@@ -90,6 +90,27 @@ Poor fits:
 
 ### 1. Import Usage Data
 
+If you use the **Codex desktop app**, you do not need to understand the commands first. Open this repository folder in Codex and say:
+
+```text
+Please use BLCaptain Codex Probe CLI to run a local usage analysis for me:
+1. If it is not installed yet, create a local virtual environment in this project and install it.
+2. Import examples/status.txt.
+3. Generate a task-level usage report at reports/usage-report.md.
+4. Inspect examples/risky-skill.md and write the report to reports/skill-lint-report.md.
+5. Tell me the report paths, key risks, and whether I should downgrade or stop.
+Do not upload any data. Do not read browser cookies, tokens, or system credentials.
+```
+
+If you want to analyze your own `/status`, paste the text into Codex and say:
+
+```text
+This is my Codex /status output. Please redact obvious keys, cookies, tokens, emails, and phone numbers first,
+save it as .probe/my-status.txt, then use BLCaptain Codex Probe CLI to generate a usage report.
+Write the report to reports/my-usage-report.md and explain in plain language:
+why it is expensive, how to downgrade, and when to stop.
+```
+
 Import a `/status` text sample:
 
 ```bash
@@ -185,6 +206,26 @@ probe --version
 ```
 
 ## Usage
+
+The friendliest path is to open this repository folder in the **Codex desktop app** and say:
+
+```text
+Please use BLCaptain Codex Probe CLI to run a complete local acceptance flow:
+install dependencies, import examples/status.txt, generate a usage report,
+inspect examples/risky-skill.md, delete local business data, and confirm NO_USAGE_DATA afterward.
+When done, only give me the report paths, key risks, next-step advice, and verification result.
+```
+
+If you already have your own `/status` or Skill text, say:
+
+```text
+Please use BLCaptain Codex Probe CLI to analyze the material I provide below.
+Goal: explain why this Codex task is expensive, how to downgrade, and when to stop;
+also inspect the Skill / output for AI-smell, plugin risk, missing acceptance criteria, or sensitive data.
+Only process text I explicitly provide. Do not read browsers, login state, cookies, tokens, or private folders.
+```
+
+Codex can run the following commands for you. You can also run them manually.
 
 Minimal workflow:
 
