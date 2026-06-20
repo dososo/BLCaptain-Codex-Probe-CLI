@@ -2,6 +2,8 @@
 
 > 本地只读的 Codex 用量治理与 Skill / 输出质量体检 CLI：解释为什么贵、怎么降配、什么时候该停。
 
+[English README](README.en.md)
+
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
