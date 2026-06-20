@@ -24,17 +24,16 @@
 
 ## Screenshots
 
-![Codex desktop one-prompt workflow](assets/screenshots/codex-desktop-prompt.svg)
+<p>
+  <img src="assets/screenshots/codex-desktop-prompt.svg" alt="Codex desktop one-prompt workflow" width="100%">
+</p>
 
 In the Codex desktop app, one prompt can ask Codex to install locally, import sample data, generate reports, inspect a Skill, and verify deletion.
 
-![Task-level usage report preview](assets/screenshots/usage-report-preview.svg)
-
-The task-level usage report puts `total_tokens`, budget state, quota remaining, and stop advice in one view, making it easier to decide whether to continue, downgrade, or stop. See the sample report at [examples/reports/usage-report.md](examples/reports/usage-report.md).
-
-![Skill / output quality inspection preview](assets/screenshots/skill-lint-preview.svg)
-
-The quality inspection report flags AI-smell, plugin risk, sensitive data, and missing privacy boundaries, while showing redacted evidence snippets. See the sample report at [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md).
+| Task-level usage report | Skill / output quality inspection |
+|---|---|
+| <img src="assets/screenshots/usage-report-preview.svg" alt="Task-level usage report preview" width="100%"> | <img src="assets/screenshots/skill-lint-preview.svg" alt="Skill / output quality inspection preview" width="100%"> |
+| Puts `total_tokens`, budget state, quota remaining, and stop advice in one view, making it easier to decide whether to continue, downgrade, or stop. See [examples/reports/usage-report.md](examples/reports/usage-report.md). | Flags AI-smell, plugin risk, sensitive data, and missing privacy boundaries, while showing redacted evidence snippets. See [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md). |
 
 ## What It Is
 

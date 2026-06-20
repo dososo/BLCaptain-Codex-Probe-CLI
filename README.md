@@ -24,17 +24,16 @@
 
 ## 工作截图
 
-![Codex 桌面版一句话入口](assets/screenshots/codex-desktop-prompt.svg)
+<p>
+  <img src="assets/screenshots/codex-desktop-prompt.svg" alt="Codex 桌面版一句话入口" width="100%">
+</p>
 
 在 Codex 桌面版 App 里，一句话就可以让 Codex 完成本地安装、导入示例数据、生成报告、体检 Skill 和删除验证。
 
-![任务级用量报告效果](assets/screenshots/usage-report-preview.svg)
-
-任务级用量报告会把 `total_tokens`、预算状态、剩余额度和停止建议放在同一张表里，方便判断“继续、降配还是先停”。示例报告见 [examples/reports/usage-report.md](examples/reports/usage-report.md)。
-
-![Skill / 输出质量体检效果](assets/screenshots/skill-lint-preview.svg)
-
-质量体检报告会标出 AI 味、插件风险、敏感信息和隐私边界缺口，并展示脱敏后的证据片段。示例报告见 [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md)。
+| 任务级用量报告 | Skill / 输出质量体检 |
+|---|---|
+| <img src="assets/screenshots/usage-report-preview.svg" alt="任务级用量报告效果" width="100%"> | <img src="assets/screenshots/skill-lint-preview.svg" alt="Skill / 输出质量体检效果" width="100%"> |
+| 把 `total_tokens`、预算状态、剩余额度和停止建议放在同一视图，方便判断“继续、降配还是先停”。示例报告见 [examples/reports/usage-report.md](examples/reports/usage-report.md)。 | 标出 AI 味、插件风险、敏感信息和隐私边界缺口，并展示脱敏后的证据片段。示例报告见 [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md)。 |
 
 ## 它到底是什么
 
