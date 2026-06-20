@@ -28,8 +28,8 @@ DEFAULT_DB = Path(".probe/probe.db")
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="probe",
-        description="Local read-only Codex usage self-check and Skill output inspection probe.",
+        prog="codex-probe",
+        description="Local read-only Codex usage governance and Skill output inspection CLI.",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--db", type=Path, default=DEFAULT_DB, help="SQLite database path. Default: .probe/probe.db")
@@ -185,4 +185,3 @@ def fail(code: str, message: str, as_json: bool) -> None:
     else:
         print(f"{code}: {message}", file=sys.stderr)
     sys.exit(1)
-

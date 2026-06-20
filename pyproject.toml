@@ -3,14 +3,14 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "codex-usage-skill-probe"
+name = "blcaptain-codex-probe"
 version = "0.1.0"
-description = "本地只读的 Codex 用量自查与 Skill 输出体检 CLI 探针。"
+description = "本地只读的 Codex 用量治理与 Skill 输出体检 CLI。"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "BLTeam" }]
-keywords = ["codex", "cli", "usage", "skills", "privacy", "local-first"]
+keywords = ["blcaptain", "codex", "cli", "usage", "skills", "privacy", "local-first"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
@@ -24,8 +24,10 @@ classifiers = [
 ]
 
 [project.scripts]
-codex-usage-skill-probe = "codex_usage_skill_probe.cli:main"
+blcaptain-codex-probe = "codex_usage_skill_probe.cli:main"
+codex-probe = "codex_usage_skill_probe.cli:main"
 probe = "codex_usage_skill_probe.cli:main"
+codex-usage-skill-probe = "codex_usage_skill_probe.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
