@@ -22,6 +22,20 @@
 
 ---
 
+## Screenshots
+
+![Codex desktop one-prompt workflow](assets/screenshots/codex-desktop-prompt.svg)
+
+In the Codex desktop app, one prompt can ask Codex to install locally, import sample data, generate reports, inspect a Skill, and verify deletion.
+
+![Task-level usage report preview](assets/screenshots/usage-report-preview.svg)
+
+The task-level usage report puts `total_tokens`, budget state, quota remaining, and stop advice in one view, making it easier to decide whether to continue, downgrade, or stop. See the sample report at [examples/reports/usage-report.md](examples/reports/usage-report.md).
+
+![Skill / output quality inspection preview](assets/screenshots/skill-lint-preview.svg)
+
+The quality inspection report flags AI-smell, plugin risk, sensitive data, and missing privacy boundaries, while showing redacted evidence snippets. See the sample report at [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md).
+
 ## What It Is
 
 BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill, and it is not a replacement for the official OpenAI usage dashboard.
@@ -330,6 +344,8 @@ See [Privacy and Security](docs/PRIVACY_SECURITY.md).
 
 ```text
 BLCaptain-Codex-Probe-CLI/
+├── assets/screenshots/               # README screenshots
+├── examples/reports/                  # Real sample reports
 ├── README.md                         # Chinese README
 ├── README.en.md                      # English README
 ├── CHANGELOG.md                      # Changelog

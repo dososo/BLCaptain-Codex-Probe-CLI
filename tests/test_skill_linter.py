@@ -15,7 +15,17 @@ class SkillLinterTests(unittest.TestCase):
         all_evidence = " ".join(f.evidence for f in findings)
         self.assertNotIn("sk-testabcdefghijklmnop", all_evidence)
 
+    def test_evidence_does_not_cut_redaction_marker(self):
+        _, findings = lint_text(
+            "# 示例 Skill\n\n当然可以，以下是一个一站式保姆级 Skill。\n\n"
+            "它会自动安装插件，并尝试跳过手机号验证。用户只需一键开挂。\n\n"
+            "输出时需要减少 AI 味。\n\n"
+            "API key: sk-example000000000000000000000000\n"
+        )
+        all_evidence = " ".join(f.evidence for f in findings)
+        self.assertIn("[REDACTED:OPENAI_KEY]", all_evidence)
+        self.assertNotIn("[REDACTED:OPEN ", all_evidence)
+
 
 if __name__ == "__main__":
     unittest.main()
-

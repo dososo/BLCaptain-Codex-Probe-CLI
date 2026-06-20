@@ -181,5 +181,11 @@ def make_finding(
 
 
 def context(text: str, start: int, end: int, radius: int = 90) -> str:
-    return text[max(0, start - radius) : min(len(text), end + radius)]
-
+    left = max(0, start - radius)
+    right = min(len(text), end + radius)
+    marker_start = text.rfind("[REDACTED:", 0, right)
+    if marker_start >= left:
+        marker_end = text.find("]", marker_start)
+        if marker_end >= right:
+            right = marker_end + 1
+    return text[left:right]

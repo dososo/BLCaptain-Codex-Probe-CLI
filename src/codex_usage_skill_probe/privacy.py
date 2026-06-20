@@ -29,4 +29,10 @@ def snippet(text: str, limit: int = 180) -> str:
     compact = " ".join(redact(text).split())
     if len(compact) <= limit:
         return compact
-    return compact[: limit - 3] + "..."
+    cut = limit - 3
+    marker_start = compact.rfind("[REDACTED:", 0, cut)
+    if marker_start != -1:
+        marker_end = compact.find("]", marker_start)
+        if marker_end >= cut:
+            cut = marker_end + 1
+    return compact[:cut] + "..."

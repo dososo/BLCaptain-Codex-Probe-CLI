@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">Codex desktop prompt example</title>
+  <desc id="desc">A Codex desktop style prompt showing how a user can ask Codex to run BLCaptain Codex Probe CLI.</desc>
+  <rect width="1280" height="760" fill="#f4f1ea"/>
+  <rect x="56" y="48" width="1168" height="664" rx="18" fill="#171717"/>
+  <rect x="56" y="48" width="1168" height="54" rx="18" fill="#252525"/>
+  <circle cx="88" cy="75" r="7" fill="#ee6a5f"/>
+  <circle cx="112" cy="75" r="7" fill="#f4bf4f"/>
+  <circle cx="136" cy="75" r="7" fill="#61c554"/>
+  <text x="176" y="82" font-family="Inter, Arial, sans-serif" font-size="17" fill="#ece7db">Codex Desktop App</text>
+
+  <rect x="96" y="132" width="1088" height="520" rx="14" fill="#fbfaf7"/>
+  <text x="128" y="178" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#1e293b">一句话让 Codex 跑完整本地体检</text>
+  <text x="128" y="210" font-family="Inter, Arial, sans-serif" font-size="16" fill="#64748b">不需要先理解 CLI 参数。打开仓库目录，把下面这段话发给 Codex。</text>
+
+  <rect x="128" y="244" width="1024" height="258" rx="12" fill="#eef6ff" stroke="#93c5fd"/>
+  <text x="156" y="286" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="19" fill="#0f172a">请用 BLCaptain Codex Probe CLI 跑一次完整本地验收：</text>
+  <text x="156" y="322" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="19" fill="#0f172a">安装依赖，导入 examples/status.txt，生成用量报告，</text>
+  <text x="156" y="358" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="19" fill="#0f172a">体检 examples/risky-skill.md，删除本地业务数据后确认返回 NO_USAGE_DATA。</text>
+  <text x="156" y="394" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="19" fill="#0f172a">完成后只给我报告路径、关键风险、下一步建议和验证结果。</text>
+  <text x="156" y="430" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="19" fill="#b91c1c">不要上传任何数据，不要读取浏览器 cookie、token 或系统凭据。</text>
+
+  <rect x="128" y="534" width="314" height="70" rx="10" fill="#ecfdf5" stroke="#86efac"/>
+  <text x="154" y="564" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#166534">输出 1</text>
+  <text x="154" y="588" font-family="Inter, Arial, sans-serif" font-size="16" fill="#14532d">reports/usage-report.md</text>
+
+  <rect x="482" y="534" width="314" height="70" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+  <text x="508" y="564" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#9a3412">输出 2</text>
+  <text x="508" y="588" font-family="Inter, Arial, sans-serif" font-size="16" fill="#7c2d12">reports/skill-lint-report.md</text>
+
+  <rect x="836" y="534" width="316" height="70" rx="10" fill="#f5f3ff" stroke="#c4b5fd"/>
+  <text x="862" y="564" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#5b21b6">验证结果</text>
+  <text x="862" y="588" font-family="Inter, Arial, sans-serif" font-size="16" fill="#4c1d95">NO_USAGE_DATA after delete</text>
+
+  <text x="96" y="690" font-family="Inter, Arial, sans-serif" font-size="14" fill="#a8a29e">BLCaptain Codex Probe CLI · local-first · no login state · no cloud upload</text>
+</svg>
