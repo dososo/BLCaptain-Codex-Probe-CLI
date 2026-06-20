@@ -1,0 +1,13 @@
+{
+  "task_id": "sample_task_manual",
+  "user_goal": "生成一份小红书内容改写报告",
+  "model": "gpt-5.4",
+  "mode": "standard",
+  "input_tokens": 42000,
+  "cached_input_tokens": 12000,
+  "output_tokens": 9000,
+  "credits": 9.5,
+  "quota_remaining": 64,
+  "quota_limit": 100
+}
+

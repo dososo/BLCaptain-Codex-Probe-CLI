@@ -1,0 +1,10 @@
+Model: gpt-5.5
+Mode: fast
+Input tokens: 120000
+Cached input tokens: 60000
+Output tokens: 22000
+Total tokens: 142000
+Credits: 38.5
+Remaining: 12
+Limit: 100
+
