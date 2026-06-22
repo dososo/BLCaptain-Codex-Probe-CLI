@@ -25,7 +25,24 @@ class UsageParserTests(unittest.TestCase):
         self.assertEqual(record.credits, 12.5)
         self.assertEqual(record.quota_remaining, 8)
 
+    def test_parse_chinese_codex_desktop_status(self):
+        batch, record = parse_status_text(
+            """
+            会话：
+            [REDACTED:SESSION_ID]
+            背景信息：
+            剩余 45% （已使用 142,047/共 258K）
+            5 小时限额:
+            剩余 94%
+            7 天限额:
+            剩余 72%
+            """
+        )
+        self.assertEqual(batch.parsed_count, 1)
+        self.assertEqual(record.total_tokens, 142047)
+        self.assertEqual(record.quota_remaining, 45.0)
+        self.assertEqual(record.quota_limit, 100.0)
+
 
 if __name__ == "__main__":
     unittest.main()
-

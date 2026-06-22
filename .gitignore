@@ -1,13 +1,16 @@
 __pycache__/
+.DS_Store
 *.py[cod]
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.probe/
 .venv/
 .venv-*/
 dist/
 build/
+reports/
 *.db
 *.sqlite
 *.sqlite3

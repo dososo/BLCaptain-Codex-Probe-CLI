@@ -23,7 +23,7 @@ def parse_int(text: str, *patterns: str) -> int | None:
     for pattern in patterns:
         match = re.search(pattern, text, flags=re.I)
         if match:
-            return int(match.group(1).replace(",", "").replace("_", ""))
+            return parse_human_int(match.group(1))
     return None
 
 
@@ -57,14 +57,24 @@ def parse_status_text(text: str, goal: str = "", model_hint: str = "") -> tuple[
         r"\bcached[_\s-]*(?:input[_\s-]*)?tokens?\s*[:=]\s*([\d,_]+)",
         r"\bcache\s*[:=]\s*([\d,_]+)",
     )
-    total_tokens = parse_int(stripped, r"\btotal[_\s-]*tokens?\s*[:=]\s*([\d,_]+)")
+    total_tokens = parse_int(
+        stripped,
+        r"\btotal[_\s-]*tokens?\s*[:=]\s*([\d,_]+)",
+        r"已使用\s*([\d,_.]+[KkMm]?)\s*/\s*共\s*[\d,_.]+[KkMm]?",
+    )
     if total_tokens is None:
         known = [v for v in [input_tokens, output_tokens] if v is not None]
         total_tokens = sum(known) if known else None
 
     credits = parse_float(stripped, r"\bcredits?\s*[:=]\s*([\d,_.]+)")
-    quota_remaining = parse_float(stripped, r"\b(?:remaining|quota_remaining)\s*[:=]\s*([\d,_.]+)")
+    quota_remaining = parse_float(
+        stripped,
+        r"\b(?:remaining|quota_remaining)\s*[:=]\s*([\d,_.]+)",
+        r"剩余\s*([\d,_.]+)\s*%",
+    )
     quota_limit = parse_float(stripped, r"\b(?:limit|quota_limit)\s*[:=]\s*([\d,_.]+)")
+    if quota_remaining is not None and quota_limit is None and "%" in stripped:
+        quota_limit = 100.0
 
     batch = ImportBatch(
         id=new_id("import"),
@@ -147,14 +157,23 @@ def parse_text_field(text: str, pattern: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def parse_human_int(value: str) -> int:
+    compact = value.replace(",", "").replace("_", "").strip()
+    suffix = compact[-1:].lower()
+    if suffix == "k":
+        return int(float(compact[:-1]) * 1000)
+    if suffix == "m":
+        return int(float(compact[:-1]) * 1000000)
+    return int(compact)
+
+
 def coerce_int(value: Any) -> int | None:
     if value is None or value == "":
         return None
-    return int(str(value).replace(",", "").replace("_", ""))
+    return parse_human_int(str(value))
 
 
 def coerce_float(value: Any) -> float | None:
     if value is None or value == "":
         return None
     return float(str(value).replace(",", "").replace("_", ""))
-
