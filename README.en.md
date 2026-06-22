@@ -10,7 +10,17 @@
 ![Release](https://img.shields.io/badge/Release-v0.3.0-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
-> **Install**:
+> **Fastest path**:
+>
+> You do not need to understand the CLI first. Open this repository folder in the Codex desktop app, then paste the [Codex desktop prompt](docs/CODEX_DESKTOP_PROMPT.md) into Codex.
+>
+> ```text
+> Please use BLCaptain Codex Probe CLI to analyze the /status text I provide below:
+> why it is expensive, how to downgrade, and when to stop.
+> Only process text I explicitly provide. Do not read browsers, cookies, tokens, or private folders.
+> ```
+
+> **Developer install**:
 >
 > ```bash
 > git clone https://github.com/dososo/BLCaptain-Codex-Probe-CLI.git
@@ -37,7 +47,7 @@ In the Codex desktop app, one prompt can ask Codex to install locally, import sa
 
 ## What It Is
 
-BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill, and it is not a replacement for the official OpenAI usage dashboard.
+BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill, and it is not a replacement for the official OpenAI usage dashboard. The real point is not "one more command"; it is to help Codex users notice earlier: **why this task is expensive, how to downgrade, and when to stop**.
 
 It focuses on two P0 workflows:
 
@@ -45,6 +55,8 @@ It focuses on two P0 workflows:
 2. **Skill / output quality inspection**: import a Skill file, prompt, or AI-generated output, and check for AI-smell, plugin risk, missing acceptance criteria, missing privacy boundaries, and sensitive information leakage.
 
 This is a **Watch / validation-stage v0.3** project. It is suitable for real local trials and open-source validation, but it does not promise savings, unlimited quota, quota boosts, or business success.
+
+If you are not a developer, treat it as a copyable workflow: paste `/status` into Codex and ask Codex to run the local CLI for you. The CLI is the underlying tool; the user entry point is one prompt.
 
 ## Naming
 
@@ -315,10 +327,12 @@ acceptance-artifacts/<timestamp>/
 
 `acceptance-artifacts/` is ignored by Git and should not be committed.
 
-## Example Data
+## Examples and Prompts
 
 | File | Purpose |
 |---|---|
+| `docs/CODEX_DESKTOP_PROMPT.md` | Copyable workflow prompts for the Codex desktop app |
+| `docs/SOCIAL_POSTS.md` | Draft posts for X and Xiaohongshu |
 | `examples/status.txt` | `/status` text sample |
 | `examples/manual-usage.json` | Manual JSON usage sample |
 | `examples/risky-skill.md` | Risky sample with AI-smell, plugin risk, and fake secrets |
@@ -353,8 +367,10 @@ BLCaptain-Codex-Probe-CLI/
 ├── LICENSE                           # MIT License
 ├── pyproject.toml                    # Python package and CLI entry points
 ├── docs/
+│   ├── CODEX_DESKTOP_PROMPT.md       # Codex desktop prompts
 │   ├── PRIVACY_SECURITY.md           # Privacy and security boundaries
-│   └── RELEASE_CHECKLIST.md          # Release checklist
+│   ├── RELEASE_CHECKLIST.md          # Release checklist
+│   └── SOCIAL_POSTS.md               # Social post drafts
 ├── examples/                         # Reproducible samples
 ├── scripts/
 │   └── run_acceptance.py             # End-to-end acceptance script
