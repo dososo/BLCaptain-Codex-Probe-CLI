@@ -323,6 +323,8 @@ acceptance-artifacts/<timestamp>/
 | `examples/manual-usage.json` | Manual JSON usage sample |
 | `examples/risky-skill.md` | Risky sample with AI-smell, plugin risk, and fake secrets |
 | `examples/clean-skill.md` | Safer Skill sample |
+| `examples/optimized-skill.md` | Optimized Skill sample based on the inspection report |
+| `examples/reports/optimized-skill-lint-report.md` | Inspection report for the optimized Skill |
 
 The example secret is fake. Reports redact common API keys, tokens, cookies, emails, and phone numbers.
 

@@ -10,7 +10,7 @@ __pycache__/
 .venv-*/
 dist/
 build/
-reports/
+/reports/
 *.db
 *.sqlite
 *.sqlite3

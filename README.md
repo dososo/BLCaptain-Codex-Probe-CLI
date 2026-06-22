@@ -320,6 +320,8 @@ acceptance-artifacts/<timestamp>/
 | `examples/manual-usage.json` | 手工 JSON 用量样本 |
 | `examples/risky-skill.md` | 含 AI 味、插件风险和假密钥的风险样例 |
 | `examples/clean-skill.md` | 相对安全的 Skill 样例 |
+| `examples/optimized-skill.md` | 根据体检报告优化后的 Skill 样例 |
+| `examples/reports/optimized-skill-lint-report.md` | 优化版 Skill 的体检报告 |
 
 示例中的密钥是无效假数据；报告会脱敏常见 API key、token、cookie、邮箱和手机号。
 
