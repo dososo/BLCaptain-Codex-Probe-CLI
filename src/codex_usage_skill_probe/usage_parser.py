@@ -36,11 +36,16 @@ def parse_float(text: str, *patterns: str) -> float | None:
 
 
 def parse_context_status(text: str) -> tuple[float | None, int | None, int | None]:
-    match = re.search(
+    patterns = [
         r"剩余\s*([\d,_.]+)\s*%\s*[（(]\s*已使用\s*([\d,_.]+[KkMm]?)\s*/\s*共\s*([\d,_.]+[KkMm]?)\s*[）)]",
-        text,
-        flags=re.I,
-    )
+        r"\bcontext(?:\s+remaining)?\s*[:=]\s*([\d,_.]+)\s*%\s*[（(]\s*used\s*([\d,_.]+[KkMm]?)\s*/\s*(?:limit\s*)?([\d,_.]+[KkMm]?)\s*[）)]",
+        r"\bcontext\s*[:=]\s*([\d,_.]+)\s*%\s*remaining\s*[（(]\s*([\d,_.]+[KkMm]?)\s*used\s*/\s*([\d,_.]+[KkMm]?)\s*limit\s*[）)]",
+    ]
+    match = None
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.I)
+        if match:
+            break
     if not match:
         return None, None, None
     return (
@@ -54,12 +59,14 @@ def parse_labeled_percent(text: str, label_pattern: str) -> float | None:
     match = re.search(label_pattern + r"[\s\S]{0,160}?剩余\s*([\d,_.]+)\s*%", text, flags=re.I)
     if not match:
         match = re.search(label_pattern + r"[\s\S]{0,160}?\bremaining\s*[:=]?\s*([\d,_.]+)\s*%", text, flags=re.I)
+    if not match:
+        match = re.search(label_pattern + r"[\s\S]{0,160}?([\d,_.]+)\s*%\s*remaining\b", text, flags=re.I)
     return float(match.group(1).replace(",", "").replace("_", "")) if match else None
 
 
 def parse_labeled_reset(text: str, label_pattern: str) -> str:
     match = re.search(
-        label_pattern + r"[\s\S]{0,180}?(?:重置时间|reset(?:\s*time|\s*at)?)\s*[：:=]\s*([^\n）)]+)",
+        label_pattern + r"[\s\S]{0,180}?(?:重置时间|reset(?:s)?(?:\s*time|\s*at)?|resets\s+at)\s*[：:=]\s*([^\n）)]+)",
         text,
         flags=re.I,
     )
@@ -224,7 +231,7 @@ def parse_text_field(text: str, pattern: str) -> str:
 
 
 def parse_human_int(value: str) -> int:
-    compact = value.replace(",", "").replace("_", "").strip()
+    compact = value.replace(",", "").replace("_", "").replace(" ", "").strip()
     suffix = compact[-1:].lower()
     if suffix == "k":
         return int(float(compact[:-1]) * 1000)

@@ -1,0 +1,11 @@
+Session:
+[REDACTED:SESSION_ID]
+Model: gpt-5.1
+Mode: high
+Context remaining: 31% (used 92,400 / limit 258K)
+5-hour limit:
+19% remaining
+resets at: 18:51
+7-day limit:
+65% remaining
+resets at: Jun 25

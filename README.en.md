@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
-![Release](https://img.shields.io/badge/Release-v0.3.1-4b5563.svg)
+![Release](https://img.shields.io/badge/Release-v0.3.2-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 > **Fastest path**:
@@ -45,6 +45,12 @@ In the Codex desktop app, one prompt can ask Codex to install locally, import sa
 | <img src="assets/screenshots/usage-report-preview.svg" alt="Task-level usage report preview" width="100%"> | <img src="assets/screenshots/skill-lint-preview.svg" alt="Skill / output quality inspection preview" width="100%"> |
 | Puts `total_tokens`, context remaining, 5-hour / 7-day quota, and the continue / downgrade / stop decision in one view. See [examples/reports/usage-report.md](examples/reports/usage-report.md). | Flags AI-smell, plugin risk, sensitive data, and missing privacy boundaries, while showing redacted evidence snippets. See [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md). |
 
+<p>
+  <img src="assets/screenshots/status-sample-library.svg" alt="Redacted /status sample library covering continue, downgrade, and stop decisions" width="100%">
+</p>
+
+`examples/status-samples/` is a redacted sample library that covers healthy continue, context-heavy downgrade, short-window pressure, low 7-day quota, and English-format `/status` scenarios. These samples are part of automated tests, so parsing and decision output are not README-only claims.
+
 ## What It Is
 
 BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill, and it is not a replacement for the official OpenAI usage dashboard. The real point is not "one more command"; it is to help Codex users notice earlier: **why this task is expensive, how to downgrade, and when to stop**.
@@ -54,7 +60,7 @@ It focuses on two P0 workflows:
 1. **Task-level token and quota governance**: import a user-provided `/status` text or manual JSON sample, generate a task-level usage report, and explain where the cost comes from, whether the task is close to budget, whether context / 5-hour / 7-day quota is healthy, and whether the next move should be continue, downgrade, split, or stop.
 2. **Skill / output quality inspection**: import a Skill file, prompt, or AI-generated output, and check for AI-smell, plugin risk, missing acceptance criteria, missing privacy boundaries, and sensitive information leakage.
 
-This is a **Watch / validation-stage v0.3.1** project. It is suitable for real local trials and open-source validation, but it does not promise savings, unlimited quota, quota boosts, or business success.
+This is a **Watch / validation-stage v0.3.2** project. It is suitable for real local trials and open-source validation, but it does not promise savings, unlimited quota, quota boosts, or business success.
 
 If you are not a developer, treat it as a copyable workflow: paste `/status` into Codex and ask Codex to run the local CLI for you. The CLI is the underlying tool; the user entry point is one prompt.
 
@@ -371,6 +377,7 @@ acceptance-artifacts/<timestamp>/
 | `docs/SOCIAL_POSTS.md` | Draft posts for X and Xiaohongshu |
 | `examples/status.txt` | `/status` text sample |
 | `examples/status-codex-desktop.txt` | Redacted Codex desktop `/status` sample |
+| `examples/status-samples/` | Redacted `/status` sample library for continue, downgrade, and stop decisions |
 | `examples/manual-usage.json` | Manual JSON usage sample |
 | `examples/risky-skill.md` | Risky sample with AI-smell, plugin risk, and fake secrets |
 | `examples/clean-skill.md` | Safer Skill sample |
@@ -418,7 +425,7 @@ BLCaptain-Codex-Probe-CLI/
 
 ## Acceptance Criteria
 
-Before v0.3.1 release:
+Before v0.3.2 release:
 
 - The project can be installed from a clean environment with `python -m pip install .`.
 - `codex-probe --version` returns the current version.
@@ -436,14 +443,14 @@ Current local acceptance evidence:
 ```text
 PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests
 ........
-Ran 8 tests
+Ran 9 tests
 OK
 
 PYTHONDONTWRITEBYTECODE=1 python3 -m compileall src tests scripts/run_acceptance.py
 OK
 
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_acceptance.py
-acceptance passed: acceptance-artifacts/20260622T103341Z
+acceptance passed: acceptance-artifacts/20260622T104904Z
 ```
 
 ## Roadmap

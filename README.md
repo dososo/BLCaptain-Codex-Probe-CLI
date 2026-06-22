@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
-![Release](https://img.shields.io/badge/Release-v0.3.1-4b5563.svg)
+![Release](https://img.shields.io/badge/Release-v0.3.2-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 > **最快使用方式**：
@@ -45,6 +45,12 @@
 | <img src="assets/screenshots/usage-report-preview.svg" alt="任务级用量报告效果" width="100%"> | <img src="assets/screenshots/skill-lint-preview.svg" alt="Skill / 输出质量体检效果" width="100%"> |
 | 把 `total_tokens`、上下文余量、5 小时/7 天额度和「继续、降配、停止」决策放在同一视图。示例报告见 [examples/reports/usage-report.md](examples/reports/usage-report.md)。 | 标出 AI 味、插件风险、敏感信息和隐私边界缺口，并展示脱敏后的证据片段。示例报告见 [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md)。 |
 
+<p>
+  <img src="assets/screenshots/status-sample-library.svg" alt="脱敏 /status 样本库覆盖继续、降配、停止决策" width="100%">
+</p>
+
+`examples/status-samples/` 提供脱敏样本库，覆盖健康可继续、上下文偏重需降配、短窗口紧张、7 天额度偏低和英文格式等场景。样本会进入自动化测试，避免解析规则只停留在 README 展示。
+
 ## 它到底是什么
 
 BLCaptain Codex Probe CLI 是一个本地命令行工具，不是 Codex Skill，也不是 OpenAI 官方 dashboard。它真正想解决的不是「多一个命令」，而是让 Codex 用户在长会话里更早知道：**这次为什么贵、怎么降配、什么时候该停**。
@@ -54,7 +60,7 @@ BLCaptain Codex Probe CLI 是一个本地命令行工具，不是 Codex Skill，
 1. **任务级 Token / 额度治理**：导入用户显式提供的 `/status` 文本或手工 JSON，生成任务级用量报告，解释贵在哪里、是否接近预算、上下文和 5 小时/7 天额度是否健康、下一步该继续、降配还是停止。
 2. **Skill / 输出质量体检**：导入 Skill、提示词或 AI 输出文本，检查 AI 味、插件风险、缺失验收、隐私边界和敏感信息泄露风险。
 
-它的定位是 **Watch / 验证型 v0.3.1**：适合真实用户本地试用和开源验证，但不承诺省钱、无限额度、额度翻倍或商业成功。
+它的定位是 **Watch / 验证型 v0.3.2**：适合真实用户本地试用和开源验证，但不承诺省钱、无限额度、额度翻倍或商业成功。
 
 如果你不是开发者，也可以只把它当作一份可复制工作流：把 `/status` 贴给 Codex，让 Codex 调用本地 CLI 生成报告。CLI 只是底层工具，用户入口是一句话。
 
@@ -153,12 +159,6 @@ codex-probe --db .probe/demo.db doctor \
 保存为 .probe/my-status.txt，再用 BLCaptain Codex Probe CLI 生成用量报告。
 报告放到 reports/my-usage-report.md，并用普通话解释：为什么贵、怎么降配、什么时候该停。
 ```
-
-执行效果示例：
-
-<p align="center">
-  <img src="assets/screenshots/status-analysis-result.png" alt="Codex 桌面版分析 /status 后生成用量报告的执行效果" width="760">
-</p>
 
 支持两种导入方式：
 
@@ -374,6 +374,7 @@ acceptance-artifacts/<timestamp>/
 | `docs/SOCIAL_POSTS.md` | X 和小红书发布短文草稿 |
 | `examples/status.txt` | `/status` 文本样本 |
 | `examples/status-codex-desktop.txt` | 脱敏后的 Codex 桌面版 `/status` 样本 |
+| `examples/status-samples/` | 脱敏 `/status` 样本库，覆盖继续、降配、停止决策 |
 | `examples/manual-usage.json` | 手工 JSON 用量样本 |
 | `examples/risky-skill.md` | 含 AI 味、插件风险和假密钥的风险样例 |
 | `examples/clean-skill.md` | 相对安全的 Skill 样例 |
@@ -420,7 +421,7 @@ BLCaptain-Codex-Probe-CLI/
 
 ## 验证标准
 
-发布 v0.3.1 前必须满足：
+发布 v0.3.2 前必须满足：
 
 - 可以从干净环境 `python -m pip install .` 安装。
 - `codex-probe --version` 返回当前版本。
@@ -438,14 +439,14 @@ BLCaptain-Codex-Probe-CLI/
 ```text
 PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests
 ........
-Ran 8 tests
+Ran 9 tests
 OK
 
 PYTHONDONTWRITEBYTECODE=1 python3 -m compileall src tests scripts/run_acceptance.py
 OK
 
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_acceptance.py
-acceptance passed: acceptance-artifacts/20260622T103341Z
+acceptance passed: acceptance-artifacts/20260622T104904Z
 ```
 
 ## Roadmap

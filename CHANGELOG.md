@@ -1,5 +1,14 @@
 # 变更日志
 
+## 0.3.2 - 2026-06-22
+
+- 新增 `examples/status-samples/` 脱敏 `/status` 样本库，覆盖继续、降配、停止和英文格式场景。
+- 增强英文 `/status` 解析，支持 `Context remaining`、`19% remaining` 和 `resets at` 等常见表达。
+- 新增样本库单元测试，确保样本能解析出上下文、5 小时额度、7 天额度和预期决策。
+- 新增 `assets/screenshots/status-sample-library.svg` 工作例图，并同步刷新中英文 README。
+- 更新小红书推荐短文，突出样本库、doctor 和决策卡片。
+- 移除中文 README 中效果较弱的旧执行截图和对应图片文件。
+
 ## 0.3.1 - 2026-06-22
 
 - 增强 Codex 桌面版 `/status` 解析：单独识别上下文剩余、已用/上限 token、5 小时额度、7 天额度和重置时间。

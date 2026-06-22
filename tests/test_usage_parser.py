@@ -1,6 +1,11 @@
 import unittest
+from pathlib import Path
 
+from codex_usage_skill_probe.usage_analyzer import analyze_usage, build_decision_card
 from codex_usage_skill_probe.usage_parser import parse_status_text
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class UsageParserTests(unittest.TestCase):
@@ -51,6 +56,25 @@ class UsageParserTests(unittest.TestCase):
         self.assertEqual(record.seven_day_reset, "6月25日")
         self.assertEqual(record.quota_remaining, 45.0)
         self.assertEqual(record.quota_limit, 100.0)
+
+    def test_status_sample_library(self):
+        cases = [
+            ("codex-desktop-healthy.txt", 78.0, 56000, 98.0, 84.0, "继续"),
+            ("codex-desktop-context-near-limit.txt", 24.0, 82000, 91.0, 70.0, "降配"),
+            ("codex-desktop-weekly-low.txt", 55.0, 93000, 41.0, 12.0, "停止"),
+            ("english-fast-mode.txt", 31.0, 92400, 19.0, 65.0, "降配"),
+        ]
+        for filename, context, total, five_hour, seven_day, action in cases:
+            with self.subTest(filename=filename):
+                text = (ROOT / "examples" / "status-samples" / filename).read_text(encoding="utf-8")
+                batch, record = parse_status_text(text)
+                self.assertEqual(batch.parsed_count, 1)
+                self.assertEqual(record.context_remaining_percent, context)
+                self.assertEqual(record.total_tokens, total)
+                self.assertEqual(record.five_hour_remaining_percent, five_hour)
+                self.assertEqual(record.seven_day_remaining_percent, seven_day)
+                findings = analyze_usage(record, budget_tokens=100000)
+                self.assertEqual(build_decision_card(record, findings)["action"], action)
 
 
 if __name__ == "__main__":

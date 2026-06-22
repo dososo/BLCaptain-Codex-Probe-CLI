@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">Codex status sample library</title>
+  <desc id="desc">A visual matrix of Codex status samples and expected decisions.</desc>
+  <rect width="1280" height="760" fill="#eef2f7"/>
+  <rect x="64" y="48" width="1152" height="664" rx="18" fill="#ffffff"/>
+  <text x="104" y="104" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700" fill="#0f172a">/status 样本库</text>
+  <text x="104" y="136" font-family="Inter, Arial, sans-serif" font-size="16" fill="#64748b">脱敏样本覆盖继续、降配、停止三类决策，验证解析器和报告输出是否一致</text>
+
+  <rect x="104" y="176" width="244" height="400" rx="12" fill="#ecfdf5" stroke="#bbf7d0"/>
+  <text x="128" y="216" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="800" fill="#166534">健康可继续</text>
+  <text x="128" y="252" font-family="Inter, Arial, sans-serif" font-size="15" fill="#475569">codex-desktop-healthy.txt</text>
+  <text x="128" y="306" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800" fill="#15803d">继续</text>
+  <text x="128" y="360" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">上下文剩余 78%</text>
+  <text x="128" y="392" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">5 小时额度 98%</text>
+  <text x="128" y="424" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">7 天额度 84%</text>
+  <text x="128" y="486" font-family="Inter, Arial, sans-serif" font-size="14" fill="#64748b">适合继续当前任务，但仍保留停止线。</text>
+
+  <rect x="380" y="176" width="244" height="400" rx="12" fill="#fffbeb" stroke="#fde68a"/>
+  <text x="404" y="216" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="800" fill="#a16207">上下文偏重</text>
+  <text x="404" y="252" font-family="Inter, Arial, sans-serif" font-size="15" fill="#475569">codex-desktop-context-near-limit.txt</text>
+  <text x="404" y="306" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800" fill="#b45309">降配</text>
+  <text x="404" y="360" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">上下文剩余 24%</text>
+  <text x="404" y="392" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">总量 82,000 tokens</text>
+  <text x="404" y="424" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">短窗口仍健康</text>
+  <text x="404" y="486" font-family="Inter, Arial, sans-serif" font-size="14" fill="#64748b">适合开新会话，只带必要文件。</text>
+
+  <rect x="656" y="176" width="244" height="400" rx="12" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="680" y="216" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="800" fill="#b91c1c">周额度偏低</text>
+  <text x="680" y="252" font-family="Inter, Arial, sans-serif" font-size="15" fill="#475569">codex-desktop-weekly-low.txt</text>
+  <text x="680" y="306" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800" fill="#b91c1c">停止</text>
+  <text x="680" y="360" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">上下文剩余 55%</text>
+  <text x="680" y="392" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">7 天额度 12%</text>
+  <text x="680" y="424" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">重置时间 6月25日</text>
+  <text x="680" y="486" font-family="Inter, Arial, sans-serif" font-size="14" fill="#64748b">适合停止非必要任务，保留验证动作。</text>
+
+  <rect x="932" y="176" width="244" height="400" rx="12" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="956" y="216" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="800" fill="#1d4ed8">英文格式</text>
+  <text x="956" y="252" font-family="Inter, Arial, sans-serif" font-size="15" fill="#475569">english-fast-mode.txt</text>
+  <text x="956" y="306" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800" fill="#1d4ed8">降配</text>
+  <text x="956" y="360" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">Context remaining 31%</text>
+  <text x="956" y="392" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">5-hour quota 19%</text>
+  <text x="956" y="424" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">Mode high</text>
+  <text x="956" y="486" font-family="Inter, Arial, sans-serif" font-size="14" fill="#64748b">适合降低推理强度，拆小任务。</text>
+
+  <rect x="104" y="612" width="1044" height="58" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="128" y="647" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">样本库路径：examples/status-samples/ · 这些样本进入单元测试，确保解析规则和决策卡片不只停留在 README 展示。</text>
+</svg>
