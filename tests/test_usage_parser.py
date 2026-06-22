@@ -34,12 +34,21 @@ class UsageParserTests(unittest.TestCase):
             剩余 45% （已使用 142,047/共 258K）
             5 小时限额:
             剩余 94%
+            (重置时间：18:51)
             7 天限额:
             剩余 72%
+            (重置时间：6月25日)
             """
         )
         self.assertEqual(batch.parsed_count, 1)
         self.assertEqual(record.total_tokens, 142047)
+        self.assertEqual(record.context_remaining_percent, 45.0)
+        self.assertEqual(record.context_used_tokens, 142047)
+        self.assertEqual(record.context_limit_tokens, 258000)
+        self.assertEqual(record.five_hour_remaining_percent, 94.0)
+        self.assertEqual(record.five_hour_reset, "18:51")
+        self.assertEqual(record.seven_day_remaining_percent, 72.0)
+        self.assertEqual(record.seven_day_reset, "6月25日")
         self.assertEqual(record.quota_remaining, 45.0)
         self.assertEqual(record.quota_limit, 100.0)
 

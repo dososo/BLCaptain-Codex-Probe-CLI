@@ -23,6 +23,7 @@ class CliE2ETests(unittest.TestCase):
             db = tmp_path / "probe.db"
             usage_report = tmp_path / "usage.md"
             skill_report = tmp_path / "skill.md"
+            doctor_dir = tmp_path / "doctor"
 
             imported = self.run_probe(
                 "--db",
@@ -68,6 +69,28 @@ class CliE2ETests(unittest.TestCase):
             self.assertIn("PLUGIN_RISK", lint_labels)
             self.assertTrue(skill_report.exists())
 
+            doctor = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "doctor",
+                "--status",
+                "examples/status-codex-desktop.txt",
+                "--skill",
+                "examples/risky-skill.md",
+                "--budget-tokens",
+                "100000",
+                "--out-dir",
+                str(doctor_dir),
+            )
+            doctor_payload = json.loads(doctor.stdout)
+            self.assertTrue(doctor_payload["ok"])
+            self.assertIn(doctor_payload["decision"]["action"], {"停止", "降配", "继续"})
+            self.assertTrue((doctor_dir / "doctor-report.md").exists())
+            self.assertTrue((doctor_dir / "usage-report.md").exists())
+            self.assertTrue((doctor_dir / "skill-lint-report.md").exists())
+            self.assertIn("决策卡片", (doctor_dir / "usage-report.md").read_text(encoding="utf-8"))
+
             deleted = self.run_probe("--db", str(db), "--json", "delete", "--all", "--yes")
             self.assertTrue(json.loads(deleted.stdout)["ok"])
 
@@ -86,4 +109,3 @@ class CliE2ETests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

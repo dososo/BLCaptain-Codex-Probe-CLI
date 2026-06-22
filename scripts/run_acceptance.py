@@ -25,6 +25,7 @@ def main() -> int:
     db = out_dir / "probe.db"
     usage_report = out_dir / "usage-report.md"
     skill_report = out_dir / "skill-lint-report.md"
+    doctor_dir = out_dir / "doctor"
     after_delete = out_dir / "after-delete.md"
 
     commands = [
@@ -77,6 +78,28 @@ def main() -> int:
                 str(skill_report),
             ],
             "expect": 0,
+        },
+        {
+            "name": "doctor",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(db),
+                "--json",
+                "doctor",
+                "--status",
+                "examples/status-codex-desktop.txt",
+                "--skill",
+                "examples/risky-skill.md",
+                "--budget-tokens",
+                "100000",
+                "--out-dir",
+                str(doctor_dir),
+            ],
+            "expect": 0,
+            "must_contain": "doctor-report.md",
         },
         {
             "name": "delete_all",

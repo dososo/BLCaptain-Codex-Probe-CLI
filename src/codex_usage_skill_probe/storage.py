@@ -32,6 +32,13 @@ CREATE TABLE IF NOT EXISTS task_usage_records (
   cached_input_tokens INTEGER,
   total_tokens INTEGER,
   credits REAL,
+  context_remaining_percent REAL,
+  context_used_tokens INTEGER,
+  context_limit_tokens INTEGER,
+  five_hour_remaining_percent REAL,
+  five_hour_reset TEXT,
+  seven_day_remaining_percent REAL,
+  seven_day_reset TEXT,
   quota_remaining REAL,
   quota_limit REAL,
   source TEXT,
@@ -82,10 +89,29 @@ class Store:
         self.conn = sqlite3.connect(self.db_path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
+        self.ensure_task_usage_columns()
         self.conn.commit()
 
     def close(self) -> None:
         self.conn.close()
+
+    def ensure_task_usage_columns(self) -> None:
+        existing = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(task_usage_records)").fetchall()
+        }
+        columns = {
+            "context_remaining_percent": "REAL",
+            "context_used_tokens": "INTEGER",
+            "context_limit_tokens": "INTEGER",
+            "five_hour_remaining_percent": "REAL",
+            "five_hour_reset": "TEXT",
+            "seven_day_remaining_percent": "REAL",
+            "seven_day_reset": "TEXT",
+        }
+        for name, column_type in columns.items():
+            if name not in existing:
+                self.conn.execute(f"ALTER TABLE task_usage_records ADD COLUMN {name} {column_type}")
 
     def add_import(self, batch: ImportBatch) -> None:
         self.conn.execute(
@@ -112,8 +138,11 @@ class Store:
             INSERT OR REPLACE INTO task_usage_records
               (task_id, import_id, created_at, user_goal, model, mode, input_tokens,
                output_tokens, cached_input_tokens, total_tokens, credits,
+               context_remaining_percent, context_used_tokens, context_limit_tokens,
+               five_hour_remaining_percent, five_hour_reset,
+               seven_day_remaining_percent, seven_day_reset,
                quota_remaining, quota_limit, source, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 record.task_id,
@@ -127,6 +156,13 @@ class Store:
                 record.cached_input_tokens,
                 record.total_tokens,
                 record.credits,
+                record.context_remaining_percent,
+                record.context_used_tokens,
+                record.context_limit_tokens,
+                record.five_hour_remaining_percent,
+                record.five_hour_reset,
+                record.seven_day_remaining_percent,
+                record.seven_day_reset,
                 record.quota_remaining,
                 record.quota_limit,
                 record.source,
@@ -226,9 +262,15 @@ def usage_from_row(row: sqlite3.Row) -> TaskUsageRecord:
         cached_input_tokens=row["cached_input_tokens"],
         total_tokens=row["total_tokens"],
         credits=row["credits"],
+        context_remaining_percent=row["context_remaining_percent"],
+        context_used_tokens=row["context_used_tokens"],
+        context_limit_tokens=row["context_limit_tokens"],
+        five_hour_remaining_percent=row["five_hour_remaining_percent"],
+        five_hour_reset=row["five_hour_reset"] or "",
+        seven_day_remaining_percent=row["seven_day_remaining_percent"],
+        seven_day_reset=row["seven_day_reset"] or "",
         quota_remaining=row["quota_remaining"],
         quota_limit=row["quota_limit"],
         source=row["source"] or "manual",
         status=row["status"] or "ok",
     )
-

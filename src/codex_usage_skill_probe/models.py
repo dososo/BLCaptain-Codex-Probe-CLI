@@ -39,6 +39,13 @@ class TaskUsageRecord:
     cached_input_tokens: int | None = None
     total_tokens: int | None = None
     credits: float | None = None
+    context_remaining_percent: float | None = None
+    context_used_tokens: int | None = None
+    context_limit_tokens: int | None = None
+    five_hour_remaining_percent: float | None = None
+    five_hour_reset: str = ""
+    seven_day_remaining_percent: float | None = None
+    seven_day_reset: str = ""
     quota_remaining: float | None = None
     quota_limit: float | None = None
     source: str = "manual"
@@ -57,4 +64,3 @@ class RiskFinding:
     suggestion: str
     evidence_ids: str
     created_at: str
-

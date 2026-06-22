@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
-![Release](https://img.shields.io/badge/Release-v0.3.0-4b5563.svg)
+![Release](https://img.shields.io/badge/Release-v0.3.1-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 > **Fastest path**:
@@ -38,12 +38,12 @@
   <img src="assets/screenshots/codex-desktop-prompt.svg" alt="Codex desktop one-prompt workflow" width="100%">
 </p>
 
-In the Codex desktop app, one prompt can ask Codex to install locally, import sample data, generate reports, inspect a Skill, and verify deletion.
+In the Codex desktop app, one prompt can ask Codex to install locally, import sample data, generate a doctor summary, inspect a Skill, and verify deletion.
 
 | Task-level usage report | Skill / output quality inspection |
 |---|---|
 | <img src="assets/screenshots/usage-report-preview.svg" alt="Task-level usage report preview" width="100%"> | <img src="assets/screenshots/skill-lint-preview.svg" alt="Skill / output quality inspection preview" width="100%"> |
-| Puts `total_tokens`, budget state, quota remaining, and stop advice in one view, making it easier to decide whether to continue, downgrade, or stop. See [examples/reports/usage-report.md](examples/reports/usage-report.md). | Flags AI-smell, plugin risk, sensitive data, and missing privacy boundaries, while showing redacted evidence snippets. See [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md). |
+| Puts `total_tokens`, context remaining, 5-hour / 7-day quota, and the continue / downgrade / stop decision in one view. See [examples/reports/usage-report.md](examples/reports/usage-report.md). | Flags AI-smell, plugin risk, sensitive data, and missing privacy boundaries, while showing redacted evidence snippets. See [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md). |
 
 ## What It Is
 
@@ -51,10 +51,10 @@ BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill,
 
 It focuses on two P0 workflows:
 
-1. **Task-level token and quota governance**: import a user-provided `/status` text or manual JSON sample, generate a task-level usage report, and explain where the cost comes from, whether the task is close to budget, and whether the next move should be downgrade, split, or stop.
+1. **Task-level token and quota governance**: import a user-provided `/status` text or manual JSON sample, generate a task-level usage report, and explain where the cost comes from, whether the task is close to budget, whether context / 5-hour / 7-day quota is healthy, and whether the next move should be continue, downgrade, split, or stop.
 2. **Skill / output quality inspection**: import a Skill file, prompt, or AI-generated output, and check for AI-smell, plugin risk, missing acceptance criteria, missing privacy boundaries, and sensitive information leakage.
 
-This is a **Watch / validation-stage v0.3** project. It is suitable for real local trials and open-source validation, but it does not promise savings, unlimited quota, quota boosts, or business success.
+This is a **Watch / validation-stage v0.3.1** project. It is suitable for real local trials and open-source validation, but it does not promise savings, unlimited quota, quota boosts, or business success.
 
 If you are not a developer, treat it as a copyable workflow: paste `/status` into Codex and ask Codex to run the local CLI for you. The CLI is the underlying tool; the user entry point is one prompt.
 
@@ -88,9 +88,9 @@ The principle is simple: **only analyze local materials explicitly provided by t
 |---|---|
 | **Input** | `/status` text, manual JSON, Skill files, prompts, AI output text |
 | **Storage** | Local SQLite database, controlled by `--db` |
-| **Usage analysis** | Tokens, credits, quota remaining, budget risk, downgrade advice, stop advice |
+| **Usage analysis** | Tokens, credits, context remaining, 5-hour quota, 7-day quota, budget risk, downgrade advice, stop advice |
 | **Quality inspection** | AI-smell, plugin risk, missing acceptance criteria, missing privacy boundaries, redaction |
-| **Reports** | Markdown reports, JSON command output, reviewable `evidence_id` values |
+| **Reports** | Decision cards, Markdown reports, JSON command output, reviewable `evidence_id` values |
 | **Deletion** | `delete --all --yes` clears local business data while keeping minimal audit logs |
 
 ## What It Solves
@@ -113,17 +113,36 @@ Poor fits:
 
 ## Core Capabilities
 
-### 1. Import Usage Data
+### 1. One-Command Doctor
+
+If you want a complete local check, start with `doctor`:
+
+```bash
+codex-probe --db .probe/demo.db doctor \
+  --status examples/status-codex-desktop.txt \
+  --skill examples/risky-skill.md \
+  --budget-tokens 100000 \
+  --out-dir reports/doctor
+```
+
+It writes three local reports:
+
+- `reports/doctor/doctor-report.md`: summary, privacy boundaries, and recommended action.
+- `reports/doctor/usage-report.md`: task-level usage report and decision card.
+- `reports/doctor/skill-lint-report.md`: Skill / output quality inspection.
+
+`doctor` only reads files explicitly passed through `--status`, `--manual-json`, or `--skill`. It does not scan system directories.
+
+### 2. Import Usage Data
 
 If you use the **Codex desktop app**, you do not need to understand the commands first. Open this repository folder in Codex and say:
 
 ```text
 Please use BLCaptain Codex Probe CLI to run a local usage analysis for me:
 1. If it is not installed yet, create a local virtual environment in this project and install it.
-2. Import examples/status.txt.
-3. Generate a task-level usage report at reports/usage-report.md.
-4. Inspect examples/risky-skill.md and write the report to reports/skill-lint-report.md.
-5. Tell me the report paths, key risks, and whether I should downgrade or stop.
+2. Run doctor with examples/status-codex-desktop.txt and examples/risky-skill.md.
+3. Write reports to reports/doctor/.
+4. Tell me the doctor report path, key risks, and whether I should continue, downgrade, or stop.
 Do not upload any data. Do not read browser cookies, tokens, or system credentials.
 ```
 
@@ -140,7 +159,7 @@ Import a `/status` text sample:
 
 ```bash
 codex-probe --db .probe/demo.db import \
-  --status examples/status.txt \
+  --status examples/status-codex-desktop.txt \
   --goal "Generate delivery report"
 ```
 
@@ -154,7 +173,7 @@ codex-probe --db .probe/demo.db import \
 
 The CLI only reads local files explicitly provided by the user. It does not scan system directories.
 
-### 2. Generate a Task-Level Usage Report
+### 3. Generate a Task-Level Usage Report
 
 ```bash
 codex-probe --db .probe/demo.db usage-report \
@@ -165,11 +184,13 @@ codex-probe --db .probe/demo.db usage-report \
 The report explains:
 
 - Model, mode, input tokens, output tokens, cached tokens, and total tokens.
+- Context remaining, used / limit tokens, 5-hour quota, 7-day quota, and reset time.
+- A top decision card: recommended action, why it is expensive, how to downgrade, and when to stop.
 - Whether the task is over budget or close to budget.
 - Whether to downgrade, split the task, reuse cached input, or stop non-essential work.
 - PRD-linked `evidence_id` values such as `E-011`, `E-012`, and `E-013`.
 
-### 3. Inspect Skills or AI Outputs
+### 4. Inspect Skills or AI Outputs
 
 ```bash
 codex-probe --db .probe/demo.db skill-lint \
@@ -185,7 +206,7 @@ The inspection checks:
 - Missing privacy and deletion boundaries.
 - API keys, cookies, tokens, emails, phone numbers, and similar sensitive data.
 
-### 4. Delete Local Data
+### 5. Delete Local Data
 
 ```bash
 codex-probe --db .probe/demo.db delete --all --yes
@@ -236,9 +257,9 @@ The friendliest path is to open this repository folder in the **Codex desktop ap
 
 ```text
 Please use BLCaptain Codex Probe CLI to run a complete local acceptance flow:
-install dependencies, import examples/status.txt, generate a usage report,
-inspect examples/risky-skill.md, delete local business data, and confirm NO_USAGE_DATA afterward.
-When done, only give me the report paths, key risks, next-step advice, and verification result.
+install dependencies, run doctor with examples/status-codex-desktop.txt and examples/risky-skill.md,
+and generate reports/doctor/doctor-report.md, usage-report.md, and skill-lint-report.md.
+When done, only give me the report paths, key risks, whether I should continue, downgrade, or stop, and the verification result.
 ```
 
 If you already have your own `/status` or Skill text, say:
@@ -257,8 +278,18 @@ Minimal workflow:
 ```bash
 mkdir -p .probe reports
 
+codex-probe --db .probe/demo.db doctor \
+  --status examples/status-codex-desktop.txt \
+  --skill examples/risky-skill.md \
+  --budget-tokens 100000 \
+  --out-dir reports/doctor
+```
+
+If you want to run each step separately:
+
+```bash
 codex-probe --db .probe/demo.db import \
-  --status examples/status.txt \
+  --status examples/status-codex-desktop.txt \
   --goal "Generate delivery report"
 
 codex-probe --db .probe/demo.db usage-report \
@@ -274,10 +305,11 @@ codex-probe --db .probe/demo.db delete --all --yes
 
 You get:
 
-1. A task-level usage self-check report.
-2. A Skill / output quality inspection report.
-3. JSON command output for Agents or scripts.
-4. A verifiable `NO_USAGE_DATA` result after deletion.
+1. A doctor summary report.
+2. A task-level usage self-check report with a decision card.
+3. A Skill / output quality inspection report.
+4. JSON command output for Agents or scripts.
+5. A verifiable `NO_USAGE_DATA` result after deletion.
 
 ## Workflow: Eight-Step Local Acceptance
 
@@ -322,6 +354,10 @@ acceptance-artifacts/<timestamp>/
 ├── commands.json
 ├── usage-report.md
 ├── skill-lint-report.md
+├── doctor/
+│   ├── doctor-report.md
+│   ├── usage-report.md
+│   └── skill-lint-report.md
 └── probe.db
 ```
 
@@ -334,10 +370,12 @@ acceptance-artifacts/<timestamp>/
 | `docs/CODEX_DESKTOP_PROMPT.md` | Copyable workflow prompts for the Codex desktop app |
 | `docs/SOCIAL_POSTS.md` | Draft posts for X and Xiaohongshu |
 | `examples/status.txt` | `/status` text sample |
+| `examples/status-codex-desktop.txt` | Redacted Codex desktop `/status` sample |
 | `examples/manual-usage.json` | Manual JSON usage sample |
 | `examples/risky-skill.md` | Risky sample with AI-smell, plugin risk, and fake secrets |
 | `examples/clean-skill.md` | Safer Skill sample |
 | `examples/optimized-skill.md` | Optimized Skill sample based on the inspection report |
+| `examples/reports/doctor/doctor-report.md` | One-command `doctor` summary report |
 | `examples/reports/optimized-skill-lint-report.md` | Inspection report for the optimized Skill |
 
 The example secret is fake. Reports redact common API keys, tokens, cookies, emails, and phone numbers.
@@ -380,11 +418,12 @@ BLCaptain-Codex-Probe-CLI/
 
 ## Acceptance Criteria
 
-Before v0.3 release:
+Before v0.3.1 release:
 
 - The project can be installed from a clean environment with `python -m pip install .`.
 - `codex-probe --version` returns the current version.
 - The CLI can import `/status` or manual JSON samples.
+- The CLI can use `doctor` to generate a summary report, usage report, and Skill inspection report in one command.
 - The CLI can generate a task-level usage report.
 - The CLI can generate a Skill / output quality inspection report.
 - The CLI can delete local business data.
@@ -396,7 +435,7 @@ Current local acceptance evidence:
 
 ```text
 PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests
-.....
+........
 Ran 8 tests
 OK
 
@@ -404,12 +443,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m compileall src tests scripts/run_acceptance
 OK
 
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_acceptance.py
-acceptance passed: acceptance-artifacts/20260622T094640Z
+acceptance passed: acceptance-artifacts/20260622T103341Z
 ```
 
 ## Roadmap
 
-- Support more `/status` text formats.
+- Continue expanding the real `/status` sample library.
 - Add HTML / JSON report schema snapshot tests.
 - Add finer-grained Skill risk rules.
 - Add multi-task usage trend comparison.
