@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
-![Release](https://img.shields.io/badge/Release-v0.1.0-4b5563.svg)
+![Release](https://img.shields.io/badge/Release-v0.3.0-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 > **Install**:
@@ -44,7 +44,7 @@ It focuses on two P0 workflows:
 1. **Task-level token and quota governance**: import a user-provided `/status` text or manual JSON sample, generate a task-level usage report, and explain where the cost comes from, whether the task is close to budget, and whether the next move should be downgrade, split, or stop.
 2. **Skill / output quality inspection**: import a Skill file, prompt, or AI-generated output, and check for AI-smell, plugin risk, missing acceptance criteria, missing privacy boundaries, and sensitive information leakage.
 
-This is a **Watch / validation-stage v0.1** project. It is suitable for real local trials and open-source validation, but it does not promise savings, unlimited quota, quota boosts, or business success.
+This is a **Watch / validation-stage v0.3** project. It is suitable for real local trials and open-source validation, but it does not promise savings, unlimited quota, quota boosts, or business success.
 
 ## Naming
 
@@ -364,7 +364,7 @@ BLCaptain-Codex-Probe-CLI/
 
 ## Acceptance Criteria
 
-Before v0.1 release:
+Before v0.3 release:
 
 - The project can be installed from a clean environment with `python -m pip install .`.
 - `codex-probe --version` returns the current version.
@@ -381,14 +381,14 @@ Current local acceptance evidence:
 ```text
 PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests
 .....
-Ran 5 tests
+Ran 8 tests
 OK
 
 PYTHONDONTWRITEBYTECODE=1 python3 -m compileall src tests scripts/run_acceptance.py
 OK
 
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_acceptance.py
-acceptance passed: acceptance-artifacts/20260620T060737Z
+acceptance passed: acceptance-artifacts/20260622T094640Z
 ```
 
 ## Roadmap

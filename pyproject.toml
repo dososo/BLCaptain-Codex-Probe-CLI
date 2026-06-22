@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "blcaptain-codex-probe"
-version = "0.1.0"
+version = "0.3.0"
 description = "本地只读的 Codex 用量治理与 Skill 输出体检 CLI。"
 readme = "README.md"
 requires-python = ">=3.10"

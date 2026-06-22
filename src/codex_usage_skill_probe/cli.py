@@ -152,7 +152,7 @@ def cmd_skill_lint(args: argparse.Namespace, store: Store) -> None:
 
 def cmd_delete(args: argparse.Namespace, store: Store) -> None:
     if not args.all:
-        fail(errors.DELETE_FAILED, "Only --all is supported in v0.1.", args.json)
+        fail(errors.DELETE_FAILED, "Only --all is supported in the current release.", args.json)
     if not args.yes:
         fail(errors.DELETE_FAILED, "Refusing to delete without --yes confirmation.", args.json)
     deleted = store.delete_business_data()

@@ -120,7 +120,7 @@ def parse_manual_json(text: str, source_type: str = "manual_json", goal: str = "
         id=new_id("import"),
         source_type=source_type,
         created_at=now_iso(),
-        metadata={"parser": "manual_json", "file_schema": "v0.1"},
+        metadata={"parser": "manual_json", "file_schema": "v0.3"},
         raw_hash=raw_hash(text),
         parsed_count=1 if any([input_tokens, output_tokens, total_tokens, data.get("credits")]) else 0,
     )

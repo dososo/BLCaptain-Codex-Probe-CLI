@@ -1,6 +1,6 @@
 # 发布前检查清单
 
-发布 v0.1 前必须完成。
+发布 v0.3 前必须完成。
 
 - [x] README 包含安装、快速开始、命令说明、安全边界和验收命令。
 - [x] LICENSE 存在。
@@ -16,6 +16,6 @@
 
 本地验收时间：2026-06-20。
 
-证据目录：`acceptance-artifacts/20260620T060737Z/`。
+证据目录：`acceptance-artifacts/20260622T094640Z/`。
 
-安装 smoke：`.venv-verify/bin/python -m pip install .` 通过，`.venv-verify/bin/codex-probe --version` 返回 `codex-probe 0.1.0`，安装后导入、报告、删除链路已通过。
+安装 smoke：`.venv-release/bin/python -m pip install .` 通过，`.venv-release/bin/codex-probe --version` 返回 `codex-probe 0.3.0`，安装后导入、报告、删除链路已通过。

@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
-![Release](https://img.shields.io/badge/Release-v0.1.0-4b5563.svg)
+![Release](https://img.shields.io/badge/Release-v0.3.0-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 > **安装**：
@@ -44,7 +44,7 @@ BLCaptain Codex Probe CLI 是一个本地命令行工具，不是 Codex Skill，
 1. **任务级 Token / 额度治理**：导入用户显式提供的 `/status` 文本或手工 JSON，生成任务级用量报告，解释贵在哪里、是否接近预算、下一步该降配还是停止。
 2. **Skill / 输出质量体检**：导入 Skill、提示词或 AI 输出文本，检查 AI 味、插件风险、缺失验收、隐私边界和敏感信息泄露风险。
 
-它的定位是 **Watch / 验证型 v0.1**：适合真实用户本地试用和开源验证，但不承诺省钱、无限额度、额度翻倍或商业成功。
+它的定位是 **Watch / 验证型 v0.3**：适合真实用户本地试用和开源验证，但不承诺省钱、无限额度、额度翻倍或商业成功。
 
 ## 命名约定
 
@@ -360,7 +360,7 @@ BLCaptain-Codex-Probe-CLI/
 
 ## 验证标准
 
-发布 v0.1 前必须满足：
+发布 v0.3 前必须满足：
 
 - 可以从干净环境 `python -m pip install .` 安装。
 - `codex-probe --version` 返回当前版本。
@@ -377,14 +377,14 @@ BLCaptain-Codex-Probe-CLI/
 ```text
 PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests
 .....
-Ran 5 tests
+Ran 8 tests
 OK
 
 PYTHONDONTWRITEBYTECODE=1 python3 -m compileall src tests scripts/run_acceptance.py
 OK
 
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_acceptance.py
-acceptance passed: acceptance-artifacts/20260620T060737Z
+acceptance passed: acceptance-artifacts/20260622T094640Z
 ```
 
 ## Roadmap
