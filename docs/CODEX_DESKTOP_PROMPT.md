@@ -20,7 +20,8 @@
    - reports/ledger/ledger-report.md
    - reports/ledger/privacy-report.md
    - reports/ledger/dashboard.html
-8. 用普通话解释：哪个会话最贵、属于哪个项目、发生在哪个时间段、数据源是什么、置信度是什么、建议继续/降配/停止。
+8. 用普通话解释：哪个会话最贵、属于哪个项目、发生在哪个本机时区时间段、credits 代表什么、数据源是什么、置信度是什么、建议继续/降配/停止。
+9. 明确说明：credits 不等同于美元、人民币或官方账单金额；置信度和建议是治理参考，不替代官方 dashboard。
 
 边界：
 - 只读取 Codex rollout JSONL 中的 token 用量白名单字段。

@@ -1,5 +1,14 @@
 # 变更日志
 
+## 0.6.0 - 2026-06-23
+
+- 新增 `codex-probe setup`，支持一条命令完成初始化、local history dry-run、报告生成和 Dashboard 打开；`--demo` 可安全使用仓库 synthetic 样本。
+- 新增 `scripts/setup-local.sh`，可创建 `.venv`、安装 CLI 并运行安全 demo。
+- Dashboard 新增项目、开始日期、结束日期、置信度和模型筛选。
+- 新增 `codex-probe watch status-page`，生成本地 watcher 状态页，展示运行状态、最近日志和会话排行。
+- 新增 `codex-probe samples collect-rollout`，生成只含白名单字段和哈希的脱敏 rollout 校准样本。
+- 新增 `docs/SAMPLE_COLLECTION.md`，说明 beta 用户如何生成和检查脱敏样本。
+
 ## 0.5.0 - 2026-06-23
 
 - 新增真实本地数据源接入：`ledger import-history --source local-codex` 可从 Codex rollout JSONL 的 token 用量白名单字段导入历史快照。

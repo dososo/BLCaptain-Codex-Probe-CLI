@@ -35,6 +35,7 @@ class SessionSummary:
     session_id: str
     title: str
     project: str
+    model: str
     started_at: str
     ended_at: str
     token_delta: int

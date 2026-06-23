@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "blcaptain-codex-probe"
-version = "0.5.0"
+version = "0.6.0"
 description = "本地只读的 Codex 会话级 Token 账本、用量治理与 Skill 输出体检 CLI。"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,7 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "BLTeam" }]
 keywords = ["blcaptain", "codex", "cli", "usage", "skills", "privacy", "local-first"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Environment :: Console",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",

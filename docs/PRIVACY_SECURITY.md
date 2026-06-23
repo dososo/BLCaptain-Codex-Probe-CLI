@@ -2,7 +2,7 @@
 
 BLCaptain Codex Probe CLI 默认本地运行，不需要 OpenAI API Key，不需要登录 Codex，也不需要云端服务。
 
-v0.5.0 新增真实本地数据源接入和稳定 watcher。它仍然遵守同一个原则：
+v0.6.0 新增一键 setup、Dashboard 筛选、watcher 状态页和脱敏 rollout 样本采集。它仍然遵守同一个原则：
 
 > 只处理用户显式提供或显式启用的数据源；只保存 allowlist 字段；不读登录态、不读聊天正文、不上传云端。
 
@@ -100,7 +100,7 @@ codex-probe --db .probe/ledger.db ledger init
 
 `watch start` 必须由用户显式执行。
 
-v0.5.0 的 watcher 是真实后台进程，会记录：
+v0.6.0 的 watcher 是真实后台进程，会记录：
 
 - PID。
 - 状态文件。
@@ -186,3 +186,13 @@ codex-probe --db .probe/ledger.db delete --watcher --yes
 - `medium` 和 `low` 只能作为估算，不应作为精确账单。
 
 工具可以帮助你定位消耗、降低无意识长会话风险，但不能保证省钱，也不能突破官方额度或限制。
+
+## credits、置信度和建议的口径
+
+- `credits` 只表示数据源提供的 credits / cost / quota 数值，不等同于美元、人民币或官方账单金额。
+- `credits delta` 只在同一数据源、同一口径可解释为消耗差值时展示；无法确认口径时显示为 `未知`。
+- `exact` 只用于用户显式提供的官方导出或等价结构化数据直接给出会话级 token 字段。
+- `high` 表示本地结构化记录能稳定关联会话和 token 字段，但仍不是官方账单。
+- `medium` 和 `low` 只能作为治理参考，不能作为精确账单或费用凭证。
+- `建议` 是基于 token delta 阈值的治理动作：`>=100,000` 建议停止，`>=50,000` 建议降配或拆分，低于阈值建议继续观察。
+- 报告里的日期时间按当前系统时区展示。中国大陆系统通常显示为 `UTC+08:00`。

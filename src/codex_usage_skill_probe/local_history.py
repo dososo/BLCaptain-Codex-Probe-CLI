@@ -316,3 +316,69 @@ def dry_run_payload(dry_run: LocalHistoryDryRun, *, wrote: bool) -> dict[str, ob
         "files": dry_run.files[:20],
         "privacy_boundary": "只读取 token 用量白名单字段；不读取浏览器 cookie、token、钥匙串、系统凭据、聊天正文、prompt 或 assistant 输出。",
     }
+
+
+def collect_redacted_rollout_samples(
+    root: Path | None,
+    out: Path,
+    *,
+    limit_files: int | None = None,
+    max_records: int = 80,
+) -> dict[str, object]:
+    safe_root = root or default_codex_root()
+    files = discover_rollout_files(safe_root)
+    if limit_files:
+        files = files[-limit_files:]
+    out.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
+    source_files = 0
+    with out.open("w", encoding="utf-8") as output:
+        for path in files:
+            file_written = 0
+            with path.open("r", encoding="utf-8", errors="replace") as handle:
+                for line_number, line in enumerate(handle, 1):
+                    if written >= max_records:
+                        break
+                    if not any(marker in line for marker in TOKEN_MARKERS):
+                        continue
+                    if any(marker in line for marker in SKIP_MARKERS):
+                        continue
+                    try:
+                        event = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    record = extract_usage_record(event, path, line_number)
+                    if not record:
+                        continue
+                    redacted = {
+                        "captured_at": record["captured_at"],
+                        "session_id": record["session_id"],
+                        "title": record["title"],
+                        "project_name": record["project_name"],
+                        "path_hash": record["path_hash"],
+                        "model": record.get("model") or "",
+                        "turn_id_hash": hash_label(record.get("turn_id") or ""),
+                        "input_tokens": record.get("input_tokens"),
+                        "cached_input_tokens": record.get("cached_input_tokens"),
+                        "output_tokens": record.get("output_tokens"),
+                        "total_tokens": record.get("total_tokens"),
+                        "token_delta": record.get("token_delta"),
+                        "credits_present": record.get("credits") is not None,
+                        "context_limit_tokens": record.get("context_limit_tokens"),
+                        "source_file_hash": hash_label(str(path)),
+                    }
+                    output.write(json.dumps(redacted, ensure_ascii=False, sort_keys=True) + "\n")
+                    written += 1
+                    file_written += 1
+                if file_written:
+                    source_files += 1
+            if written >= max_records:
+                break
+    return {
+        "ok": True,
+        "out": str(out),
+        "root_hash": hash_label(str(safe_root.expanduser())),
+        "source_files": source_files,
+        "records": written,
+        "privacy_boundary": "样本只包含 token 用量白名单字段和哈希；不包含完整路径、聊天正文、prompt、assistant 输出、cookie、token 或系统凭据。",
+    }

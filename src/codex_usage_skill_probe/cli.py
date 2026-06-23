@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import webbrowser
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from .ledger_reports import (
     render_privacy_markdown,
     render_session_detail_markdown,
     render_sessions_markdown,
+    render_watch_status_html,
 )
 from .ledger_storage import (
     add_privacy_audit,
@@ -29,7 +31,7 @@ from .ledger_storage import (
     write_static_file,
     write_watch_state,
 )
-from .local_history import import_local_history, inspect_local_codex
+from .local_history import collect_redacted_rollout_samples, import_local_history, inspect_local_codex
 from .models import ImportBatch
 from .reports import (
     findings_to_json,
@@ -67,6 +69,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
 
     sub = parser.add_subparsers(dest="command", required=True)
+
+    setup_cmd = sub.add_parser("setup", help="Initialize ledger, dry-run local history, generate reports, and open dashboard.")
+    add_range_args(setup_cmd)
+    setup_cmd.add_argument("--out-dir", type=Path, default=Path("reports/ledger"), help="Report output directory.")
+    setup_cmd.add_argument("--root", type=Path, default=None, help="Codex data root. Defaults to ~/.codex.")
+    setup_cmd.add_argument("--demo", action="store_true", help="Use repository synthetic samples for a safe first run.")
+    setup_cmd.add_argument("--import-history", action="store_true", help="Import local history after dry-run.")
+    setup_cmd.add_argument("--limit-files", type=int, default=None)
+    setup_cmd.add_argument("--no-open", action="store_true", help="Do not open the generated dashboard.")
 
     import_cmd = sub.add_parser("import", help="Import user-provided usage data.")
     source = import_cmd.add_mutually_exclusive_group(required=True)
@@ -133,6 +144,10 @@ def build_parser() -> argparse.ArgumentParser:
     watch_sub.add_parser("status", help="Show watcher state.")
     watch_logs = watch_sub.add_parser("logs", help="Show watcher logs.")
     watch_logs.add_argument("--limit", type=int, default=80)
+    watch_status_page = watch_sub.add_parser("status-page", help="Generate a friendly local watcher status page.")
+    add_range_args(watch_status_page)
+    watch_status_page.add_argument("--out", type=Path, default=Path("reports/ledger/watch-status.html"))
+    watch_status_page.add_argument("--open", action="store_true", help="Open the generated status page.")
     watch_sub.add_parser("stop", help="Stop watcher state.")
     watch_run = watch_sub.add_parser("_run", help=argparse.SUPPRESS)
     watch_run.add_argument("--interval-seconds", type=int, default=60)
@@ -160,6 +175,15 @@ def build_parser() -> argparse.ArgumentParser:
     dashboard_cmd = sub.add_parser("dashboard", help="Generate a local HTML dashboard.")
     add_range_args(dashboard_cmd)
     dashboard_cmd.add_argument("--out", type=Path, default=Path("reports/ledger/dashboard.html"))
+    dashboard_cmd.add_argument("--open", action="store_true", help="Open the generated dashboard.")
+
+    samples_cmd = sub.add_parser("samples", help="Collect redacted calibration samples.")
+    samples_sub = samples_cmd.add_subparsers(dest="samples_command", required=True)
+    collect_cmd = samples_sub.add_parser("collect-rollout", help="Write redacted rollout calibration samples.")
+    collect_cmd.add_argument("--root", type=Path, default=None)
+    collect_cmd.add_argument("--out", type=Path, default=Path("reports/ledger/redacted-rollout-samples.jsonl"))
+    collect_cmd.add_argument("--limit-files", type=int, default=40)
+    collect_cmd.add_argument("--max-records", type=int, default=80)
 
     delete_cmd = sub.add_parser("delete", help="Delete local business data.")
     delete_cmd.add_argument("--all", action="store_true", help="Delete all local business data.")
@@ -176,6 +200,8 @@ def main(argv: list[str] | None = None) -> None:
     try:
         if args.command == "import":
             cmd_import(args, store)
+        elif args.command == "setup":
+            cmd_setup(args, store)
         elif args.command == "usage-report":
             cmd_usage_report(args, store)
         elif args.command == "skill-lint":
@@ -198,12 +224,95 @@ def main(argv: list[str] | None = None) -> None:
             cmd_privacy(args, store)
         elif args.command == "dashboard":
             cmd_dashboard(args, store)
+        elif args.command == "samples":
+            cmd_samples(args, store)
         elif args.command == "delete":
             cmd_delete(args, store)
         else:
             fail("UNKNOWN_COMMAND", f"Unsupported command: {args.command}", args.json)
     finally:
         store.close()
+
+
+def cmd_setup(args: argparse.Namespace, store: Store) -> None:
+    root = args.root
+    if args.demo and root is None:
+        root = Path("examples/ledger-samples/local-codex")
+    out_dir = args.out_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
+    range_label, start, end = resolve_range(args)
+
+    local_summary = inspect_local_codex(root, limit_files=args.limit_files)
+    sources = run_source_doctor(store.conn, Path.cwd(), deep=True, local_codex=local_summary)
+    add_privacy_audit(
+        store.conn,
+        "setup_initialized",
+        {"db_name": store.db_path.name, "demo": args.demo, "local_codex_records": local_summary.importable_record_count},
+    )
+    store.conn.commit()
+    dry_run = import_local_history(store.conn, root=root, dry_run=True, limit_files=args.limit_files)
+    imports: list[dict[str, object]] = []
+
+    if args.demo:
+        imports.extend(import_demo_samples(store))
+        imports.append(import_local_history(store.conn, root=root, dry_run=False, limit_files=args.limit_files))
+    elif args.import_history:
+        imports.append(import_local_history(store.conn, root=root, dry_run=False, limit_files=args.limit_files))
+
+    sessions = ledger_summary(store.conn, start=start, end=end)
+    sessions_path = out_dir / "sessions.md"
+    ledger_path = out_dir / "ledger-report.md"
+    privacy_path = out_dir / "privacy-report.md"
+    dashboard_path = out_dir / "dashboard.html"
+    status_path = out_dir / "watch-status.html"
+    write_text(sessions_path, render_sessions_markdown(sessions, range_label))
+    write_text(ledger_path, render_ledger_report_markdown(sessions, range_label))
+    write_text(privacy_path, render_privacy_markdown(source_rows(store.conn), privacy_audit_rows(store.conn)))
+    write_static_file(dashboard_path, render_dashboard_html(sessions, range_label))
+    write_static_file(status_path, render_watch_status_html(read_state(store.db_path), watcher_logs(store.db_path)["lines"], sessions))
+    store.add_report("setup_dashboard", str(dashboard_path), f"{len(sessions)} sessions")
+    store.conn.commit()
+
+    if not args.no_open:
+        open_local_file(dashboard_path)
+
+    payload = {
+        "ok": True,
+        "db_path": str(store.db_path),
+        "range": range_label,
+        "demo": args.demo,
+        "dry_run": dry_run,
+        "imports": imports,
+        "sources": source_doctor_payload(sources, deep=True),
+        "reports": {
+            "sessions": str(sessions_path),
+            "ledger": str(ledger_path),
+            "privacy": str(privacy_path),
+            "dashboard": str(dashboard_path),
+            "watch_status": str(status_path),
+        },
+        "opened": not args.no_open,
+    }
+    print_payload(payload, args.json)
+
+
+def import_demo_samples(store: Store) -> list[dict[str, object]]:
+    sample_dir = Path("examples/ledger-samples")
+    imports: list[dict[str, object]] = []
+    official_csv = sample_dir / "official-export.csv"
+    official_jsonl = sample_dir / "official-export.jsonl"
+    alt_json = sample_dir / "official-export-alt.json"
+    alt_mapping = sample_dir / "official-export-alt.mapping.json"
+    snapshot = sample_dir / "snapshot-delta.json"
+    if official_csv.exists():
+        imports.append({"source_type": "official_export", **import_official_export(store.conn, official_csv)})
+    if official_jsonl.exists():
+        imports.append({"source_type": "official_export", **import_official_export(store.conn, official_jsonl)})
+    if alt_json.exists() and alt_mapping.exists():
+        imports.append({"source_type": "official_export", **import_official_export(store.conn, alt_json, mapping_path=alt_mapping)})
+    if snapshot.exists():
+        imports.append({"source_type": "snapshot_delta", **import_snapshot_delta(store.conn, snapshot)})
+    return imports
 
 
 def cmd_import(args: argparse.Namespace, store: Store) -> None:
@@ -451,6 +560,16 @@ def cmd_watch(args: argparse.Namespace, store: Store) -> None:
     if args.watch_command == "logs":
         print_payload(watcher_logs(store.db_path, limit=args.limit), args.json)
         return
+    if args.watch_command == "status-page":
+        range_label, start, end = resolve_range(args)
+        sessions = ledger_summary(store.conn, start=start, end=end)
+        logs = watcher_logs(store.db_path, limit=80)["lines"]
+        write_static_file(args.out, render_watch_status_html(read_state(store.db_path), logs, sessions))
+        store.add_report("watch_status_page", str(args.out), f"{len(sessions)} sessions")
+        if args.open:
+            open_local_file(args.out)
+        print_payload({"ok": True, "range": range_label, "status_page": str(args.out), "opened": args.open}, args.json)
+        return
     if args.watch_command == "stop":
         state = stop_watcher(store.db_path)
         write_watch_state(store.conn, status="stopped", message="watch 已停止。")
@@ -528,7 +647,27 @@ def cmd_dashboard(args: argparse.Namespace, store: Store) -> None:
     sessions = ledger_summary(store.conn, start=start, end=end)
     write_static_file(args.out, render_dashboard_html(sessions, range_label))
     store.add_report("ledger_dashboard", str(args.out), f"{len(sessions)} sessions")
-    print_payload({"ok": True, "dashboard_path": str(args.out), "session_count": len(sessions)}, args.json)
+    if args.open:
+        open_local_file(args.out)
+    print_payload({"ok": True, "dashboard_path": str(args.out), "session_count": len(sessions), "opened": args.open}, args.json)
+
+
+def cmd_samples(args: argparse.Namespace, store: Store) -> None:
+    if args.samples_command != "collect-rollout":
+        fail("UNKNOWN_COMMAND", f"Unsupported samples command: {args.samples_command}", args.json)
+    result = collect_redacted_rollout_samples(
+        args.root,
+        args.out,
+        limit_files=args.limit_files,
+        max_records=args.max_records,
+    )
+    add_privacy_audit(
+        store.conn,
+        "redacted_rollout_samples_collected",
+        {"out": str(args.out), "records": result.get("records"), "root_hash": result.get("root_hash")},
+    )
+    store.conn.commit()
+    print_payload(result, args.json)
 
 
 def cmd_delete(args: argparse.Namespace, store: Store) -> None:
@@ -588,6 +727,7 @@ def session_to_json(session: object) -> dict[str, object]:
         "session_id": session.session_id,
         "title": session.title,
         "project": session.project,
+        "model": session.model,
         "started_at": session.started_at,
         "ended_at": session.ended_at,
         "token_delta": session.token_delta,
@@ -610,6 +750,13 @@ def print_payload(payload: dict[str, object], as_json: bool) -> None:
             print(f"{key}: {len(value) if isinstance(value, list) else value}")
         else:
             print(f"{key}: {value}")
+
+
+def open_local_file(path: Path) -> None:
+    try:
+        webbrowser.open(path.resolve().as_uri())
+    except Exception:
+        pass
 
 
 def fail(code: str, message: str, as_json: bool) -> None:

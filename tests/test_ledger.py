@@ -4,6 +4,7 @@ from pathlib import Path
 
 from codex_usage_skill_probe.export_mapping import inspect_export
 from codex_usage_skill_probe.ledger_adapters import import_official_export, import_snapshot_delta
+from codex_usage_skill_probe.ledger_reports import local_time, render_sessions_markdown
 from codex_usage_skill_probe.ledger_storage import delete_ledger_data, ledger_summary, privacy_audit_rows
 from codex_usage_skill_probe.local_history import import_local_history, inspect_local_codex
 from codex_usage_skill_probe.source_doctor import run_source_doctor, source_doctor_payload
@@ -96,6 +97,22 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual(sessions[0].token_delta, 58000)
         self.assertEqual(sessions[0].confidence_level, "high")
         self.assertIn("降配", sessions[0].recommendation)
+
+    def test_reports_show_local_time_and_precision_notes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(Path(tmp) / "ledger.db")
+            try:
+                import_official_export(store.conn, ROOT / "examples" / "ledger-samples" / "official-export.csv")
+                sessions = ledger_summary(store.conn)
+            finally:
+                store.close()
+
+        rendered = render_sessions_markdown(sessions, "7d")
+        self.assertIn("开始时间", rendered)
+        self.assertIn("结束时间", rendered)
+        self.assertIn("credits delta（来源值）", rendered)
+        self.assertIn("本工具不换算成美元、人民币或官方账单金额", rendered)
+        self.assertRegex(local_time("2026-06-22T09:00:00+00:00"), r"2026-06-22 .* UTC[+-][0-9]{2}:[0-9]{2}")
 
     def test_delete_ledger_keeps_privacy_audit(self):
         with tempfile.TemporaryDirectory() as tmp:

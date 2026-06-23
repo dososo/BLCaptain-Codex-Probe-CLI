@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
-![Release](https://img.shields.io/badge/Release-v0.5.0-4b5563.svg)
+![Release](https://img.shields.io/badge/Release-v0.6.0-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 > **Fastest path in the Codex desktop app**
@@ -25,11 +25,10 @@
 > ```bash
 > git clone https://github.com/dososo/BLCaptain-Codex-Probe-CLI.git
 > cd BLCaptain-Codex-Probe-CLI
-> python3 -m venv .venv
-> . .venv/bin/activate
-> python -m pip install .
-> codex-probe --version
+> scripts/setup-local.sh
 > ```
+>
+> With no arguments, it runs a safe demo: creates `.venv`, installs the CLI, initializes the ledger, performs dry-run, imports repository synthetic samples, generates reports, and opens the dashboard.
 
 ---
 
@@ -37,7 +36,7 @@
 
 BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill, and it is not a replacement for the official OpenAI usage dashboard.
 
-In v0.5.0, the product moves from an importable sample ledger to **real local data-source ingestion plus a stable watcher**. The primary question is:
+In v0.6.0, the product builds on real local data-source ingestion and a stable watcher with **one-command setup, dashboard filters, a watcher status page, and redacted rollout sample collection**. The primary question is:
 
 > Which Codex session, project, and time window consumed the tokens or credits?
 
@@ -92,6 +91,7 @@ Why not call it a Skill: this project is not an instruction package loaded by an
 
 | Capability | Command | Result |
 |---|---|---|
+| One-command local setup | `scripts/setup-local.sh` or `codex-probe setup --demo` | Install/init, dry-run, reports, and dashboard in one pass |
 | Safe source check | `codex-probe sources doctor` | Shows available sources, maximum confidence, and privacy boundary |
 | Deep source check | `codex-probe sources doctor --deep` | Safely checks local Codex rollout field coverage with hashes and counts only |
 | Initialize ledger | `codex-probe ledger init` | Creates SQLite schema and privacy audit record |
@@ -106,22 +106,37 @@ Why not call it a Skill: this project is not an instruction package loaded by an
 | Session detail | `codex-probe session-report <session_id>` | Shows timeline, snapshots, and high-consumption windows |
 | Ledger report | `codex-probe ledger-report --range 30d` | Summarizes tokens, credits, projects, and actions |
 | Local dashboard | `codex-probe dashboard` | Generates a readable local HTML page |
+| Dashboard filtering | Built into local HTML | Filter by project, start date, end date, confidence, and model |
+| Watcher status page | `codex-probe watch status-page` | Generates a friendly local watcher status page |
+| Redacted sample collection | `codex-probe samples collect-rollout` | Writes calibration samples with allowlisted fields and hashes only |
 | Privacy audit | `codex-probe privacy inspect` | Shows enabled sources, read fields, and audit logs |
 | Delete watcher data | `codex-probe delete --watcher --yes` | Deletes watcher state, lock, stop flag, and logs |
 | Delete ledger data | `codex-probe delete --ledger --yes` | Deletes ledger business data while keeping a non-sensitive audit trail |
 
 Confidence levels:
 
-- `exact`: a user-provided official export contains session ID and token data.
-- `high`: local structured snapshots can attribute delta to one session.
+- `exact`: a user-provided official export or equivalent structured source directly contains session ID and token fields.
+- `high`: local structured records can reliably link token fields to a session, but they are still not the official bill.
 - `medium`: multiple sessions or overlapping windows require metadata-based estimation.
 - `low`: only global quota movement is available, so it is not an exact bill.
+
+Credits are intentionally conservative:
+
+- `credits` means a source-provided credits / cost / quota value. It is not converted to USD, CNY, or an official bill amount.
+- `credits delta` is shown only when the same source and same semantics can support a consumption delta. Otherwise it is shown as `unknown`.
+- Session ranking start/end times are rendered in the current system timezone. A mainland China system will show `UTC+08:00`.
 
 ## Three-Minute Example
 
 ```bash
 mkdir -p .probe reports/ledger
 
+codex-probe --db .probe/setup-demo.db setup --demo
+```
+
+If you want to run the steps manually:
+
+```bash
 codex-probe --db .probe/ledger.db ledger init
 
 codex-probe --db .probe/ledger.db sources doctor
@@ -168,6 +183,9 @@ codex-probe --db .probe/ledger.db dashboard \
   --range 7d \
   --out reports/ledger/dashboard.html
 
+codex-probe --db .probe/ledger.db watch status-page \
+  --out reports/ledger/watch-status.html
+
 codex-probe --db .probe/ledger.db privacy inspect \
   --out reports/ledger/privacy-report.md
 ```
@@ -205,11 +223,22 @@ codex-probe sessions --from 2026-06-01 --to 2026-06-23
 | `examples/ledger-samples/snapshot-delta.json` | Redacted snapshot sample covering high / medium / low confidence |
 | `examples/ledger-samples/local-status-snapshots.json` | local_status allowlist example |
 | `examples/ledger-samples/local-codex/` | Synthetic Codex rollout sample for local history import |
-| `examples/reports/ledger/` | v0.5.0 ledger sample reports |
+| `examples/reports/ledger/` | v0.6.0 ledger sample reports |
 | `examples/status-samples/` | Earlier `/status` sample library |
 | `examples/risky-skill.md` | Risky Skill / output inspection sample |
 
 Samples should be redacted and should not contain real cookies, tokens, emails, phone numbers, or private user paths.
+
+Collect redacted rollout calibration samples:
+
+```bash
+codex-probe --db .probe/probe.db samples collect-rollout \
+  --out reports/ledger/redacted-rollout-samples.jsonl \
+  --limit-files 40 \
+  --max-records 80
+```
+
+The output contains only token-usage allowlist fields and hashes. It does not contain chat content, prompts, assistant outputs, cookies, tokens, or full paths.
 
 ## Codex Desktop Usage
 
@@ -351,14 +380,16 @@ BLCaptain-Codex-Probe-CLI/
 
 ## Release Acceptance
 
-Before v0.5.0 release:
+Before v0.6.0 release:
 
 - The project can be installed from a clean environment with `python -m pip install .`.
-- `codex-probe --version` returns `0.5.0`.
+- `codex-probe --version` returns `0.6.0`.
 - The CLI can import official CSV / JSON / JSONL exports, mapping samples, local synthetic rollout history, and snapshot samples.
 - The CLI can run `sources doctor --deep`, `ledger inspect-export`, `ledger map-export`, and `ledger import-history --dry-run`.
-- The CLI can run `watch once/start/status/logs/stop` and `delete --watcher --yes`.
-- The CLI can generate session ranking, single-session report, ledger report, privacy audit report, and local HTML dashboard.
+- The CLI can run `setup --demo`, `watch once/start/status/logs/stop/status-page`, and `delete --watcher --yes`.
+- The CLI can generate session ranking, single-session report, ledger report, privacy audit report, local HTML dashboard, and watcher status page.
+- The dashboard can filter by project, date, confidence, and model.
+- The CLI can generate redacted rollout calibration samples with allowlisted fields and hashes only.
 - Every session has a source and `exact/high/medium/low` confidence.
 - The CLI can delete local ledger business data.
 - Reports do not leak full API keys, cookies, tokens, emails, phone numbers, or private user paths.

@@ -23,6 +23,8 @@ def main() -> int:
     out_dir = ROOT / "acceptance-artifacts" / stamp
     out_dir.mkdir(parents=True, exist_ok=True)
     db = out_dir / "probe.db"
+    setup_db = out_dir / "setup.db"
+    setup_reports = out_dir / "setup-reports"
     usage_report = out_dir / "usage-report.md"
     skill_report = out_dir / "skill-lint-report.md"
     doctor_dir = out_dir / "doctor"
@@ -33,6 +35,8 @@ def main() -> int:
     ledger_privacy_report = out_dir / "ledger-privacy-report.md"
     ledger_dashboard = out_dir / "ledger-dashboard.html"
     mapping_json = out_dir / "official-export-alt.mapping.json"
+    watch_status_page = out_dir / "watch-status.html"
+    redacted_rollout = out_dir / "redacted-rollout.jsonl"
 
     commands = [
         {
@@ -121,6 +125,24 @@ def main() -> int:
             ],
             "expect": 0,
             "must_contain": "不读取浏览器 cookie",
+        },
+        {
+            "name": "setup_demo",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(setup_db),
+                "--json",
+                "setup",
+                "--demo",
+                "--no-open",
+                "--out-dir",
+                str(setup_reports),
+            ],
+            "expect": 0,
+            "must_contain": "dashboard.html",
         },
         {
             "name": "sources_doctor",
@@ -363,6 +385,23 @@ def main() -> int:
             "must_contain": "log_path",
         },
         {
+            "name": "watch_status_page",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(db),
+                "--json",
+                "watch",
+                "status-page",
+                "--out",
+                str(watch_status_page),
+            ],
+            "expect": 0,
+            "must_contain": "watch-status.html",
+        },
+        {
             "name": "watch_stop",
             "cmd": [
                 sys.executable,
@@ -376,6 +415,27 @@ def main() -> int:
             ],
             "expect": 0,
             "must_contain": "stopped",
+        },
+        {
+            "name": "samples_collect_rollout",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(db),
+                "--json",
+                "samples",
+                "collect-rollout",
+                "--root",
+                "examples/ledger-samples/local-codex",
+                "--out",
+                str(redacted_rollout),
+                "--max-records",
+                "5",
+            ],
+            "expect": 0,
+            "must_contain": "redacted-rollout.jsonl",
         },
         {
             "name": "ledger_sessions",

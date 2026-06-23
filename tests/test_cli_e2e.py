@@ -264,13 +264,68 @@ class CliE2ETests(unittest.TestCase):
             self.run_probe("--db", str(db), "--json", "dashboard", "--range", "7d", "--out", str(dashboard))
             html = dashboard.read_text(encoding="utf-8")
             self.assertIn("Codex 会话级 Token 账本", html)
+            self.assertIn("projectFilter", html)
+            self.assertIn("confidenceFilter", html)
+            self.assertIn("modelFilter", html)
             self.assertNotIn("cookie=", html)
+
+            status_page = tmp_path / "watch-status.html"
+            status = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "watch",
+                "status-page",
+                "--out",
+                str(status_page),
+            )
+            self.assertTrue(json.loads(status.stdout)["ok"])
+            self.assertIn("Watcher 状态", status_page.read_text(encoding="utf-8"))
+
+            redacted = tmp_path / "redacted-rollout.jsonl"
+            collected = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "samples",
+                "collect-rollout",
+                "--root",
+                "examples/ledger-samples/local-codex",
+                "--out",
+                str(redacted),
+                "--max-records",
+                "3",
+            )
+            self.assertEqual(json.loads(collected.stdout)["records"], 2)
+            self.assertTrue(redacted.exists())
+            self.assertNotIn("/redacted/projects", redacted.read_text(encoding="utf-8"))
 
             deleted = self.run_probe("--db", str(db), "--json", "delete", "--ledger", "--yes")
             self.assertTrue(json.loads(deleted.stdout)["ok"])
 
             deleted_watcher = self.run_probe("--db", str(db), "--json", "delete", "--watcher", "--yes")
             self.assertTrue(json.loads(deleted_watcher.stdout)["ok"])
+
+    def test_setup_demo_generates_dashboard(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            db = tmp_path / "setup.db"
+            out_dir = tmp_path / "reports"
+            result = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "setup",
+                "--demo",
+                "--no-open",
+                "--out-dir",
+                str(out_dir),
+            )
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["ok"])
+            self.assertTrue((out_dir / "dashboard.html").exists())
+            self.assertTrue((out_dir / "watch-status.html").exists())
+            self.assertIn("projectFilter", (out_dir / "dashboard.html").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
