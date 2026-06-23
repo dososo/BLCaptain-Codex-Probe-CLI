@@ -1,4 +1,4 @@
 session_id,title,project,started_at,ended_at,model,input_tokens,cached_input_tokens,output_tokens,total_tokens,credits,context_used_tokens,context_limit_tokens
-session_readme_release,README 发布准备,Codex Probe CLI,2026-06-22T09:00:00+00:00,2026-06-22T11:10:00+00:00,gpt-5.2-codex,98000,21000,23047,142047,18.42,142047,258000
-session_xhs_assets,小红书素材生成,Codex Probe CLI,2026-06-22T12:20:00+00:00,2026-06-22T13:40:00+00:00,gpt-5.2-codex,42000,8000,11320,61320,7.80,61320,258000
-session_skill_review,Skill 优化验收,BLCaptain Skills,2026-06-21T15:30:00+00:00,2026-06-21T16:25:00+00:00,gpt-5.2-codex,26000,5000,7900,38900,4.90,38900,258000
+session_readme_release,README 发布准备,Codex Probe CLI,2026-06-22T09:00:00+00:00,2026-06-22T11:10:00+00:00,gpt-5.5,98000,21000,23047,142047,18.42,142047,258000
+session_xhs_assets,小红书素材生成,Codex Probe CLI,2026-06-22T12:20:00+00:00,2026-06-22T13:40:00+00:00,gpt-5.5,42000,8000,11320,61320,7.80,61320,258000
+session_skill_review,Skill 优化验收,BLCaptain Skills,2026-06-21T15:30:00+00:00,2026-06-21T16:25:00+00:00,gpt-5.5,26000,5000,7900,38900,4.90,38900,258000

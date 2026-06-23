@@ -1,5 +1,9 @@
 # 变更日志
 
+## 未发布
+
+- 修正 README 会话级 Token 账本示例：统一公开样本模型字段为 `gpt-5.5`，并说明模型列来自数据源 `model` 字段，CLI 不猜测或强制改写。
+
 ## 0.6.0 - 2026-06-23
 
 - 新增 `codex-probe setup`，支持一条命令完成初始化、local history dry-run、报告生成和 Dashboard 打开；`--demo` 可安全使用仓库 synthetic 样本。

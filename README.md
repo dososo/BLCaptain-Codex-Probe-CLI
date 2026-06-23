@@ -67,6 +67,8 @@ v0.6.0 在真实数据源接入和稳定 watcher 之上，继续补齐 **一键 
   <img src="assets/screenshots/ledger-dashboard.png" alt="本地 Codex 会话级 Token 账本 Dashboard" width="100%">
 </p>
 
+模型列来自导入数据源中的 `model` 字段。CLI 会原样展示官方导出、快照或本地 rollout 提供的模型名；如果数据源没有模型字段，会显示为空或未知，不会猜测或强行改写。
+
 ### 保留能力：任务级报告与 Skill 体检
 
 | 任务级用量报告 | Skill / 输出质量体检 |

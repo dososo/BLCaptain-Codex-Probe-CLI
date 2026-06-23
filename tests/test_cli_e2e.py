@@ -267,6 +267,9 @@ class CliE2ETests(unittest.TestCase):
             self.assertIn("projectFilter", html)
             self.assertIn("confidenceFilter", html)
             self.assertIn("modelFilter", html)
+            self.assertIn("gpt-5.5", html)
+            self.assertNotIn("gpt-5.2-codex", html)
+            self.assertNotIn("gpt-5-codex-low", html)
             self.assertNotIn("cookie=", html)
 
             status_page = tmp_path / "watch-status.html"

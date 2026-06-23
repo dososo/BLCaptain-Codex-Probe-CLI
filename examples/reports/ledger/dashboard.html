@@ -26,6 +26,7 @@
     table { width: 100%; min-width: 900px; border-collapse: collapse; background: white; }
     th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }
     th { background: #f1f5f9; color: #334155; }
+    th:nth-child(3), td:nth-child(3) { min-width: 76px; white-space: nowrap; }
     .details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
     dl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }
     dt { color: #64748b; font-size: 12px; }
@@ -85,9 +86,7 @@
         <label>模型
           <select id="modelFilter">
             <option value="">全部</option>
-            <option value="gpt-5-codex">gpt-5-codex</option>
-<option value="gpt-5-codex-low">gpt-5-codex-low</option>
-<option value="gpt-5.2-codex">gpt-5.2-codex</option>
+            <option value="gpt-5.5">gpt-5.5</option>
           </select>
         </label>
       </div>
@@ -97,10 +96,10 @@
           <tr><th>会话</th><th>项目</th><th>模型</th><th>开始</th><th>结束</th><th>token delta</th><th>credits</th><th>上下文峰值</th><th>置信度</th><th>建议</th></tr>
         </thead>
         <tbody>
-                  <tr data-project="codex probe cli" data-confidence="exact" data-model="gpt-5.2-codex" data-start="2026-06-22">
+                  <tr data-project="codex probe cli" data-confidence="exact" data-model="gpt-5.5" data-start="2026-06-22">
           <td>README 发布准备</td>
           <td>Codex Probe CLI</td>
-          <td>gpt-5.2-codex</td>
+          <td>gpt-5.5</td>
           <td>2026-06-22 17:00:00 UTC+08:00</td>
           <td>2026-06-22 19:10:00 UTC+08:00</td>
           <td>142,047</td>
@@ -109,10 +108,10 @@
           <td><span class="badge exact">exact</span></td>
           <td>停止当前长会话，保存成果后拆到新会话</td>
         </tr>
-        <tr data-project="codex probe cli" data-confidence="exact" data-model="gpt-5.2-codex" data-start="2026-06-22">
+        <tr data-project="codex probe cli" data-confidence="exact" data-model="gpt-5.5" data-start="2026-06-22">
           <td>小红书素材生成</td>
           <td>Codex Probe CLI</td>
-          <td>gpt-5.2-codex</td>
+          <td>gpt-5.5</td>
           <td>2026-06-22 20:20:00 UTC+08:00</td>
           <td>2026-06-22 21:40:00 UTC+08:00</td>
           <td>61,320</td>
@@ -121,10 +120,10 @@
           <td><span class="badge exact">exact</span></td>
           <td>降配或拆分后续任务，避免继续放大上下文</td>
         </tr>
-        <tr data-project="本地项目 7d72b21f626e8d0b" data-confidence="high" data-model="gpt-5-codex" data-start="2026-06-22">
+        <tr data-project="本地项目 7d72b21f626e8d0b" data-confidence="high" data-model="gpt-5.5" data-start="2026-06-22">
           <td>Codex 会话 aa5b3c07</td>
           <td>本地项目 7d72b21f626e8d0b</td>
-          <td>gpt-5-codex</td>
+          <td>gpt-5.5</td>
           <td>2026-06-22 23:02:00 UTC+08:00</td>
           <td>2026-06-22 23:40:00 UTC+08:00</td>
           <td>58,000</td>
@@ -133,10 +132,10 @@
           <td><span class="badge high">high</span></td>
           <td>降配或拆分后续任务，避免继续放大上下文</td>
         </tr>
-        <tr data-project="codex-probe" data-confidence="exact" data-model="gpt-5-codex" data-start="2026-06-22">
+        <tr data-project="codex-probe" data-confidence="exact" data-model="gpt-5.5" data-start="2026-06-22">
           <td>JSONL 发布验收</td>
           <td>codex-probe</td>
-          <td>gpt-5-codex</td>
+          <td>gpt-5.5</td>
           <td>2026-06-22 18:00:00 UTC+08:00</td>
           <td>2026-06-22 19:30:00 UTC+08:00</td>
           <td>47,400</td>
@@ -145,10 +144,10 @@
           <td><span class="badge exact">exact</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
-        <tr data-project="blcaptain skills" data-confidence="exact" data-model="gpt-5.2-codex" data-start="2026-06-21">
+        <tr data-project="blcaptain skills" data-confidence="exact" data-model="gpt-5.5" data-start="2026-06-21">
           <td>Skill 优化验收</td>
           <td>BLCaptain Skills</td>
-          <td>gpt-5.2-codex</td>
+          <td>gpt-5.5</td>
           <td>2026-06-21 23:30:00 UTC+08:00</td>
           <td>2026-06-22 00:25:00 UTC+08:00</td>
           <td>38,900</td>
@@ -157,10 +156,10 @@
           <td><span class="badge exact">exact</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
-        <tr data-project="codex-probe" data-confidence="exact" data-model="gpt-5-codex" data-start="2026-06-22">
+        <tr data-project="codex-probe" data-confidence="exact" data-model="gpt-5.5" data-start="2026-06-22">
           <td>字段映射导入</td>
           <td>codex-probe</td>
-          <td>gpt-5-codex</td>
+          <td>gpt-5.5</td>
           <td>2026-06-22 21:00:00 UTC+08:00</td>
           <td>2026-06-22 22:05:00 UTC+08:00</td>
           <td>36,600</td>
@@ -169,10 +168,10 @@
           <td><span class="badge exact">exact</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
-        <tr data-project="codex probe cli" data-confidence="high" data-model="gpt-5.2-codex" data-start="2026-06-23">
+        <tr data-project="codex probe cli" data-confidence="high" data-model="gpt-5.5" data-start="2026-06-23">
           <td>CI 修复会话</td>
           <td>Codex Probe CLI</td>
-          <td>gpt-5.2-codex</td>
+          <td>gpt-5.5</td>
           <td>2026-06-23 10:00:00 UTC+08:00</td>
           <td>2026-06-23 10:35:00 UTC+08:00</td>
           <td>22,400</td>
@@ -181,10 +180,10 @@
           <td><span class="badge high">high</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
-        <tr data-project="codex research" data-confidence="medium" data-model="gpt-5.2-codex" data-start="2026-06-23">
+        <tr data-project="codex research" data-confidence="medium" data-model="gpt-5.5" data-start="2026-06-23">
           <td>竞品调研会话</td>
           <td>Codex Research</td>
-          <td>gpt-5.2-codex</td>
+          <td>gpt-5.5</td>
           <td>2026-06-23 11:00:00 UTC+08:00</td>
           <td>2026-06-23 11:45:00 UTC+08:00</td>
           <td>18,200</td>
@@ -205,10 +204,10 @@
           <td><span class="badge low">low</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
-        <tr data-project="codex-probe" data-confidence="exact" data-model="gpt-5-codex-low" data-start="2026-06-22">
+        <tr data-project="codex-probe" data-confidence="exact" data-model="gpt-5.5" data-start="2026-06-22">
           <td>JSONL 轻量改文案</td>
           <td>codex-probe</td>
-          <td>gpt-5-codex-low</td>
+          <td>gpt-5.5</td>
           <td>2026-06-22 20:00:00 UTC+08:00</td>
           <td>2026-06-22 20:18:00 UTC+08:00</td>
           <td>5,600</td>

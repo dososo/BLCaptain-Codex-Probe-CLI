@@ -6,7 +6,7 @@
       "project": "codex-probe",
       "started_at": "2026-06-22T08:00:00+00:00",
       "ended_at": "2026-06-22T09:20:00+00:00",
-      "model": "gpt-5-codex",
+      "model": "gpt-5.5",
       "input_tokens": 18000,
       "cached_input_tokens": 9000,
       "output_tokens": 7200,

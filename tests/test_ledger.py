@@ -96,6 +96,7 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual(len(sessions), 1)
         self.assertEqual(sessions[0].token_delta, 58000)
         self.assertEqual(sessions[0].confidence_level, "high")
+        self.assertEqual(sessions[0].model, "gpt-5.5")
         self.assertIn("降配", sessions[0].recommendation)
 
     def test_reports_show_local_time_and_precision_notes(self):

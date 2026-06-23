@@ -1,8 +1,10 @@
 # Ledger 样本库
 
-这些样本用于验证 BLCaptain Codex Probe CLI v0.5.0 的会话级 Token 账本、官方导出适配、本地历史导入和 watcher 能力。
+这些样本用于验证 BLCaptain Codex Probe CLI v0.6.0 的会话级 Token 账本、官方导出适配、本地历史导入和 watcher 能力。
 
 所有数据均为合成或脱敏样本，不包含真实会话 ID、cookie、token、邮箱、手机号或本地用户路径。
+
+公开示例统一使用 `gpt-5.5` 作为模型字段，便于 README 截图阅读。真实导入时，CLI 会原样展示数据源提供的模型名，不会猜测或强制改写。
 
 | 文件 | 数据源 | 覆盖 |
 |---|---|---|

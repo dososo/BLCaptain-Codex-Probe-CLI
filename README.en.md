@@ -67,6 +67,8 @@ Example reports:
   <img src="assets/screenshots/ledger-dashboard.png" alt="Local Codex session-level token ledger dashboard" width="100%">
 </p>
 
+The model column comes from the imported source's `model` field. The CLI preserves model names from official exports, snapshots, or local rollout records; if the source has no model field, it shows an empty or unknown value instead of guessing.
+
 ### Existing Workflows: Task Report and Skill Inspection
 
 | Task-level usage report | Skill / output quality inspection |

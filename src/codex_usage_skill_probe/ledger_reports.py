@@ -362,6 +362,7 @@ def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> s
     table {{ width: 100%; min-width: 900px; border-collapse: collapse; background: white; }}
     th, td {{ text-align: left; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }}
     th {{ background: #f1f5f9; color: #334155; }}
+    th:nth-child(3), td:nth-child(3) {{ min-width: 76px; white-space: nowrap; }}
     .details {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }}
     dl {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }}
     dt {{ color: #64748b; font-size: 12px; }}

@@ -111,3 +111,12 @@
 - [x] 将包版本、CLI 版本、README badge、发布验收标准和 CHANGELOG 同步到 `0.6.0`。
 - [x] 中英文 README 已补充一键 setup、Dashboard 筛选、watcher 状态页和脱敏 rollout 样本采集。
 - [x] 安装 smoke 通过：临时虚拟环境中 `python -m pip install .` 成功，`codex-probe --version` 返回 `codex-probe 0.6.0`。
+
+## README 模型示例修正
+
+- [x] 确认模型列来自示例数据和数据源 `model` 字段，不是解析器误判。
+- [x] 将 ledger 公开样本统一为 `gpt-5.5`，避免 README 截图出现旧模型名。
+- [x] 补充 README 说明：CLI 原样展示数据源模型字段，不会猜测或强制改写。
+- [x] 重新生成示例报告、Dashboard HTML 和 README PNG 截图。
+- [x] 验证通过：17 个单元测试、compileall、acceptance；证据目录为 `acceptance-artifacts/20260623T130952Z/`。
+- [x] 审计通过：候选文件 18 个，敏感扫描仅命中说明性文本、测试断言和 README 公开邮箱；旧模型名仅保留在测试禁止断言中。
