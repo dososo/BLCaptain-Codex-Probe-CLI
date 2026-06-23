@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .export_mapping import load_mapping, normalize_rows, read_export_rows
 from .ledger_storage import (
     add_delta_and_attribution,
     add_privacy_audit,
@@ -41,6 +42,9 @@ def coerce_float(value: Any) -> float | None:
 
 def load_records(path: Path) -> dict[str, list[dict[str, Any]]]:
     suffix = path.suffix.lower()
+    if suffix == ".jsonl":
+        _, rows = read_export_rows(path)
+        return {"sessions": rows}
     if suffix == ".json":
         payload = json.loads(path.read_text(encoding="utf-8"))
         if isinstance(payload, list):
@@ -57,14 +61,16 @@ def load_records(path: Path) -> dict[str, list[dict[str, Any]]]:
     raise ValueError(f"Unsupported ledger data file: {path}")
 
 
-def import_official_export(conn, path: Path) -> dict[str, object]:
-    payload = load_records(path)
+def import_official_export(conn, path: Path, mapping_path: Path | None = None) -> dict[str, object]:
+    file_format, rows = read_export_rows(path)
+    mapping = load_mapping(mapping_path) if mapping_path else None
+    payload = {"sessions": normalize_rows(rows, mapping)}
     source_id = upsert_source(
         conn,
         "official_export",
         "exact",
-        "用户显式提供的官方导出 CSV/JSON；不读取浏览器、cookie、token 或聊天正文。",
-        metadata={"filename": path.name},
+        "用户显式提供的官方导出 CSV/JSON/JSONL；不读取浏览器、cookie、token 或聊天正文。",
+        metadata={"filename": path.name, "format": file_format, "mapping": mapping or "auto"},
     )
     imported_sessions = 0
     imported_snapshots = 0
@@ -108,7 +114,7 @@ def import_official_export(conn, path: Path) -> dict[str, object]:
             context_remaining_percent=coerce_float(record.get("context_remaining_percent")),
             context_used_tokens=coerce_int(record.get("context_used_tokens")),
             context_limit_tokens=coerce_int(record.get("context_limit_tokens")),
-            raw_ref=f"{path.name}:sessions",
+            raw_ref=f"{path.name}:row:{record.get('_row_number') or imported_sessions + 1}",
         )
         add_delta_and_attribution(
             conn,
@@ -130,7 +136,7 @@ def import_official_export(conn, path: Path) -> dict[str, object]:
     add_privacy_audit(
         conn,
         "official_export_imported",
-        {"filename": path.name, "sessions": imported_sessions, "snapshots": imported_snapshots},
+        {"filename": path.name, "format": file_format, "sessions": imported_sessions, "snapshots": imported_snapshots},
     )
     conn.commit()
     return {"sessions": imported_sessions, "snapshots": imported_snapshots, "source_id": source_id}

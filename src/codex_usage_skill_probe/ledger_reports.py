@@ -241,6 +241,8 @@ def render_privacy_markdown(sources: list[dict[str, object]], audits: list[dict[
 def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> str:
     total_tokens = sum(item.token_delta for item in sessions)
     total_credits = sum(item.credits_delta or 0 for item in sessions)
+    exact_high = len([item for item in sessions if item.confidence_level in {"exact", "high"}])
+    top = sessions[0] if sessions else None
     row_blocks = []
     for item in sessions:
         row_blocks.append(
@@ -251,6 +253,7 @@ def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> s
                     f"          <td>{html_escape(item.project)}</td>",
                     f"          <td>{item.token_delta:,}</td>",
                     f"          <td>{fmt(item.credits_delta)}</td>",
+                    f"          <td>{fmt(item.context_peak_percent)}</td>",
                     f"          <td><span class=\"badge {item.confidence_level}\">{item.confidence_level}</span></td>",
                     f"          <td>{html_escape(item.recommendation)}</td>",
                     "        </tr>",
@@ -259,7 +262,28 @@ def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> s
         )
     rows = "\n".join(row_blocks)
     if not rows:
-        rows = "<tr><td colspan=\"6\">暂无会话账本数据，请先导入官方导出或快照样本。</td></tr>"
+        rows = "<tr><td colspan=\"7\">暂无会话账本数据，请先导入官方导出、local history 或快照样本。</td></tr>"
+    detail_blocks = []
+    for item in sessions[:6]:
+        detail_blocks.append(
+            "\n".join(
+                [
+                    "<article class=\"detail\">",
+                    f"  <h3>{html_escape(item.title)}</h3>",
+                    f"  <p>{html_escape(item.project)} · {html_escape(item.started_at or '未知')} → {html_escape(item.ended_at or '未知')}</p>",
+                    "  <dl>",
+                    f"    <div><dt>token delta</dt><dd>{item.token_delta:,}</dd></div>",
+                    f"    <div><dt>置信度</dt><dd>{html_escape(item.confidence_level)} / {item.confidence_score:.2f}</dd></div>",
+                    f"    <div><dt>数据源</dt><dd>{html_escape(item.source_type)}</dd></div>",
+                    f"    <div><dt>建议</dt><dd>{html_escape(item.recommendation)}</dd></div>",
+                    "  </dl>",
+                    f"  <p class=\"evidence\">{html_escape(item.evidence_summary)}</p>",
+                    "</article>",
+                ]
+            )
+        )
+    details = "\n".join(detail_blocks) or "<p>暂无单会话详情。</p>"
+    decision = html_escape(ledger_conclusion(sessions))
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -267,42 +291,83 @@ def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> s
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BLCaptain Codex Ledger</title>
   <style>
-    body {{ margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111827; background: #f4fbf7; }}
-    main {{ max-width: 1180px; margin: 0 auto; padding: 42px 28px 64px; }}
-    h1 {{ font-size: 44px; margin: 0 0 10px; letter-spacing: 0; }}
-    p {{ color: #475569; font-size: 18px; }}
-    .grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 28px 0; }}
-    .stat, .panel {{ background: white; border: 1px solid #bbf7d0; border-radius: 8px; padding: 22px; }}
-    .stat strong {{ display: block; font-size: 34px; margin-top: 8px; }}
-    table {{ width: 100%; border-collapse: collapse; background: white; border: 1px solid #bbf7d0; border-radius: 8px; overflow: hidden; }}
-    th, td {{ text-align: left; padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-size: 15px; }}
-    th {{ background: #ecfdf5; color: #065f46; }}
+    body {{ margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111827; background: #f8fafc; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 34px 28px 56px; }}
+    h1 {{ font-size: 34px; margin: 0 0 8px; letter-spacing: 0; }}
+    h2 {{ margin: 0 0 14px; font-size: 22px; }}
+    h3 {{ margin: 0 0 8px; font-size: 18px; }}
+    p {{ color: #475569; font-size: 16px; line-height: 1.6; }}
+    .topline {{ display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; border-bottom: 1px solid #cbd5e1; padding-bottom: 20px; }}
+    .topline p {{ margin: 0; max-width: 760px; }}
+    .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 22px 0; }}
+    .stat, .panel, .detail {{ background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; }}
+    .stat span {{ color: #64748b; font-size: 13px; }}
+    .stat strong {{ display: block; font-size: 28px; margin-top: 8px; }}
+    .decision {{ border-left: 4px solid #0f766e; background: #f0fdfa; padding: 14px 16px; margin: 18px 0 24px; }}
+    .panel {{ margin-top: 18px; overflow-x: auto; }}
+    table {{ width: 100%; min-width: 900px; border-collapse: collapse; background: white; }}
+    th, td {{ text-align: left; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }}
+    th {{ background: #f1f5f9; color: #334155; }}
+    .details {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }}
+    dl {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }}
+    dt {{ color: #64748b; font-size: 12px; }}
+    dd {{ margin: 3px 0 0; font-weight: 700; }}
+    .evidence {{ font-size: 14px; margin-bottom: 0; }}
+    .privacy ul {{ margin: 0; padding-left: 20px; color: #334155; line-height: 1.8; }}
     .badge {{ border-radius: 999px; padding: 4px 10px; font-weight: 700; }}
     .exact {{ background: #d9ff72; }}
     .high {{ background: #bbf7d0; }}
     .medium {{ background: #fde68a; }}
     .low {{ background: #fecaca; }}
+    @media (max-width: 820px) {{
+      main {{ padding: 24px 16px 40px; }}
+      .topline {{ display: block; }}
+      .grid, .details {{ grid-template-columns: 1fr; }}
+      h1 {{ font-size: 28px; }}
+    }}
   </style>
 </head>
 <body>
   <main>
-    <h1>Codex 会话级 Token 账本</h1>
-    <p>时间范围：{html_escape(range_label)}。所有数据来自本地账本，不上传云端，不读取聊天正文、cookie、token 或系统凭据。</p>
-    <section class="grid">
-      <div class="stat">会话数<strong>{len(sessions)}</strong></div>
-      <div class="stat">token delta<strong>{total_tokens:,}</strong></div>
-      <div class="stat">credits delta<strong>{total_credits:.2f}</strong></div>
+    <section class="topline">
+      <div>
+        <h1>Codex 会话级 Token 账本</h1>
+        <p>时间范围：{html_escape(range_label)}。所有数据来自本地账本，不上传云端，不读取聊天正文、cookie、token 或系统凭据。</p>
+      </div>
+      <p>最高消耗会话：{html_escape(top.title if top else "暂无")}</p>
     </section>
+    <section class="grid">
+      <div class="stat"><span>会话数</span><strong>{len(sessions)}</strong></div>
+      <div class="stat"><span>token delta</span><strong>{total_tokens:,}</strong></div>
+      <div class="stat"><span>credits delta</span><strong>{total_credits:.2f}</strong></div>
+      <div class="stat"><span>exact/high 会话</span><strong>{exact_high}</strong></div>
+    </section>
+    <section class="decision">{decision}</section>
     <section class="panel">
-      <h2>最耗 token 的会话</h2>
+      <h2>会话排行</h2>
       <table>
         <thead>
-          <tr><th>会话</th><th>项目</th><th>token delta</th><th>credits</th><th>置信度</th><th>建议</th></tr>
+          <tr><th>会话</th><th>项目</th><th>token delta</th><th>credits</th><th>上下文峰值</th><th>置信度</th><th>建议</th></tr>
         </thead>
         <tbody>
           {rows}
         </tbody>
       </table>
+    </section>
+    <section class="panel">
+      <h2>单会话详情摘要</h2>
+      <div class="details">
+        {details}
+      </div>
+    </section>
+    <section class="panel privacy">
+      <h2>隐私边界</h2>
+      <ul>
+        <li>本页面只展示本地账本中的会话元信息和 token/credits 数字。</li>
+        <li>不包含聊天正文、prompt、assistant 输出、浏览器 cookie、OpenAI token、钥匙串或系统凭据。</li>
+        <li>local Codex 历史导入默认隐藏完整路径，只保留哈希和短会话标识。</li>
+        <li>低置信归因只能作为估算，不应当作精确账单。</li>
+      </ul>
     </section>
   </main>
 </body>

@@ -415,11 +415,19 @@ def ledger_summary(
             confidence_level={4: "exact", 3: "high", 2: "medium"}.get(row["confidence_rank"], "low"),
             confidence_score=float(row["confidence_score"] or 0),
             source_type=row["source_type"],
-            recommendation=row["recommendation"],
+            recommendation=summary_recommendation(int(row["token_delta"] or 0), row["recommendation"]),
             evidence_summary=row["evidence_summary"],
         )
         for row in rows
     ]
+
+
+def summary_recommendation(token_delta: int, fallback: str) -> str:
+    if token_delta >= 100_000:
+        return "停止当前长会话，保存成果后拆到新会话"
+    if token_delta >= 50_000:
+        return "降配或拆分后续任务，避免继续放大上下文"
+    return fallback or "可以继续，但保留停止线"
 
 
 def session_snapshots(conn: sqlite3.Connection, session_id: str) -> list[SnapshotSummary]:

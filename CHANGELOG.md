@@ -1,5 +1,18 @@
 # 变更日志
 
+## 0.5.0 - 2026-06-23
+
+- 新增真实本地数据源接入：`ledger import-history --source local-codex` 可从 Codex rollout JSONL 的 token 用量白名单字段导入历史快照。
+- 新增 `ledger import-history --dry-run`，可先预览文件数、token 记录数、可导入记录数和跳过正文行数，不写入业务数据。
+- 新增官方导出适配：`ledger inspect-export`、`ledger map-export`、CSV / JSON / JSONL 支持、字段别名和 mapping JSON。
+- 新增 `sources doctor --deep`，安全检查本机 Codex 结构化日志覆盖率，只输出哈希、计数和字段覆盖率，不输出完整路径或正文。
+- 新增真实 watcher：`watch once/start/status/logs/stop`，支持 PID、状态文件、lock、日志、最近采集时间、错误和采集次数。
+- 新增 `delete --watcher --yes`，可删除 watcher 状态、日志和控制文件。
+- 增强 Dashboard，加入总览、会话排行、单会话详情摘要和隐私边界。
+- 新增 macOS LaunchAgent 安装/卸载脚本和 `docs/MACOS_WATCHER.md`。
+- 新增 JSON、JSONL、mapping 和 synthetic rollout 脱敏样本，并刷新示例报告和 Dashboard 截图。
+- 更新中英文 README、隐私文档、桌面版提示词、发布清单、测试和验收脚本。
+
 ## 0.4.0 - 2026-06-23
 
 - 新增本地 Codex 会话级 Token 账本，回答「token/credits 具体消耗在哪个会话、哪个项目、哪个时间段」。

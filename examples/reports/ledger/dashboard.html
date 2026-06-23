@@ -5,37 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BLCaptain Codex Ledger</title>
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111827; background: #f4fbf7; }
-    main { max-width: 1180px; margin: 0 auto; padding: 42px 28px 64px; }
-    h1 { font-size: 44px; margin: 0 0 10px; letter-spacing: 0; }
-    p { color: #475569; font-size: 18px; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 28px 0; }
-    .stat, .panel { background: white; border: 1px solid #bbf7d0; border-radius: 8px; padding: 22px; }
-    .stat strong { display: block; font-size: 34px; margin-top: 8px; }
-    table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #bbf7d0; border-radius: 8px; overflow: hidden; }
-    th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-size: 15px; }
-    th { background: #ecfdf5; color: #065f46; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111827; background: #f8fafc; }
+    main { max-width: 1240px; margin: 0 auto; padding: 34px 28px 56px; }
+    h1 { font-size: 34px; margin: 0 0 8px; letter-spacing: 0; }
+    h2 { margin: 0 0 14px; font-size: 22px; }
+    h3 { margin: 0 0 8px; font-size: 18px; }
+    p { color: #475569; font-size: 16px; line-height: 1.6; }
+    .topline { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; border-bottom: 1px solid #cbd5e1; padding-bottom: 20px; }
+    .topline p { margin: 0; max-width: 760px; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 22px 0; }
+    .stat, .panel, .detail { background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; }
+    .stat span { color: #64748b; font-size: 13px; }
+    .stat strong { display: block; font-size: 28px; margin-top: 8px; }
+    .decision { border-left: 4px solid #0f766e; background: #f0fdfa; padding: 14px 16px; margin: 18px 0 24px; }
+    .panel { margin-top: 18px; overflow-x: auto; }
+    table { width: 100%; min-width: 900px; border-collapse: collapse; background: white; }
+    th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }
+    th { background: #f1f5f9; color: #334155; }
+    .details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    dl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }
+    dt { color: #64748b; font-size: 12px; }
+    dd { margin: 3px 0 0; font-weight: 700; }
+    .evidence { font-size: 14px; margin-bottom: 0; }
+    .privacy ul { margin: 0; padding-left: 20px; color: #334155; line-height: 1.8; }
     .badge { border-radius: 999px; padding: 4px 10px; font-weight: 700; }
     .exact { background: #d9ff72; }
     .high { background: #bbf7d0; }
     .medium { background: #fde68a; }
     .low { background: #fecaca; }
+    @media (max-width: 820px) {
+      main { padding: 24px 16px 40px; }
+      .topline { display: block; }
+      .grid, .details { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
   </style>
 </head>
 <body>
   <main>
-    <h1>Codex 会话级 Token 账本</h1>
-    <p>时间范围：7d。所有数据来自本地账本，不上传云端，不读取聊天正文、cookie、token 或系统凭据。</p>
-    <section class="grid">
-      <div class="stat">会话数<strong>6</strong></div>
-      <div class="stat">token delta<strong>289,267</strong></div>
-      <div class="stat">credits delta<strong>35.86</strong></div>
+    <section class="topline">
+      <div>
+        <h1>Codex 会话级 Token 账本</h1>
+        <p>时间范围：30d。所有数据来自本地账本，不上传云端，不读取聊天正文、cookie、token 或系统凭据。</p>
+      </div>
+      <p>最高消耗会话：README 发布准备</p>
     </section>
+    <section class="grid">
+      <div class="stat"><span>会话数</span><strong>10</strong></div>
+      <div class="stat"><span>token delta</span><strong>436,867</strong></div>
+      <div class="stat"><span>credits delta</span><strong>40.46</strong></div>
+      <div class="stat"><span>exact/high 会话</span><strong>8</strong></div>
+    </section>
+    <section class="decision">最耗会话是「README 发布准备」，token delta 为 142,047。建议先停止该长会话，保存成果后拆到新会话。</section>
     <section class="panel">
-      <h2>最耗 token 的会话</h2>
+      <h2>会话排行</h2>
       <table>
         <thead>
-          <tr><th>会话</th><th>项目</th><th>token delta</th><th>credits</th><th>置信度</th><th>建议</th></tr>
+          <tr><th>会话</th><th>项目</th><th>token delta</th><th>credits</th><th>上下文峰值</th><th>置信度</th><th>建议</th></tr>
         </thead>
         <tbody>
                   <tr>
@@ -43,6 +69,7 @@
           <td>Codex Probe CLI</td>
           <td>142,047</td>
           <td>18.42</td>
+          <td>55.06</td>
           <td><span class="badge exact">exact</span></td>
           <td>停止当前长会话，保存成果后拆到新会话</td>
         </tr>
@@ -51,14 +78,43 @@
           <td>Codex Probe CLI</td>
           <td>61,320</td>
           <td>7.80</td>
+          <td>23.77</td>
           <td><span class="badge exact">exact</span></td>
           <td>降配或拆分后续任务，避免继续放大上下文</td>
+        </tr>
+        <tr>
+          <td>Codex 会话 aa5b3c07</td>
+          <td>本地项目 7d72b21f626e8d0b</td>
+          <td>58,000</td>
+          <td>未知</td>
+          <td>未知</td>
+          <td><span class="badge high">high</span></td>
+          <td>降配或拆分后续任务，避免继续放大上下文</td>
+        </tr>
+        <tr>
+          <td>JSONL 发布验收</td>
+          <td>codex-probe</td>
+          <td>47,400</td>
+          <td>2.40</td>
+          <td>46.00</td>
+          <td><span class="badge exact">exact</span></td>
+          <td>可以继续，但保留停止线</td>
         </tr>
         <tr>
           <td>Skill 优化验收</td>
           <td>BLCaptain Skills</td>
           <td>38,900</td>
           <td>4.90</td>
+          <td>15.08</td>
+          <td><span class="badge exact">exact</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
+        <tr>
+          <td>字段映射导入</td>
+          <td>codex-probe</td>
+          <td>36,600</td>
+          <td>1.90</td>
+          <td>33.00</td>
           <td><span class="badge exact">exact</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
@@ -67,6 +123,7 @@
           <td>Codex Probe CLI</td>
           <td>22,400</td>
           <td>2.44</td>
+          <td>13.33</td>
           <td><span class="badge high">high</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
@@ -75,6 +132,7 @@
           <td>Codex Research</td>
           <td>18,200</td>
           <td>1.80</td>
+          <td>10.54</td>
           <td><span class="badge medium">medium</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
@@ -83,11 +141,101 @@
           <td>未归属项目</td>
           <td>6,400</td>
           <td>0.50</td>
+          <td>9.00</td>
           <td><span class="badge low">low</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
+        <tr>
+          <td>JSONL 轻量改文案</td>
+          <td>codex-probe</td>
+          <td>5,600</td>
+          <td>0.30</td>
+          <td>9.00</td>
+          <td><span class="badge exact">exact</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
         </tbody>
       </table>
+    </section>
+    <section class="panel">
+      <h2>单会话详情摘要</h2>
+      <div class="details">
+        <article class="detail">
+  <h3>README 发布准备</h3>
+  <p>Codex Probe CLI · 2026-06-22T09:00:00+00:00 → 2026-06-22T11:10:00+00:00</p>
+  <dl>
+    <div><dt>token delta</dt><dd>142,047</dd></div>
+    <div><dt>置信度</dt><dd>exact / 0.99</dd></div>
+    <div><dt>数据源</dt><dd>official_export</dd></div>
+    <div><dt>建议</dt><dd>停止当前长会话，保存成果后拆到新会话</dd></div>
+  </dl>
+  <p class="evidence">官方导出直接提供会话级用量字段</p>
+</article>
+<article class="detail">
+  <h3>小红书素材生成</h3>
+  <p>Codex Probe CLI · 2026-06-22T12:20:00+00:00 → 2026-06-22T13:40:00+00:00</p>
+  <dl>
+    <div><dt>token delta</dt><dd>61,320</dd></div>
+    <div><dt>置信度</dt><dd>exact / 0.99</dd></div>
+    <div><dt>数据源</dt><dd>official_export</dd></div>
+    <div><dt>建议</dt><dd>降配或拆分后续任务，避免继续放大上下文</dd></div>
+  </dl>
+  <p class="evidence">官方导出直接提供会话级用量字段</p>
+</article>
+<article class="detail">
+  <h3>Codex 会话 aa5b3c07</h3>
+  <p>本地项目 7d72b21f626e8d0b · 2026-06-22T15:02:00+00:00 → 2026-06-22T15:40:00+00:00</p>
+  <dl>
+    <div><dt>token delta</dt><dd>58,000</dd></div>
+    <div><dt>置信度</dt><dd>high / 0.88</dd></div>
+    <div><dt>数据源</dt><dd>local_codex_rollout</dd></div>
+    <div><dt>建议</dt><dd>降配或拆分后续任务，避免继续放大上下文</dd></div>
+  </dl>
+  <p class="evidence">本地 Codex rollout 结构化 token 用量字段；未读取聊天正文</p>
+</article>
+<article class="detail">
+  <h3>JSONL 发布验收</h3>
+  <p>codex-probe · 2026-06-22T10:00:00+00:00 → 2026-06-22T11:30:00+00:00</p>
+  <dl>
+    <div><dt>token delta</dt><dd>47,400</dd></div>
+    <div><dt>置信度</dt><dd>exact / 0.99</dd></div>
+    <div><dt>数据源</dt><dd>official_export</dd></div>
+    <div><dt>建议</dt><dd>可以继续，但保留停止线</dd></div>
+  </dl>
+  <p class="evidence">官方导出直接提供会话级用量字段</p>
+</article>
+<article class="detail">
+  <h3>Skill 优化验收</h3>
+  <p>BLCaptain Skills · 2026-06-21T15:30:00+00:00 → 2026-06-21T16:25:00+00:00</p>
+  <dl>
+    <div><dt>token delta</dt><dd>38,900</dd></div>
+    <div><dt>置信度</dt><dd>exact / 0.99</dd></div>
+    <div><dt>数据源</dt><dd>official_export</dd></div>
+    <div><dt>建议</dt><dd>可以继续，但保留停止线</dd></div>
+  </dl>
+  <p class="evidence">官方导出直接提供会话级用量字段</p>
+</article>
+<article class="detail">
+  <h3>字段映射导入</h3>
+  <p>codex-probe · 2026-06-22T13:00:00+00:00 → 2026-06-22T14:05:00+00:00</p>
+  <dl>
+    <div><dt>token delta</dt><dd>36,600</dd></div>
+    <div><dt>置信度</dt><dd>exact / 0.99</dd></div>
+    <div><dt>数据源</dt><dd>official_export</dd></div>
+    <div><dt>建议</dt><dd>可以继续，但保留停止线</dd></div>
+  </dl>
+  <p class="evidence">官方导出直接提供会话级用量字段</p>
+</article>
+      </div>
+    </section>
+    <section class="panel privacy">
+      <h2>隐私边界</h2>
+      <ul>
+        <li>本页面只展示本地账本中的会话元信息和 token/credits 数字。</li>
+        <li>不包含聊天正文、prompt、assistant 输出、浏览器 cookie、OpenAI token、钥匙串或系统凭据。</li>
+        <li>local Codex 历史导入默认隐藏完整路径，只保留哈希和短会话标识。</li>
+        <li>低置信归因只能作为估算，不应当作精确账单。</li>
+      </ul>
     </section>
   </main>
 </body>

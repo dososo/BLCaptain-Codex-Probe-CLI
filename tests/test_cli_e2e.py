@@ -122,6 +122,30 @@ class CliE2ETests(unittest.TestCase):
             doctor_payload = json.loads(doctor.stdout)
             self.assertEqual(doctor_payload["max_confidence"], "exact")
 
+            inspected = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "ledger",
+                "inspect-export",
+                "examples/ledger-samples/official-export.jsonl",
+            )
+            self.assertEqual(json.loads(inspected.stdout)["format"], "jsonl")
+
+            mapping = tmp_path / "mapping.json"
+            mapped = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "ledger",
+                "map-export",
+                "examples/ledger-samples/official-export-alt.json",
+                "--out",
+                str(mapping),
+            )
+            self.assertTrue(json.loads(mapped.stdout)["ok"])
+            self.assertTrue(mapping.exists())
+
             official = self.run_probe(
                 "--db",
                 str(db),
@@ -133,6 +157,17 @@ class CliE2ETests(unittest.TestCase):
             )
             self.assertEqual(json.loads(official.stdout)["sessions"], 3)
 
+            jsonl = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "ledger",
+                "import",
+                "--official-export",
+                "examples/ledger-samples/official-export.jsonl",
+            )
+            self.assertEqual(json.loads(jsonl.stdout)["sessions"], 2)
+
             snapshots = self.run_probe(
                 "--db",
                 str(db),
@@ -143,6 +178,64 @@ class CliE2ETests(unittest.TestCase):
                 "examples/ledger-samples/snapshot-delta.json",
             )
             self.assertEqual(json.loads(snapshots.stdout)["snapshots"], 5)
+
+            history_preview = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "ledger",
+                "import-history",
+                "--dry-run",
+                "--source",
+                "local-codex",
+                "--root",
+                "examples/ledger-samples/local-codex",
+            )
+            self.assertFalse(json.loads(history_preview.stdout)["wrote"])
+
+            history_import = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "ledger",
+                "import-history",
+                "--source",
+                "local-codex",
+                "--root",
+                "examples/ledger-samples/local-codex",
+            )
+            self.assertEqual(json.loads(history_import.stdout)["imported_snapshots"], 2)
+
+            watch_once = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "watch",
+                "once",
+                "--root",
+                "examples/ledger-samples/local-codex",
+            )
+            self.assertTrue(json.loads(watch_once.stdout)["ok"])
+
+            try:
+                watch_start = self.run_probe(
+                    "--db",
+                    str(db),
+                    "--json",
+                    "watch",
+                    "start",
+                    "--interval-seconds",
+                    "1",
+                    "--root",
+                    "examples/ledger-samples/local-codex",
+                )
+                self.assertEqual(json.loads(watch_start.stdout)["status"], "running")
+                watch_status = self.run_probe("--db", str(db), "--json", "watch", "status")
+                self.assertIn(json.loads(watch_status.stdout)["status"], {"running", "stopped"})
+                watch_logs = self.run_probe("--db", str(db), "--json", "watch", "logs")
+                self.assertTrue(json.loads(watch_logs.stdout)["ok"])
+            finally:
+                self.run_probe("--db", str(db), "--json", "watch", "stop", check=False)
 
             ranked = self.run_probe("--db", str(db), "--json", "sessions", "--range", "7d")
             ranked_payload = json.loads(ranked.stdout)
@@ -175,6 +268,9 @@ class CliE2ETests(unittest.TestCase):
 
             deleted = self.run_probe("--db", str(db), "--json", "delete", "--ledger", "--yes")
             self.assertTrue(json.loads(deleted.stdout)["ok"])
+
+            deleted_watcher = self.run_probe("--db", str(db), "--json", "delete", "--watcher", "--yes")
+            self.assertTrue(json.loads(deleted_watcher.stdout)["ok"])
 
 
 if __name__ == "__main__":

@@ -1,65 +1,76 @@
-# v0.4.0 本地 Codex 会话级 Token 账本执行清单
+# v0.5.0 真实数据源与稳定 Watcher 执行清单
 
-目标：基于 `outputs/codex-session-token-ledger-prd.md`，把 BLCaptain Codex Probe CLI 从 `/status` 用量体检升级为「本地 Codex 会话级 Token 账本」，达到 GitHub 开源可发布标准。
+目标：基于 `outputs/codex-session-token-ledger-prd.md` 和本轮 `/goal`，把 BLCaptain Codex Probe CLI 从 v0.4.0「本地会话级 Token 账本框架」升级为 v0.5.0「真实数据源接入 + 稳定 watcher + 可发布 beta 产品」。
 
 成功标准：
 
-- 能回答「Codex token/credits 具体消耗在哪个会话、哪个项目、哪个时间段」。
-- 支持会话排行、会话详情时间线、token delta、高消耗区间、数据源、置信度。
-- 严格本地优先：不读浏览器 cookie，不碰 token，不读钥匙串，不抓包，不读取聊天正文，不上传云端。
-- README、英文 README、隐私文档、示例数据、测试和验收脚本同步更新。
+- 能尽最大努力回答「Codex token 具体消耗在哪个会话、哪个项目、哪个时间段」。
+- 能自动检测并安全读取本机 Codex 结构化 rollout 日志中的 token 用量字段；如果没有 token 字段，只导入元信息或明确说明无法精确归因。
+- 支持官方导出 CSV / JSON / JSONL、字段别名、mapping JSON、导出结构检查和 dry-run。
+- 支持 `watch once`、真实后台 `watch start/status/stop/logs`、PID/lock/status/log、崩溃状态识别和 `delete --watcher --yes`。
+- Dashboard 覆盖总览、会话排行、单会话详情和隐私边界，工具型、可读、无营销页。
+- 严格本地优先：不读浏览器 cookie，不碰 token，不读钥匙串，不抓包，不读取聊天正文、prompt、assistant 输出，不上传云端。
+- README、英文 README、隐私文档、macOS 入口文档、示例数据、测试和验收脚本同步更新。
 
 ## 1. 调研
 
-- [x] 读取 PRD，确认 v0.4.0 的核心不再是单次 `/status` 报告，而是会话级 Token 账本。
-- [x] 检查当前 git 状态、版本号和已有改动。
-- [x] 读取现有 CLI、storage、reports、测试、README 和验收脚本。
-- [x] 识别无关未跟踪素材：`assets/xiaohongshu/` 不纳入本次 v0.4.0 提交。
+- [x] 读取 `/goal` 附件，确认 v0.5.0 目标、命令要求、隐私边界和不自动 push 要求。
+- [x] 检查当前 git 状态、版本号和已有 commit。
+- [x] 读取 v0.4.0 CLI、ledger adapter、storage、source doctor、report、测试和验收脚本。
+- [x] 安全探测 `~/.codex` 文件结构，只读取文件名、schema key、计数和哈希，不读取正文内容。
+- [x] 确认本机 Codex rollout JSONL 中存在 `last_token_usage`、`total_token_usage`、`rate_limits`、`turn_id`、`model` 等可白名单读取字段。
+- [x] 识别无关未跟踪素材：`assets/xiaohongshu/` 不纳入本次 v0.5.0 提交。
 
 ## 2. 分析
 
-- [x] 确认可复用现有 Python CLI、SQLite、Markdown 报告和测试结构。
-- [x] 确认 P0 可用轻量本地 HTML Dashboard，不先做完整桌面插件。
-- [x] 确认官方导入和快照 delta 是 P0 最小可交付数据源。
-- [x] 确认隐私边界：只处理用户显式提供文件和 allowlist 字段。
+- [x] 确认可在现有 Python CLI + SQLite 架构内扩展，不需要重做为桌面 App。
+- [x] 确认「自动读取所有历史」的真实边界：只有本地结构化日志含 token 字段时才可导入；不伪造缺失用量。
+- [x] 确认 local Codex 历史导入必须只取 allowlist 字段，路径默认哈希，不显示完整私密路径。
+- [x] 确认 watcher P0 应是稳定后台进程和状态文件，不读取聊天正文。
+- [x] 确认 Dashboard 和文档措辞不承诺省钱、绕限制、替代官方账单。
 
 ## 3. 计划
 
-- [x] 建立 v0.4.0 执行清单。
+- [x] 建立 v0.5.0 执行清单。
+- [x] 更新发布检查清单到 v0.5.0。
+- [x] 先补数据源适配和测试，再接 watcher，最后刷新文档和示例。
 - [x] 开发完成后补写 Review，记录验证结果、审计结果和剩余风险。
 
 ## 4. 开发
 
-- [x] 新增 ledger 数据模型与 SQLite schema。
-- [x] 新增 Source Doctor。
-- [x] 新增 official_export 与 snapshot_delta 导入。
-- [x] 新增 ledger CLI 命令：init、import、watch、sessions、session-report、ledger-report、privacy inspect、dashboard、delete --ledger。
-- [x] 新增会话排行、单会话、总账和隐私审计报告。
-- [x] 新增示例数据和示例报告。
-- [x] 更新 README.md、README.en.md、docs/PRIVACY_SECURITY.md、docs/CODEX_DESKTOP_PROMPT.md。
-- [x] 更新验收脚本，覆盖 ledger 端到端链路。
+- [x] 升级版本号到 v0.5.0。
+- [x] 新增官方导出 inspect / map / JSONL / mapping 支持。
+- [x] 新增 local Codex rollout 历史导入和 dry-run。
+- [x] 新增 `sources doctor --deep`，展示安全数据源覆盖率、token 字段计数和隐私边界。
+- [x] 新增真实 watcher：`watch once/start/status/stop/logs`。
+- [x] 新增 `delete --watcher --yes`。
+- [x] 增强 Dashboard：总览、会话排行、单会话详情、隐私页。
+- [x] 新增 macOS LaunchAgent 安装/卸载脚本和文档。
+- [x] 新增示例数据：CSV、JSON、JSONL、mapping、synthetic rollout。
+- [x] 更新 README.md、README.en.md、CHANGELOG.md、docs/PRIVACY_SECURITY.md、docs/CODEX_DESKTOP_PROMPT.md。
+- [x] 更新验收脚本，覆盖 v0.5.0 端到端链路。
 
 ## 5. 验证
 
-- [x] 手工跑通 ledger 初始化、数据源检查、导入、sessions、报告生成。
-- [x] 修复 snapshot 首条 baseline 被误算为 delta 的问题。
-- [x] 修复 ledger 汇总 join 导致 delta 被放大的问题。
-- [x] 重新跑完整端到端验收脚本。
-- [x] 验证 Dashboard 或本地 HTML 页面非空、可读、无明显遮挡。
+- [x] 手工跑通导出 inspect / map / import。
+- [x] 手工跑通 local history dry-run 和 synthetic rollout 导入。
+- [x] 手工跑通 `sources doctor --deep`，确认不输出完整私密路径和正文。
+- [x] 手工跑通 `watch once/start/status/logs/stop`，确认 PID、lock、日志和崩溃状态。
+- [x] 验证 Dashboard 页面非空、可读、无明显遮挡、不展示敏感数据。
 
 ## 6. 测试
 
-- [x] 新增 ledger 单元测试和 CLI e2e 测试。
-- [x] 运行 `python3 -m unittest discover -s tests` 并通过。
-- [x] 运行 `python3 -m compileall src/codex_usage_skill_probe` 并通过。
-- [x] 更新验收脚本后重新运行完整测试、编译检查和 acceptance。
+- [x] 新增/更新单元测试覆盖 official export mapping、JSONL、local history、watcher、delete watcher。
+- [x] 运行 `PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests` 并通过。
+- [x] 运行 `PYTHONDONTWRITEBYTECODE=1 python3 -m compileall src tests scripts/run_acceptance.py` 并通过。
+- [x] 运行 `PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_acceptance.py` 并通过。
 
 ## 7. 审计验收
 
 - [x] 扫描敏感信息：API key、cookie、token、Bearer、GitHub token、邮箱、手机号、`/Users/` 私密路径。
 - [x] 检查不提交 `.probe/`、`reports/`、`acceptance-artifacts/`、虚拟环境、数据库、`.DS_Store`、临时截图和无关素材。
 - [x] 展示 staged 文件清单和敏感扫描结果。
-- [x] 本地 commit 前确认只包含本项目 v0.4.0 相关文件。
+- [x] 本地 commit 前确认只包含本项目 v0.5.0 相关文件。
 
 ## 8. 总结
 
@@ -67,11 +78,12 @@
 
 ## Review
 
-- 功能结果：v0.4.0 已新增本地 Codex 会话级 Token 账本，支持 `sources doctor`、`ledger init/import`、`watch start/status/stop`、`sessions`、`session-report`、`ledger-report`、`privacy inspect`、`dashboard` 和 `delete --ledger --yes`。
-- 文档结果：README、README.en.md、CHANGELOG、隐私文档、Codex 桌面版提示词和发布清单已同步到 v0.4.0。
-- 示例结果：新增 `examples/ledger-samples/` 和 `examples/reports/ledger/`，覆盖 exact / high / medium / low 置信度；新增 `assets/screenshots/ledger-dashboard.png`。
-- 验证结果：`python3 -m unittest discover -s tests` 通过 13 个测试；`python3 -m compileall src tests scripts/run_acceptance.py` 通过；`scripts/run_acceptance.py` 通过，证据目录为 `acceptance-artifacts/20260623T115715Z/`。
-- 安装结果：临时虚拟环境中 `python -m pip install .` 通过，安装后 `codex-probe --version` 返回 `codex-probe 0.4.0`。
-- 审计结果：staged 文件为 29 个，未包含 `.probe/`、`reports/`、`acceptance-artifacts/`、虚拟环境、数据库、`.DS_Store` 或 `assets/xiaohongshu/`；敏感扫描仅命中 README 公开联系邮箱和测试断言字面量 `cookie=`。
-- 剩余风险：P0 的 `watch start` 仍是显式状态记录，不是后台采集 daemon；Dashboard 是本地静态 HTML，不是完整交互式桌面插件；真实用户官方导出格式仍需 beta 样本继续校准。
-- beta 建议：建议进入小范围 beta，重点收集真实脱敏官方导出和快照样本，验证归因置信度与用户理解成本。
+- 功能结果：v0.5.0 已新增 official export inspect / map / JSONL / mapping、本地 Codex rollout 历史导入、dry-run、`sources doctor --deep`、真实 watcher、`delete --watcher --yes`、增强 Dashboard 和 macOS LaunchAgent 入口。
+- 数据源结果：本机安全调研确认 Codex rollout JSONL 存在 token 用量字段；实现只处理 token 用量白名单字段，跳过正文、prompt、assistant 输出和工具参数，完整路径默认哈希。
+- 文档结果：README、README.en.md、CHANGELOG、隐私文档、Codex 桌面版提示词、macOS watcher 文档、发布清单和样本说明已同步 v0.5.0。
+- 示例结果：新增 CSV / JSON / JSONL / mapping / synthetic rollout 样本；刷新 `examples/reports/ledger/` 和 `assets/screenshots/ledger-dashboard.png`。
+- 验证结果：`python3 -m unittest discover -s tests` 通过 15 个测试；`python3 -m compileall src tests scripts/run_acceptance.py` 通过；`scripts/run_acceptance.py` 通过，证据目录为 `acceptance-artifacts/20260623T122554Z/`。
+- 安装结果：临时虚拟环境中 `python -m pip install .` 通过，安装后 `codex-probe --version` 返回 `codex-probe 0.5.0`。
+- 审计结果：候选文件 34 个，敏感扫描仅命中说明性 `/Users/` 文案、测试断言字面量 `cookie=` 和 README 公开邮箱；未命中手机号、真实 API key、Bearer、GitHub token、cookie 或私密路径。
+- 剩余风险：真实 Codex rollout schema 可能随版本变化，仍需 beta 样本校准；local history 只能在 token 字段存在时精细归因；watcher 是 LaunchAgent/后台进程入口，不是完整菜单栏 App。
+- beta 建议：建议进入公开 beta，但 README 必须继续强调本地优先、不可替代官方账单、不能保证省钱、不能伪造缺失 token。

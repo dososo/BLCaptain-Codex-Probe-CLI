@@ -1,0 +1,21 @@
+{
+  "source_file": "official-export-alt.json",
+  "format": "json",
+  "row_count": 1,
+  "fields": {
+    "session_id": "conversation_id",
+    "title": "chat_title",
+    "project": "workspace",
+    "started_at": "created",
+    "ended_at": "updated_at",
+    "model": "model_name",
+    "input_tokens": "prompt_tokens",
+    "cached_input_tokens": "cache_read_tokens",
+    "output_tokens": "completion_tokens",
+    "total_tokens": "tokens",
+    "credits": "cost_credits",
+    "context_remaining_percent": "remaining_context_percent",
+    "context_used_tokens": "context_tokens",
+    "context_limit_tokens": "context_window"
+  }
+}

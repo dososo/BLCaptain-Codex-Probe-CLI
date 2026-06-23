@@ -10,6 +10,7 @@ from pathlib import Path
 
 from . import __version__
 from . import errors
+from .export_mapping import inspect_export, inspection_payload, write_mapping_template
 from .ledger_adapters import import_official_export, import_snapshot_delta
 from .ledger_reports import (
     render_dashboard_html,
@@ -28,6 +29,7 @@ from .ledger_storage import (
     write_static_file,
     write_watch_state,
 )
+from .local_history import import_local_history, inspect_local_codex
 from .models import ImportBatch
 from .reports import (
     findings_to_json,
@@ -38,10 +40,11 @@ from .reports import (
     write_text,
 )
 from .skill_linter import lint_file
-from .source_doctor import run_source_doctor, source_doctor_payload
+from .source_doctor import deep_local_payload, run_source_doctor, source_doctor_payload
 from .storage import Store
 from .usage_analyzer import analyze_usage, build_decision_card
 from .usage_parser import load_manual_json, load_status_file
+from .watcher import collect_once, delete_watcher_files, read_state, run_forever, start_watcher, stop_watcher, watcher_logs
 
 
 DEFAULT_DB = Path(".probe/probe.db")
@@ -95,7 +98,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     sources_cmd = sub.add_parser("sources", help="Inspect safe ledger data sources.")
     sources_sub = sources_cmd.add_subparsers(dest="sources_command", required=True)
-    sources_sub.add_parser("doctor", help="Detect available safe data sources without reading chat content.")
+    sources_doctor = sources_sub.add_parser("doctor", help="Detect available safe data sources without reading chat content.")
+    sources_doctor.add_argument("--deep", action="store_true", help="Safely inspect local Codex rollout schema counts.")
 
     ledger_cmd = sub.add_parser("ledger", help="Initialize and import session-level token ledger data.")
     ledger_sub = ledger_cmd.add_subparsers(dest="ledger_command", required=True)
@@ -104,13 +108,36 @@ def build_parser() -> argparse.ArgumentParser:
     ledger_source = ledger_import.add_mutually_exclusive_group(required=True)
     ledger_source.add_argument("--official-export", type=Path, help="User-provided official CSV/JSON export.")
     ledger_source.add_argument("--snapshot", type=Path, help="User-provided local snapshot CSV/JSON.")
+    ledger_import.add_argument("--mapping", type=Path, default=None, help="Optional mapping JSON for official export fields.")
+    inspect_cmd = ledger_sub.add_parser("inspect-export", help="Inspect official CSV/JSON/JSONL export fields.")
+    inspect_cmd.add_argument("file", type=Path)
+    inspect_cmd.add_argument("--mapping", type=Path, default=None)
+    map_cmd = ledger_sub.add_parser("map-export", help="Generate an editable official export mapping JSON.")
+    map_cmd.add_argument("file", type=Path)
+    map_cmd.add_argument("--out", type=Path, required=True)
+    history_cmd = ledger_sub.add_parser("import-history", help="Import local Codex rollout token history.")
+    history_cmd.add_argument("--source", choices=["local-codex"], default="local-codex")
+    history_cmd.add_argument("--root", type=Path, default=None, help="Codex data root. Defaults to ~/.codex.")
+    history_cmd.add_argument("--dry-run", action="store_true", help="Preview import without writing ledger data.")
+    history_cmd.add_argument("--limit-files", type=int, default=None, help="Only scan the newest N rollout files.")
 
     watch_cmd = sub.add_parser("watch", help="Control explicit local ledger watcher state.")
     watch_sub = watch_cmd.add_subparsers(dest="watch_command", required=True)
-    watch_start = watch_sub.add_parser("start", help="Mark watcher as explicitly started.")
-    watch_start.add_argument("--interval-seconds", type=int, default=60, help="Intended capture interval.")
+    watch_once = watch_sub.add_parser("once", help="Run one safe local history collection.")
+    watch_once.add_argument("--root", type=Path, default=None)
+    watch_once.add_argument("--limit-files", type=int, default=None)
+    watch_start = watch_sub.add_parser("start", help="Start a background local watcher.")
+    watch_start.add_argument("--interval-seconds", type=int, default=60, help="Capture interval.")
+    watch_start.add_argument("--root", type=Path, default=None)
+    watch_start.add_argument("--limit-files", type=int, default=None)
     watch_sub.add_parser("status", help="Show watcher state.")
+    watch_logs = watch_sub.add_parser("logs", help="Show watcher logs.")
+    watch_logs.add_argument("--limit", type=int, default=80)
     watch_sub.add_parser("stop", help="Stop watcher state.")
+    watch_run = watch_sub.add_parser("_run", help=argparse.SUPPRESS)
+    watch_run.add_argument("--interval-seconds", type=int, default=60)
+    watch_run.add_argument("--root", type=Path, default=None)
+    watch_run.add_argument("--limit-files", type=int, default=None)
 
     sessions_cmd = sub.add_parser("sessions", help="Rank Codex sessions by token delta.")
     add_range_args(sessions_cmd)
@@ -137,6 +164,7 @@ def build_parser() -> argparse.ArgumentParser:
     delete_cmd = sub.add_parser("delete", help="Delete local business data.")
     delete_cmd.add_argument("--all", action="store_true", help="Delete all local business data.")
     delete_cmd.add_argument("--ledger", action="store_true", help="Delete local ledger business data.")
+    delete_cmd.add_argument("--watcher", action="store_true", help="Delete watcher state, lock, stop flag, and logs.")
     delete_cmd.add_argument("--yes", action="store_true", help="Confirm deletion without prompting.")
 
     return parser
@@ -314,8 +342,11 @@ def cmd_doctor(args: argparse.Namespace, store: Store) -> None:
 def cmd_sources(args: argparse.Namespace, store: Store) -> None:
     if args.sources_command != "doctor":
         fail("UNKNOWN_COMMAND", f"Unsupported sources command: {args.sources_command}", args.json)
-    results = run_source_doctor(store.conn, Path.cwd())
-    payload = source_doctor_payload(results)
+    local_summary = inspect_local_codex(limit_files=40) if args.deep else None
+    results = run_source_doctor(store.conn, Path.cwd(), deep=args.deep, local_codex=local_summary)
+    payload = source_doctor_payload(results, deep=args.deep)
+    if args.deep:
+        payload["local_codex"] = deep_local_payload(local_summary)
     print_payload(payload, args.json)
 
 
@@ -340,7 +371,7 @@ def cmd_ledger(args: argparse.Namespace, store: Store) -> None:
     if args.ledger_command == "import":
         try:
             if args.official_export:
-                result = import_official_export(store.conn, args.official_export)
+                result = import_official_export(store.conn, args.official_export, mapping_path=args.mapping)
                 source_type = "official_export"
             else:
                 result = import_snapshot_delta(store.conn, args.snapshot)
@@ -353,28 +384,81 @@ def cmd_ledger(args: argparse.Namespace, store: Store) -> None:
         print_payload(payload, args.json)
         return
 
+    if args.ledger_command == "inspect-export":
+        try:
+            inspection = inspect_export(args.file, args.mapping)
+        except FileNotFoundError as exc:
+            fail(errors.INVALID_SOURCE, str(exc), args.json)
+        except (ValueError, json.JSONDecodeError) as exc:
+            fail(errors.PARSE_FAILED, str(exc), args.json)
+        print_payload(inspection_payload(inspection), args.json)
+        return
+
+    if args.ledger_command == "map-export":
+        try:
+            inspection = inspect_export(args.file)
+            write_mapping_template(args.out, inspection)
+        except FileNotFoundError as exc:
+            fail(errors.INVALID_SOURCE, str(exc), args.json)
+        except (ValueError, json.JSONDecodeError) as exc:
+            fail(errors.PARSE_FAILED, str(exc), args.json)
+        print_payload({"ok": True, "mapping_path": str(args.out), **inspection_payload(inspection)}, args.json)
+        return
+
+    if args.ledger_command == "import-history":
+        try:
+            result = import_local_history(
+                store.conn,
+                root=args.root,
+                dry_run=args.dry_run,
+                limit_files=args.limit_files,
+            )
+        except FileNotFoundError as exc:
+            fail(errors.INVALID_SOURCE, str(exc), args.json)
+        except (ValueError, json.JSONDecodeError) as exc:
+            fail(errors.PARSE_FAILED, str(exc), args.json)
+        print_payload(result, args.json)
+        return
+
     fail("UNKNOWN_COMMAND", f"Unsupported ledger command: {args.ledger_command}", args.json)
 
 
 def cmd_watch(args: argparse.Namespace, store: Store) -> None:
+    if args.watch_command == "once":
+        try:
+            result = collect_once(store, root=args.root, limit_files=args.limit_files)
+        except (ValueError, json.JSONDecodeError) as exc:
+            fail(errors.PARSE_FAILED, str(exc), args.json)
+        print_payload({"ok": True, **result}, args.json)
+        return
     if args.watch_command == "start":
+        state = start_watcher(store.db_path, args.interval_seconds, root=args.root, limit_files=args.limit_files)
         write_watch_state(
             store.conn,
-            status="running",
+            status=state.get("status", "running"),
             interval_seconds=args.interval_seconds,
-            source_ids=[row["id"] for row in source_rows(store.conn) if row["enabled"]],
-            message="watch 已显式启动；P0 只记录状态，不后台读取聊天正文。",
+            source_ids=["source_local_codex_rollout"],
+            message="watcher 后台采集已启动；只读取 token 用量白名单字段。",
         )
         store.conn.commit()
-        print_payload({"ok": True, **read_watch_state(store.conn)}, args.json)
+        print_payload({"ok": True, **state}, args.json)
         return
     if args.watch_command == "status":
-        print_payload({"ok": True, **read_watch_state(store.conn)}, args.json)
+        state = read_state(store.db_path)
+        legacy = read_watch_state(store.conn)
+        print_payload({"ok": True, **legacy, **state}, args.json)
+        return
+    if args.watch_command == "logs":
+        print_payload(watcher_logs(store.db_path, limit=args.limit), args.json)
         return
     if args.watch_command == "stop":
+        state = stop_watcher(store.db_path)
         write_watch_state(store.conn, status="stopped", message="watch 已停止。")
         store.conn.commit()
-        print_payload({"ok": True, **read_watch_state(store.conn)}, args.json)
+        print_payload({"ok": True, **state}, args.json)
+        return
+    if args.watch_command == "_run":
+        run_forever(store, args.interval_seconds, root=args.root, limit_files=args.limit_files)
         return
     fail("UNKNOWN_COMMAND", f"Unsupported watch command: {args.watch_command}", args.json)
 
@@ -448,8 +532,8 @@ def cmd_dashboard(args: argparse.Namespace, store: Store) -> None:
 
 
 def cmd_delete(args: argparse.Namespace, store: Store) -> None:
-    if not args.all and not args.ledger:
-        fail(errors.DELETE_FAILED, "Use --all or --ledger to choose deletion scope.", args.json)
+    if not args.all and not args.ledger and not args.watcher:
+        fail(errors.DELETE_FAILED, "Use --all, --ledger, or --watcher to choose deletion scope.", args.json)
     if not args.yes:
         fail(errors.DELETE_FAILED, "Refusing to delete without --yes confirmation.", args.json)
     deleted = 0
@@ -457,7 +541,10 @@ def cmd_delete(args: argparse.Namespace, store: Store) -> None:
         deleted += store.delete_business_data()
     if args.ledger:
         deleted += store.delete_ledger_business_data()
-    print_payload({"ok": True, "deleted_count": deleted, "scope": "all" if args.all else "ledger"}, args.json)
+    if args.watcher:
+        deleted += delete_watcher_files(store.db_path)
+    scope = "all" if args.all else "ledger" if args.ledger else "watcher"
+    print_payload({"ok": True, "deleted_count": deleted, "scope": scope}, args.json)
 
 
 def risk_score(findings: list[object]) -> int:
