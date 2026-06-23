@@ -120,3 +120,9 @@
 - [x] 重新生成示例报告、Dashboard HTML 和 README PNG 截图。
 - [x] 验证通过：17 个单元测试、compileall、acceptance；证据目录为 `acceptance-artifacts/20260623T130952Z/`。
 - [x] 审计通过：候选文件 18 个，敏感扫描仅命中说明性文本、测试断言和 README 公开邮箱；旧模型名仅保留在测试禁止断言中。
+
+## 普通用户入口补充
+
+- [x] 将 README 顶部 Codex 桌面版入口从单句扩展为安全 demo、本地历史分析、单次 `/status` 三类可复制提示词。
+- [x] 同步 README 正文和 `docs/CODEX_DESKTOP_PROMPT.md`。
+- [x] 明确每类入口的报告路径、隐私边界和最终解释要求。

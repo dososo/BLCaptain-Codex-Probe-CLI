@@ -12,13 +12,25 @@
 
 > **Codex 桌面版最快入口**
 >
-> 打开这个仓库目录，把下面一句话发给 Codex：
+> 打开这个仓库目录，把下面任意一段发给 Codex。
+>
+> 安全体验 demo，不读取你的真实历史：
 >
 > ```text
-> 请用 BLCaptain Codex Probe CLI 打开本地 Codex token 会话账本，分析最近 7 天哪个会话消耗最多，并生成报告。
+> 请运行 scripts/setup-local.sh，只使用仓库 demo 样本生成 Codex 用量 Dashboard，不读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串或系统凭据，不上传任何数据。最后告诉我 Dashboard 和报告路径。
 > ```
 >
-> 边界要一起说清楚：只处理本仓库示例或我显式提供的本地文件；不要读取浏览器 cookie、token、钥匙串、系统凭据或聊天正文；不要上传任何数据。
+> 分析自己的本地 Codex 会话：
+>
+> ```text
+> 请用 BLCaptain Codex Probe CLI 分析我本地 Codex 最近 7 天的会话 token 用量。先 dry-run 检查可用数据源，再只读取 token 用量白名单字段，生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md 和 privacy-report.md。最后用普通话告诉我：哪个会话最贵、为什么贵、怎么降配、什么时候该停。不要读取聊天正文、浏览器 cookie、token、钥匙串或系统凭据，不要上传任何数据。
+> ```
+>
+> 只分析一次 `/status`：
+>
+> ```text
+> 我会粘贴 Codex /status，请先脱敏明显的 key、cookie、token、邮箱和手机号，保存到 .probe/my-status.txt，再用 BLCaptain Codex Probe CLI 生成 reports/my-usage-report.md，并解释为什么贵、怎么降配、什么时候该停。不要读取浏览器 cookie、token、钥匙串或系统凭据，不要上传任何数据。
+> ```
 
 > **开发者安装**
 >
@@ -244,17 +256,55 @@ codex-probe --db .probe/probe.db samples collect-rollout \
 
 ## Codex 桌面版怎么用
 
-最友好的方式，是在 **Codex 桌面版 App** 中打开这个仓库目录，然后说：
+最友好的方式，是在 **Codex 桌面版 App** 中打开这个仓库目录，然后按场景复制下面的提示词。
+
+### 只跑安全 demo
 
 ```text
-请用 BLCaptain Codex Probe CLI 打开本地 Codex token 会话账本，分析最近 7 天哪个会话消耗最多，并生成报告。
+请运行 scripts/setup-local.sh，只使用仓库 demo 样本生成 Codex 用量 Dashboard。
 
 要求：
 1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
-2. 使用 examples/ledger-samples/official-export.csv、official-export.jsonl、snapshot-delta.json 和 local-codex synthetic rollout。
-3. 生成 reports/ledger/sessions.md、session-readme-release.md、ledger-report.md、privacy-report.md 和 dashboard.html。
-4. 最后告诉我最耗 token 的会话、主要风险、建议继续/降配/停止。
-5. 不要上传任何数据，不要读取浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
+2. 只使用仓库 examples/ledger-samples/ 里的 demo 样本。
+3. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、privacy-report.md 和 watch-status.html。
+4. 最后告诉我 Dashboard 和报告路径，以及示例里哪个会话最贵。
+5. 不要读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
+6. 不要上传任何数据。
+```
+
+### 分析自己的本地 Codex 会话
+
+```text
+请用 BLCaptain Codex Probe CLI 分析我本地 Codex 最近 7 天的会话 token 用量。
+
+要求：
+1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
+2. 先运行 dry-run 检查可用数据源，不要直接导入未知内容。
+3. 只读取 Codex rollout JSONL 中的 token 用量白名单字段。
+4. 如果 dry-run 显示有可导入 token 记录，再导入本地历史。
+5. 生成 reports/ledger/sessions.md、ledger-report.md、privacy-report.md、dashboard.html 和 watch-status.html。
+6. 用普通话告诉我：哪个会话最贵、属于哪个项目、发生在哪个时间段、置信度是什么、为什么贵、怎么降配、什么时候该停。
+7. 明确说明：credits 不等同于美元、人民币或官方账单金额；置信度和建议只是治理参考。
+8. 不要读取聊天正文、prompt、assistant 输出、浏览器 cookie、token、钥匙串、系统凭据或完整私密路径。
+9. 不要上传任何数据。
+```
+
+### 只分析一次 `/status`
+
+```text
+我会粘贴 Codex /status，请用 BLCaptain Codex Probe CLI 做一次本地用量体检。
+
+要求：
+1. 先脱敏明显的 key、cookie、token、邮箱、手机号和会话标识。
+2. 保存为 .probe/my-status.txt。
+3. 生成 reports/my-usage-report.md。
+4. 用普通话解释：为什么贵、怎么降配、什么时候该停。
+5. 明确建议动作：继续、降配还是停止。
+6. 只处理我显式提供的文本，不读取浏览器 cookie、token、钥匙串、系统凭据或私密目录。
+7. 不上传任何数据。
+
+这是我的 /status：
+[把 /status 文本粘贴在这里]
 ```
 
 更多可复制提示词见 [Codex 桌面版提示词](docs/CODEX_DESKTOP_PROMPT.md)。

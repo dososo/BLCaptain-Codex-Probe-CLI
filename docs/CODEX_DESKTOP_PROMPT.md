@@ -2,26 +2,38 @@
 
 复制下面的提示词到 Codex 桌面版 App。适合你已经打开本仓库目录，并希望 Codex 自动调用本地 CLI 完成会话级账本分析、`/status` 用量体检或 Skill / 输出质量体检。
 
+## 安全体验 demo
+
+```text
+请运行 scripts/setup-local.sh，只使用仓库 demo 样本生成 Codex 用量 Dashboard。
+
+要求：
+1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
+2. 只使用仓库 examples/ledger-samples/ 里的 demo 样本。
+3. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、privacy-report.md 和 watch-status.html。
+4. 最后告诉我 Dashboard 和报告路径，以及示例里哪个会话最贵。
+5. 不要读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
+6. 不要上传任何数据。
+```
+
 ## 自动检查本地 Codex token 会话账本
 
 ```text
-请用 BLCaptain Codex Probe CLI 自动检查本地 Codex token 会话账本，导入可用历史记录，分析最近 7 天哪个会话消耗最多，并生成报告。
+请用 BLCaptain Codex Probe CLI 分析我本地 Codex 最近 7 天的会话 token 用量。
 
 目标：
 1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
-2. 初始化本地账本：codex-probe ledger init。
-3. 运行安全数据源检查：codex-probe sources doctor --deep。
-4. 先 dry-run：codex-probe ledger import-history --dry-run --source local-codex。
-5. 如果 dry-run 显示有可导入 token 记录，再执行：codex-probe ledger import-history --source local-codex。
-6. 同时验证官方导出适配：codex-probe ledger inspect-export examples/ledger-samples/official-export.jsonl。
-7. 生成：
+2. 运行安全数据源检查：codex-probe sources doctor --deep。
+3. 先 dry-run：codex-probe ledger import-history --dry-run --source local-codex。
+4. 如果 dry-run 显示有可导入 token 记录，再执行：codex-probe ledger import-history --source local-codex。
+5. 生成：
    - reports/ledger/sessions.md
-   - reports/ledger/session-readme-release.md
    - reports/ledger/ledger-report.md
    - reports/ledger/privacy-report.md
    - reports/ledger/dashboard.html
-8. 用普通话解释：哪个会话最贵、属于哪个项目、发生在哪个本机时区时间段、credits 代表什么、数据源是什么、置信度是什么、建议继续/降配/停止。
-9. 明确说明：credits 不等同于美元、人民币或官方账单金额；置信度和建议是治理参考，不替代官方 dashboard。
+   - reports/ledger/watch-status.html
+6. 用普通话解释：哪个会话最贵、属于哪个项目、发生在哪个本机时区时间段、credits 代表什么、数据源是什么、置信度是什么、建议继续/降配/停止。
+7. 明确说明：credits 不等同于美元、人民币或官方账单金额；置信度和建议是治理参考，不替代官方 dashboard。
 
 边界：
 - 只读取 Codex rollout JSONL 中的 token 用量白名单字段。

@@ -12,13 +12,25 @@
 
 > **Fastest path in the Codex desktop app**
 >
-> Open this repository folder and send this prompt to Codex:
+> Open this repository folder and send one of these prompts to Codex.
+>
+> Safe demo, without reading your real history:
 >
 > ```text
-> Please use BLCaptain Codex Probe CLI to open the local Codex token session ledger, analyze which session consumed the most tokens in the last 7 days, and generate reports.
+> Run scripts/setup-local.sh and use only the repository demo samples to generate a Codex usage dashboard. Do not read my real Codex history, browser cookies, tokens, keychains, system credentials, or chat content. Do not upload any data. Tell me the dashboard and report paths at the end.
 > ```
 >
-> Keep the boundary explicit: only process repository samples or local files I explicitly provide; do not read browser cookies, tokens, keychains, system credentials, or chat content; do not upload any data.
+> Analyze your local Codex sessions:
+>
+> ```text
+> Use BLCaptain Codex Probe CLI to analyze my local Codex session token usage for the last 7 days. First run a dry-run source check, then read only token-usage allowlist fields, generate reports/ledger/dashboard.html, sessions.md, ledger-report.md, and privacy-report.md. Finally tell me which session is most expensive, why, how to downgrade, and when to stop. Do not read chat content, browser cookies, tokens, keychains, or system credentials. Do not upload any data.
+> ```
+>
+> Analyze one `/status` only:
+>
+> ```text
+> I will paste Codex /status. First redact obvious keys, cookies, tokens, emails, and phone numbers, save it to .probe/my-status.txt, then use BLCaptain Codex Probe CLI to generate reports/my-usage-report.md and explain why it is expensive, how to downgrade, and when to stop. Do not read browser cookies, tokens, keychains, or system credentials. Do not upload any data.
+> ```
 
 > **Developer install**
 >
@@ -244,17 +256,55 @@ The output contains only token-usage allowlist fields and hashes. It does not co
 
 ## Codex Desktop Usage
 
-The friendliest path is to open this repository folder in the **Codex desktop app** and say:
+The friendliest path is to open this repository folder in the **Codex desktop app** and copy the prompt that matches your scenario.
+
+### Safe Demo Only
 
 ```text
-Please use BLCaptain Codex Probe CLI to open the local Codex token session ledger, analyze which session consumed the most tokens in the last 7 days, and generate reports.
+Run scripts/setup-local.sh and use only the repository demo samples to generate a Codex usage dashboard.
 
 Requirements:
 1. If it is not installed yet, create a local virtual environment in this project and install it.
-2. Use examples/ledger-samples/official-export.csv, official-export.jsonl, snapshot-delta.json, and the local-codex synthetic rollout.
-3. Generate reports/ledger/sessions.md, session-readme-release.md, ledger-report.md, privacy-report.md, and dashboard.html.
-4. Tell me the highest-token session, key risks, and whether I should continue, downgrade, or stop.
-5. Do not upload any data. Do not read browser cookies, tokens, keychains, system credentials, or chat content.
+2. Use only demo samples under examples/ledger-samples/.
+3. Generate reports/ledger/dashboard.html, sessions.md, ledger-report.md, privacy-report.md, and watch-status.html.
+4. Tell me the dashboard and report paths, plus which demo session consumed the most tokens.
+5. Do not read my real Codex history, browser cookies, tokens, keychains, system credentials, or chat content.
+6. Do not upload any data.
+```
+
+### Analyze My Local Codex Sessions
+
+```text
+Use BLCaptain Codex Probe CLI to analyze my local Codex session token usage for the last 7 days.
+
+Requirements:
+1. If it is not installed yet, create a local virtual environment in this project and install it.
+2. First run a dry-run source check. Do not directly import unknown content.
+3. Read only token-usage allowlist fields from Codex rollout JSONL.
+4. If the dry-run finds importable token records, import local history.
+5. Generate reports/ledger/sessions.md, ledger-report.md, privacy-report.md, dashboard.html, and watch-status.html.
+6. Tell me which session is most expensive, which project it belongs to, the local-time window, confidence level, why it is expensive, how to downgrade, and when to stop.
+7. Clearly state that credits are not USD, CNY, or official billing amounts; confidence and recommendations are governance hints.
+8. Do not read chat content, prompts, assistant outputs, browser cookies, tokens, keychains, system credentials, or full private paths.
+9. Do not upload any data.
+```
+
+### Analyze One `/status`
+
+```text
+I will paste Codex /status. Use BLCaptain Codex Probe CLI to run a local usage check.
+
+Requirements:
+1. First redact obvious keys, cookies, tokens, emails, phone numbers, and session identifiers.
+2. Save it as .probe/my-status.txt.
+3. Generate reports/my-usage-report.md.
+4. Explain why it is expensive, how to downgrade, and when to stop.
+5. Recommend one action: continue, downgrade, or stop.
+6. Only process the text I explicitly provide. Do not read browser cookies, tokens, keychains, system credentials, or private directories.
+7. Do not upload any data.
+
+Here is my /status:
+[paste /status here]
 ```
 
 More copyable prompts: [Codex desktop prompts](docs/CODEX_DESKTOP_PROMPT.md).
