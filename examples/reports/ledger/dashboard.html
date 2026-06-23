@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BLCaptain Codex Ledger</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111827; background: #f4fbf7; }
+    main { max-width: 1180px; margin: 0 auto; padding: 42px 28px 64px; }
+    h1 { font-size: 44px; margin: 0 0 10px; letter-spacing: 0; }
+    p { color: #475569; font-size: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 28px 0; }
+    .stat, .panel { background: white; border: 1px solid #bbf7d0; border-radius: 8px; padding: 22px; }
+    .stat strong { display: block; font-size: 34px; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #bbf7d0; border-radius: 8px; overflow: hidden; }
+    th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-size: 15px; }
+    th { background: #ecfdf5; color: #065f46; }
+    .badge { border-radius: 999px; padding: 4px 10px; font-weight: 700; }
+    .exact { background: #d9ff72; }
+    .high { background: #bbf7d0; }
+    .medium { background: #fde68a; }
+    .low { background: #fecaca; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Codex 会话级 Token 账本</h1>
+    <p>时间范围：7d。所有数据来自本地账本，不上传云端，不读取聊天正文、cookie、token 或系统凭据。</p>
+    <section class="grid">
+      <div class="stat">会话数<strong>6</strong></div>
+      <div class="stat">token delta<strong>289,267</strong></div>
+      <div class="stat">credits delta<strong>35.86</strong></div>
+    </section>
+    <section class="panel">
+      <h2>最耗 token 的会话</h2>
+      <table>
+        <thead>
+          <tr><th>会话</th><th>项目</th><th>token delta</th><th>credits</th><th>置信度</th><th>建议</th></tr>
+        </thead>
+        <tbody>
+                  <tr>
+          <td>README 发布准备</td>
+          <td>Codex Probe CLI</td>
+          <td>142,047</td>
+          <td>18.42</td>
+          <td><span class="badge exact">exact</span></td>
+          <td>停止当前长会话，保存成果后拆到新会话</td>
+        </tr>
+        <tr>
+          <td>小红书素材生成</td>
+          <td>Codex Probe CLI</td>
+          <td>61,320</td>
+          <td>7.80</td>
+          <td><span class="badge exact">exact</span></td>
+          <td>降配或拆分后续任务，避免继续放大上下文</td>
+        </tr>
+        <tr>
+          <td>Skill 优化验收</td>
+          <td>BLCaptain Skills</td>
+          <td>38,900</td>
+          <td>4.90</td>
+          <td><span class="badge exact">exact</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
+        <tr>
+          <td>CI 修复会话</td>
+          <td>Codex Probe CLI</td>
+          <td>22,400</td>
+          <td>2.44</td>
+          <td><span class="badge high">high</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
+        <tr>
+          <td>竞品调研会话</td>
+          <td>Codex Research</td>
+          <td>18,200</td>
+          <td>1.80</td>
+          <td><span class="badge medium">medium</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
+        <tr>
+          <td>未知全局额度变化</td>
+          <td>未归属项目</td>
+          <td>6,400</td>
+          <td>0.50</td>
+          <td><span class="badge low">low</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

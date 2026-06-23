@@ -106,6 +106,76 @@ class CliE2ETests(unittest.TestCase):
             self.assertNotEqual(after_delete.returncode, 0)
             self.assertIn("NO_USAGE_DATA", after_delete.stderr)
 
+    def test_ledger_flow(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            db = tmp_path / "ledger.db"
+            session_report = tmp_path / "session.md"
+            ledger_report = tmp_path / "ledger.md"
+            privacy_report = tmp_path / "privacy.md"
+            dashboard = tmp_path / "dashboard.html"
+
+            initialized = self.run_probe("--db", str(db), "--json", "ledger", "init")
+            self.assertTrue(json.loads(initialized.stdout)["ok"])
+
+            doctor = self.run_probe("--db", str(db), "--json", "sources", "doctor")
+            doctor_payload = json.loads(doctor.stdout)
+            self.assertEqual(doctor_payload["max_confidence"], "exact")
+
+            official = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "ledger",
+                "import",
+                "--official-export",
+                "examples/ledger-samples/official-export.csv",
+            )
+            self.assertEqual(json.loads(official.stdout)["sessions"], 3)
+
+            snapshots = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "ledger",
+                "import",
+                "--snapshot",
+                "examples/ledger-samples/snapshot-delta.json",
+            )
+            self.assertEqual(json.loads(snapshots.stdout)["snapshots"], 5)
+
+            ranked = self.run_probe("--db", str(db), "--json", "sessions", "--range", "7d")
+            ranked_payload = json.loads(ranked.stdout)
+            self.assertEqual(ranked_payload["sessions"][0]["session_id"], "session_readme_release")
+            confidences = {item["confidence_level"] for item in ranked_payload["sessions"]}
+            self.assertTrue({"exact", "high", "medium", "low"}.issubset(confidences))
+
+            self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "session-report",
+                "session_readme_release",
+                "--out",
+                str(session_report),
+            )
+            self.assertIn("Codex 单会话用量详情", session_report.read_text(encoding="utf-8"))
+            self.assertIn("高消耗区间", session_report.read_text(encoding="utf-8"))
+
+            self.run_probe("--db", str(db), "--json", "ledger-report", "--range", "30d", "--out", str(ledger_report))
+            self.assertIn("Codex 会话级 Token 总账报告", ledger_report.read_text(encoding="utf-8"))
+
+            self.run_probe("--db", str(db), "--json", "privacy", "inspect", "--out", str(privacy_report))
+            self.assertIn("不读取", privacy_report.read_text(encoding="utf-8"))
+
+            self.run_probe("--db", str(db), "--json", "dashboard", "--range", "7d", "--out", str(dashboard))
+            html = dashboard.read_text(encoding="utf-8")
+            self.assertIn("Codex 会话级 Token 账本", html)
+            self.assertNotIn("cookie=", html)
+
+            deleted = self.run_probe("--db", str(db), "--json", "delete", "--ledger", "--yes")
+            self.assertTrue(json.loads(deleted.stdout)["ok"])
+
 
 if __name__ == "__main__":
     unittest.main()

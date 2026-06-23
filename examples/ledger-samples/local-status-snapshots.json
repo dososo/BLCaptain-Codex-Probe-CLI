@@ -1,0 +1,24 @@
+{
+  "snapshots": [
+    {
+      "session_id": "session_local_status",
+      "title": "本地状态采集样本",
+      "project": "Codex Probe CLI",
+      "captured_at": "2026-06-23T05:00:00+00:00",
+      "total_tokens": 16800,
+      "credits": 1.40,
+      "context_remaining_percent": 93,
+      "source_type": "local_status"
+    },
+    {
+      "session_id": "session_local_status",
+      "title": "本地状态采集样本",
+      "project": "Codex Probe CLI",
+      "captured_at": "2026-06-23T05:40:00+00:00",
+      "total_tokens": 31900,
+      "credits": 2.95,
+      "context_remaining_percent": 88,
+      "source_type": "local_status"
+    }
+  ]
+}

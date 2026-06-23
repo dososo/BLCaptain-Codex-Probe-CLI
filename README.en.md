@@ -1,26 +1,26 @@
 # BLCaptain Codex Probe CLI
 
-> A local-first, read-only CLI for Codex usage governance and Skill / output quality checks: explain why a task is expensive, how to downgrade, and when to stop.
+> A local-first Codex session-level token ledger, usage governance, and Skill / output inspection CLI. It helps you locate which session, project, and time window consumed tokens or credits, then explains why it is expensive, how to downgrade, and when to stop.
 
 [中文 README](README.md)
 
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
-![Release](https://img.shields.io/badge/Release-v0.3.2-4b5563.svg)
+![Release](https://img.shields.io/badge/Release-v0.4.0-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
-> **Fastest path**:
+> **Fastest path in the Codex desktop app**
 >
-> You do not need to understand the CLI first. Open this repository folder in the Codex desktop app, then paste the [Codex desktop prompt](docs/CODEX_DESKTOP_PROMPT.md) into Codex.
+> Open this repository folder and send this prompt to Codex:
 >
 > ```text
-> Please use BLCaptain Codex Probe CLI to analyze the /status text I provide below:
-> why it is expensive, how to downgrade, and when to stop.
-> Only process text I explicitly provide. Do not read browsers, cookies, tokens, or private folders.
+> Please use BLCaptain Codex Probe CLI to open the local Codex token session ledger, analyze which session consumed the most tokens in the last 7 days, and generate reports.
 > ```
+>
+> Keep the boundary explicit: only process repository samples or local files I explicitly provide; do not read browser cookies, tokens, keychains, system credentials, or chat content; do not upload any data.
 
-> **Developer install**:
+> **Developer install**
 >
 > ```bash
 > git clone https://github.com/dososo/BLCaptain-Codex-Probe-CLI.git
@@ -28,41 +28,50 @@
 > python3 -m venv .venv
 > . .venv/bin/activate
 > python -m pip install .
+> codex-probe --version
 > ```
 
 ---
 
-## Screenshots
+## What It Is
+
+BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill, and it is not a replacement for the official OpenAI usage dashboard.
+
+In v0.4.0, the main product moves from single `/status` analysis to a **local Codex session-level token ledger**. The primary question is:
+
+> Which Codex session, project, and time window consumed the tokens or credits?
+
+It also keeps two earlier workflows:
+
+1. **Task-level `/status` usage reports**: explain why one task is expensive, how to downgrade, and when to stop.
+2. **Skill / output inspection**: check AI-smell, plugin risk, sensitive data, and missing privacy boundaries.
+
+It does not promise savings, bypass quotas, read login state, or replace official billing. Think of it as a local ledger and brake pedal for long Codex sessions.
+
+## Output Preview
+
+### Session-Level Token Ledger
+
+The local ledger ranks sessions by time range. Each row includes token delta, credits delta, project, source, confidence, and recommended action.
+
+Example reports:
+
+- [Session ranking report](examples/reports/ledger/sessions.md)
+- [Single-session detail report](examples/reports/ledger/session-readme-release.md)
+- [Ledger summary report](examples/reports/ledger/ledger-report.md)
+- [Privacy audit report](examples/reports/ledger/privacy-report.md)
+- [Local HTML dashboard](examples/reports/ledger/dashboard.html)
 
 <p>
-  <img src="assets/screenshots/codex-desktop-prompt.svg" alt="Codex desktop one-prompt workflow" width="100%">
+  <img src="assets/screenshots/ledger-dashboard.png" alt="Local Codex session-level token ledger dashboard" width="100%">
 </p>
 
-In the Codex desktop app, one prompt can ask Codex to install locally, import sample data, generate a doctor summary, inspect a Skill, and verify deletion.
+### Existing Workflows: Task Report and Skill Inspection
 
 | Task-level usage report | Skill / output quality inspection |
 |---|---|
 | <img src="assets/screenshots/usage-report-preview.svg" alt="Task-level usage report preview" width="100%"> | <img src="assets/screenshots/skill-lint-preview.svg" alt="Skill / output quality inspection preview" width="100%"> |
-| Puts `total_tokens`, context remaining, 5-hour / 7-day quota, and the continue / downgrade / stop decision in one view. See [examples/reports/usage-report.md](examples/reports/usage-report.md). | Flags AI-smell, plugin risk, sensitive data, and missing privacy boundaries, while showing redacted evidence snippets. See [examples/reports/skill-lint-report.md](examples/reports/skill-lint-report.md). |
-
-<p>
-  <img src="assets/screenshots/status-sample-library.svg" alt="Redacted /status sample library covering continue, downgrade, and stop decisions" width="100%">
-</p>
-
-`examples/status-samples/` is a redacted sample library that covers healthy continue, context-heavy downgrade, short-window pressure, low 7-day quota, and English-format `/status` scenarios. These samples are part of automated tests, so parsing and decision output are not README-only claims.
-
-## What It Is
-
-BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill, and it is not a replacement for the official OpenAI usage dashboard. The real point is not "one more command"; it is to help Codex users notice earlier: **why this task is expensive, how to downgrade, and when to stop**.
-
-It focuses on two P0 workflows:
-
-1. **Task-level token and quota governance**: import a user-provided `/status` text or manual JSON sample, generate a task-level usage report, and explain where the cost comes from, whether the task is close to budget, whether context / 5-hour / 7-day quota is healthy, and whether the next move should be continue, downgrade, split, or stop.
-2. **Skill / output quality inspection**: import a Skill file, prompt, or AI-generated output, and check for AI-smell, plugin risk, missing acceptance criteria, missing privacy boundaries, and sensitive information leakage.
-
-This is a **Watch / validation-stage v0.3.2** project. It is suitable for real local trials and open-source validation, but it does not promise savings, unlimited quota, quota boosts, or business success.
-
-If you are not a developer, treat it as a copyable workflow: paste `/status` into Codex and ask Codex to run the local CLI for you. The CLI is the underlying tool; the user entry point is one prompt.
+| Puts `total_tokens`, context remaining, 5-hour / 7-day quota, and the continue / downgrade / stop decision in one view. | Flags AI-smell, plugin risk, sensitive data, and missing privacy boundaries with redacted evidence snippets. |
 
 ## Naming
 
@@ -77,51 +86,116 @@ If you are not a developer, treat it as a copyable workflow: paste `/status` int
 
 Why not call it a Skill: this project is not an instruction package loaded by an Agent. It is a CLI that can be used by humans or Agents. It can inspect Skills, but it is not itself a Skill.
 
-## Why This Exists
-
-Many Codex users do not mainly struggle with prompt writing. They struggle with process control:
-
-1. **They do not know why a task became expensive**: a task ends, the context is huge, output is long, or the selected mode was heavier than needed, but there is no task-level explanation.
-2. **They do not know how to downgrade**: quota is getting tight, but it is unclear whether to split the task, reuse cached input, switch model, or stop and preserve the current result.
-3. **Skill and output quality are inconsistent**: wrong plugins, generic AI tone, and weak delivery artifacts create extra manual cleanup.
-4. **Safety boundaries are unclear**: examples may include API keys, cookies, phone numbers, emails, or phrases around bypassing login, account sharing, or avoiding billing.
-
-The principle is simple: **only analyze local materials explicitly provided by the user; only provide reviewable suggestions; never proxy, bypass, or upload.**
-
-## What You Get
-
-| Area | Output |
-|---|---|
-| **Input** | `/status` text, manual JSON, Skill files, prompts, AI output text |
-| **Storage** | Local SQLite database, controlled by `--db` |
-| **Usage analysis** | Tokens, credits, context remaining, 5-hour quota, 7-day quota, budget risk, downgrade advice, stop advice |
-| **Quality inspection** | AI-smell, plugin risk, missing acceptance criteria, missing privacy boundaries, redaction |
-| **Reports** | Decision cards, Markdown reports, JSON command output, reviewable `evidence_id` values |
-| **Deletion** | `delete --all --yes` clears local business data while keeping minimal audit logs |
-
-## What It Solves
-
-Good fits:
-
-- You want to understand why a Codex task consumed many tokens or credits.
-- You want to make "continue / downgrade / stop" a reviewable decision.
-- You want to inspect a Skill or AI output before publishing or delivering it.
-- You want a local tool for light developers, creators, or internal teams.
-- You want privacy boundaries and do not want to upload usage data, Skills, or outputs.
-
-Poor fits:
-
-- You want to replace the official OpenAI usage dashboard or `/status`.
-- You want the tool to automatically read Codex login state, browser cookies, system credentials, or production data.
-- You want to proxy, intercept, or modify Codex requests.
-- You want to bypass login, phone verification, subscriptions, region restrictions, or official billing.
-- You want guaranteed savings, unlimited quota, quota boosts, or business success.
-
 ## Core Capabilities
 
-### 1. One-Command Doctor
+| Capability | Command | Result |
+|---|---|---|
+| Safe source check | `codex-probe sources doctor` | Shows available sources, maximum confidence, and privacy boundary |
+| Initialize ledger | `codex-probe ledger init` | Creates SQLite schema and privacy audit record |
+| Import official export | `codex-probe ledger import --official-export <file>` | exact-confidence session attribution |
+| Import local snapshots | `codex-probe ledger import --snapshot <file>` | high / medium / low-confidence delta attribution |
+| Rank sessions | `codex-probe sessions --range 7d` | Finds the most expensive sessions |
+| Session detail | `codex-probe session-report <session_id>` | Shows timeline, snapshots, and high-consumption windows |
+| Ledger report | `codex-probe ledger-report --range 30d` | Summarizes tokens, credits, projects, and actions |
+| Local dashboard | `codex-probe dashboard` | Generates a readable local HTML page |
+| Privacy audit | `codex-probe privacy inspect` | Shows enabled sources, read fields, and audit logs |
+| Delete ledger data | `codex-probe delete --ledger --yes` | Deletes ledger business data while keeping a non-sensitive audit trail |
 
-If you want a complete local check, start with `doctor`:
+Confidence levels:
+
+- `exact`: a user-provided official export contains session ID and token data.
+- `high`: local structured snapshots can attribute delta to one session.
+- `medium`: multiple sessions or overlapping windows require metadata-based estimation.
+- `low`: only global quota movement is available, so it is not an exact bill.
+
+## Three-Minute Example
+
+```bash
+mkdir -p .probe reports/ledger
+
+codex-probe --db .probe/ledger.db ledger init
+
+codex-probe --db .probe/ledger.db sources doctor
+
+codex-probe --db .probe/ledger.db ledger import \
+  --official-export examples/ledger-samples/official-export.csv
+
+codex-probe --db .probe/ledger.db ledger import \
+  --snapshot examples/ledger-samples/snapshot-delta.json
+
+codex-probe --db .probe/ledger.db sessions \
+  --range 7d \
+  --out reports/ledger/sessions.md
+
+codex-probe --db .probe/ledger.db session-report \
+  session_readme_release \
+  --out reports/ledger/session-readme-release.md
+
+codex-probe --db .probe/ledger.db ledger-report \
+  --range 30d \
+  --out reports/ledger/ledger-report.md
+
+codex-probe --db .probe/ledger.db dashboard \
+  --range 7d \
+  --out reports/ledger/dashboard.html
+
+codex-probe --db .probe/ledger.db privacy inspect \
+  --out reports/ledger/privacy-report.md
+```
+
+Delete local ledger business data:
+
+```bash
+codex-probe --db .probe/ledger.db delete --ledger --yes
+```
+
+## Time Ranges
+
+The ledger is not hardcoded to the last 7 days:
+
+```bash
+codex-probe sessions --range today
+codex-probe sessions --range yesterday
+codex-probe sessions --since 24h
+codex-probe sessions --range 3d
+codex-probe sessions --range 7d
+codex-probe sessions --range 30d
+codex-probe sessions --from 2026-06-01 --to 2026-06-23
+```
+
+## Sample Data
+
+| File | Purpose |
+|---|---|
+| `examples/ledger-samples/official-export.csv` | Redacted official-export sample covering exact confidence |
+| `examples/ledger-samples/snapshot-delta.json` | Redacted snapshot sample covering high / medium / low confidence |
+| `examples/ledger-samples/local-status-snapshots.json` | local_status allowlist example |
+| `examples/reports/ledger/` | v0.4.0 ledger sample reports |
+| `examples/status-samples/` | Earlier `/status` sample library |
+| `examples/risky-skill.md` | Risky Skill / output inspection sample |
+
+Samples should be redacted and should not contain real cookies, tokens, emails, phone numbers, or private user paths.
+
+## Codex Desktop Usage
+
+The friendliest path is to open this repository folder in the **Codex desktop app** and say:
+
+```text
+Please use BLCaptain Codex Probe CLI to open the local Codex token session ledger, analyze which session consumed the most tokens in the last 7 days, and generate reports.
+
+Requirements:
+1. If it is not installed yet, create a local virtual environment in this project and install it.
+2. Use examples/ledger-samples/official-export.csv and examples/ledger-samples/snapshot-delta.json.
+3. Generate reports/ledger/sessions.md, session-readme-release.md, ledger-report.md, privacy-report.md, and dashboard.html.
+4. Tell me the highest-token session, key risks, and whether I should continue, downgrade, or stop.
+5. Do not upload any data. Do not read browser cookies, tokens, keychains, system credentials, or chat content.
+```
+
+More copyable prompts: [Codex desktop prompts](docs/CODEX_DESKTOP_PROMPT.md).
+
+## Existing Workflow: `/status` Usage Check
+
+If you only want to analyze one `/status` output:
 
 ```bash
 codex-probe --db .probe/demo.db doctor \
@@ -131,72 +205,19 @@ codex-probe --db .probe/demo.db doctor \
   --out-dir reports/doctor
 ```
 
-It writes three local reports:
-
-- `reports/doctor/doctor-report.md`: summary, privacy boundaries, and recommended action.
-- `reports/doctor/usage-report.md`: task-level usage report and decision card.
-- `reports/doctor/skill-lint-report.md`: Skill / output quality inspection.
-
-`doctor` only reads files explicitly passed through `--status`, `--manual-json`, or `--skill`. It does not scan system directories.
-
-### 2. Import Usage Data
-
-If you use the **Codex desktop app**, you do not need to understand the commands first. Open this repository folder in Codex and say:
-
-```text
-Please use BLCaptain Codex Probe CLI to run a local usage analysis for me:
-1. If it is not installed yet, create a local virtual environment in this project and install it.
-2. Run doctor with examples/status-codex-desktop.txt and examples/risky-skill.md.
-3. Write reports to reports/doctor/.
-4. Tell me the doctor report path, key risks, and whether I should continue, downgrade, or stop.
-Do not upload any data. Do not read browser cookies, tokens, or system credentials.
-```
-
-If you want to analyze your own `/status`, paste the text into Codex and say:
-
-```text
-This is my Codex /status output. Please redact obvious keys, cookies, tokens, emails, and phone numbers first,
-save it as .probe/my-status.txt, then use BLCaptain Codex Probe CLI to generate a usage report.
-Write the report to reports/my-usage-report.md and explain in plain language:
-why it is expensive, how to downgrade, and when to stop.
-```
-
-Import a `/status` text sample:
+Or generate only a usage report:
 
 ```bash
 codex-probe --db .probe/demo.db import \
   --status examples/status-codex-desktop.txt \
   --goal "Generate delivery report"
-```
 
-Import a manual JSON sample:
-
-```bash
-codex-probe --db .probe/demo.db import \
-  --manual-json examples/manual-usage.json \
-  --goal "Manual sample acceptance"
-```
-
-The CLI only reads local files explicitly provided by the user. It does not scan system directories.
-
-### 3. Generate a Task-Level Usage Report
-
-```bash
 codex-probe --db .probe/demo.db usage-report \
   --budget-tokens 100000 \
   --out reports/usage-report.md
 ```
 
-The report explains:
-
-- Model, mode, input tokens, output tokens, cached tokens, and total tokens.
-- Context remaining, used / limit tokens, 5-hour quota, 7-day quota, and reset time.
-- A top decision card: recommended action, why it is expensive, how to downgrade, and when to stop.
-- Whether the task is over budget or close to budget.
-- Whether to downgrade, split the task, reuse cached input, or stop non-essential work.
-- PRD-linked `evidence_id` values such as `E-011`, `E-012`, and `E-013`.
-
-### 4. Inspect Skills or AI Outputs
+## Existing Workflow: Skill / Output Inspection
 
 ```bash
 codex-probe --db .probe/demo.db skill-lint \
@@ -212,125 +233,19 @@ The inspection checks:
 - Missing privacy and deletion boundaries.
 - API keys, cookies, tokens, emails, phone numbers, and similar sensitive data.
 
-### 5. Delete Local Data
+## Data and Privacy
 
-```bash
-codex-probe --db .probe/demo.db delete --all --yes
-```
+- Does not log in to OpenAI or Codex.
+- Does not read browser cookies, tokens, keychains, or system credentials.
+- Does not proxy, intercept, or modify Codex requests.
+- Does not read chat content.
+- Does not upload data to the cloud.
+- Does not start background collection by default; `watch start` must be explicit.
+- `dashboard` writes a local HTML file and does not start a cloud service.
+- `delete --ledger --yes` deletes ledger business data while keeping audit logs without sensitive raw content.
+- Does not promise savings, unlimited quota, or replacement of the official dashboard or bill.
 
-After deletion, a usage report should return:
-
-```json
-{
-  "ok": false,
-  "error": {
-    "code": "NO_USAGE_DATA"
-  }
-}
-```
-
-## Installation
-
-Requirements:
-
-- Python 3.10+
-- Local command-line access
-- No OpenAI API key required
-- No Codex login required
-
-Install locally:
-
-```bash
-git clone https://github.com/dososo/BLCaptain-Codex-Probe-CLI.git
-cd BLCaptain-Codex-Probe-CLI
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install .
-codex-probe --version
-```
-
-Available commands:
-
-```bash
-codex-probe --version
-blcaptain-codex-probe --version
-probe --version
-```
-
-## Usage
-
-The friendliest path is to open this repository folder in the **Codex desktop app** and say:
-
-```text
-Please use BLCaptain Codex Probe CLI to run a complete local acceptance flow:
-install dependencies, run doctor with examples/status-codex-desktop.txt and examples/risky-skill.md,
-and generate reports/doctor/doctor-report.md, usage-report.md, and skill-lint-report.md.
-When done, only give me the report paths, key risks, whether I should continue, downgrade, or stop, and the verification result.
-```
-
-If you already have your own `/status` or Skill text, say:
-
-```text
-Please use BLCaptain Codex Probe CLI to analyze the material I provide below.
-Goal: explain why this Codex task is expensive, how to downgrade, and when to stop;
-also inspect the Skill / output for AI-smell, plugin risk, missing acceptance criteria, or sensitive data.
-Only process text I explicitly provide. Do not read browsers, login state, cookies, tokens, or private folders.
-```
-
-Codex can run the following commands for you. You can also run them manually.
-
-Minimal workflow:
-
-```bash
-mkdir -p .probe reports
-
-codex-probe --db .probe/demo.db doctor \
-  --status examples/status-codex-desktop.txt \
-  --skill examples/risky-skill.md \
-  --budget-tokens 100000 \
-  --out-dir reports/doctor
-```
-
-If you want to run each step separately:
-
-```bash
-codex-probe --db .probe/demo.db import \
-  --status examples/status-codex-desktop.txt \
-  --goal "Generate delivery report"
-
-codex-probe --db .probe/demo.db usage-report \
-  --budget-tokens 100000 \
-  --out reports/usage-report.md
-
-codex-probe --db .probe/demo.db skill-lint \
-  examples/risky-skill.md \
-  --out reports/skill-lint-report.md
-
-codex-probe --db .probe/demo.db delete --all --yes
-```
-
-You get:
-
-1. A doctor summary report.
-2. A task-level usage self-check report with a decision card.
-3. A Skill / output quality inspection report.
-4. JSON command output for Agents or scripts.
-5. A verifiable `NO_USAGE_DATA` result after deletion.
-
-## Workflow: Eight-Step Local Acceptance
-
-The project is built and accepted through eight steps:
-
-1. **Research**: read the PRD, samples, user scenarios, and boundaries.
-2. **Analysis**: define input formats, risk rules, error codes, and report structure.
-3. **Plan**: split P0 commands, tests, acceptance scripts, and release materials.
-4. **Development**: implement the CLI, SQLite storage, report rendering, redaction, and deletion.
-5. **Verification**: run end-to-end flows for import, report, inspection, and deletion.
-6. **Testing**: run unit tests and equivalent static checks.
-7. **Audit acceptance**: check README, LICENSE, CHANGELOG, CI, privacy docs, and release checklist.
-8. **Summary**: record completion status, residual risks, and next-version suggestions.
-
-If a step fails, inspect logs and evidence first instead of guessing.
+See [Privacy and Security](docs/PRIVACY_SECURITY.md).
 
 ## Local Commands
 
@@ -361,51 +276,23 @@ acceptance-artifacts/<timestamp>/
 ├── usage-report.md
 ├── skill-lint-report.md
 ├── doctor/
-│   ├── doctor-report.md
-│   ├── usage-report.md
-│   └── skill-lint-report.md
+├── ledger-sessions.md
+├── ledger-session-report.md
+├── ledger-report.md
+├── ledger-privacy-report.md
+├── ledger-dashboard.html
 └── probe.db
 ```
 
 `acceptance-artifacts/` is ignored by Git and should not be committed.
-
-## Examples and Prompts
-
-| File | Purpose |
-|---|---|
-| `docs/CODEX_DESKTOP_PROMPT.md` | Copyable workflow prompts for the Codex desktop app |
-| `docs/SOCIAL_POSTS.md` | Draft posts for X and Xiaohongshu |
-| `examples/status.txt` | `/status` text sample |
-| `examples/status-codex-desktop.txt` | Redacted Codex desktop `/status` sample |
-| `examples/status-samples/` | Redacted `/status` sample library for continue, downgrade, and stop decisions |
-| `examples/manual-usage.json` | Manual JSON usage sample |
-| `examples/risky-skill.md` | Risky sample with AI-smell, plugin risk, and fake secrets |
-| `examples/clean-skill.md` | Safer Skill sample |
-| `examples/optimized-skill.md` | Optimized Skill sample based on the inspection report |
-| `examples/reports/doctor/doctor-report.md` | One-command `doctor` summary report |
-| `examples/reports/optimized-skill-lint-report.md` | Inspection report for the optimized Skill |
-
-The example secret is fake. Reports redact common API keys, tokens, cookies, emails, and phone numbers.
-
-## Data and Privacy
-
-- Does not log in to OpenAI or Codex.
-- Does not read browser cookies, tokens, keychains, or system credentials.
-- Does not proxy, intercept, or modify Codex requests.
-- Does not bypass login, phone verification, subscriptions, regions, or official billing.
-- Does not upload data to the cloud.
-- Does not automatically install, enable, or modify Skills.
-- Only processes local files explicitly provided by the user.
-- Local business data can be deleted with `delete --all --yes`.
-
-See [Privacy and Security](docs/PRIVACY_SECURITY.md).
 
 ## Directory Structure
 
 ```text
 BLCaptain-Codex-Probe-CLI/
 ├── assets/screenshots/               # README screenshots
-├── examples/reports/                  # Real sample reports
+├── examples/ledger-samples/          # Redacted ledger samples
+├── examples/reports/ledger/          # Ledger sample reports
 ├── README.md                         # Chinese README
 ├── README.en.md                      # English README
 ├── CHANGELOG.md                      # Changelog
@@ -416,51 +303,33 @@ BLCaptain-Codex-Probe-CLI/
 │   ├── PRIVACY_SECURITY.md           # Privacy and security boundaries
 │   ├── RELEASE_CHECKLIST.md          # Release checklist
 │   └── SOCIAL_POSTS.md               # Social post drafts
-├── examples/                         # Reproducible samples
 ├── scripts/
 │   └── run_acceptance.py             # End-to-end acceptance script
 ├── src/codex_usage_skill_probe/       # CLI source code
 └── tests/                            # Unit and end-to-end tests
 ```
 
-## Acceptance Criteria
+## Release Acceptance
 
-Before v0.3.2 release:
+Before v0.4.0 release:
 
 - The project can be installed from a clean environment with `python -m pip install .`.
-- `codex-probe --version` returns the current version.
-- The CLI can import `/status` or manual JSON samples.
-- The CLI can use `doctor` to generate a summary report, usage report, and Skill inspection report in one command.
-- The CLI can generate a task-level usage report.
-- The CLI can generate a Skill / output quality inspection report.
-- The CLI can delete local business data.
-- After deletion, another report returns `NO_USAGE_DATA`.
-- Reports do not leak full API keys, cookies, tokens, emails, or phone numbers.
-- README, LICENSE, CHANGELOG, CI, privacy docs, and release checklist are present.
-
-Current local acceptance evidence:
-
-```text
-PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests
-........
-Ran 9 tests
-OK
-
-PYTHONDONTWRITEBYTECODE=1 python3 -m compileall src tests scripts/run_acceptance.py
-OK
-
-PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_acceptance.py
-acceptance passed: acceptance-artifacts/20260622T104904Z
-```
+- `codex-probe --version` returns `0.4.0`.
+- The CLI can import official-export and snapshot samples.
+- The CLI can generate session ranking, single-session report, ledger report, privacy audit report, and local HTML dashboard.
+- Every session has a source and `exact/high/medium/low` confidence.
+- The CLI can delete local ledger business data.
+- Reports do not leak full API keys, cookies, tokens, emails, phone numbers, or private user paths.
+- README, English README, CHANGELOG, CI, privacy docs, and release checklist are present.
 
 ## Roadmap
 
-- Continue expanding the real `/status` sample library.
+- Expand the redacted sample library for more `/status` and export formats.
+- Add project-level aggregation and weekly reports.
 - Add HTML / JSON report schema snapshot tests.
 - Add finer-grained Skill risk rules.
-- Add multi-task usage trend comparison.
-- Add report template customization.
 - Provide lighter installation options such as Homebrew or uvx.
+- Evaluate a menu bar app or desktop component without reading login state.
 
 ## FAQ
 
@@ -470,23 +339,23 @@ A: No. It is a CLI. It can inspect Skills or output text, but it is not an Agent
 
 **Q: Does it require an OpenAI API key?**
 
-A: No. It only analyzes local text or JSON explicitly provided by the user.
+A: No. It only analyzes local files and samples explicitly provided by the user.
 
-**Q: Can it directly read my Codex usage?**
+**Q: Can it read my official bill directly?**
 
-A: No. It does not read login state or the official dashboard. You provide `/status` text or manual JSON.
+A: No. P0 supports user-provided official exports or local snapshots. It does not read login state, browser cookies, or hidden official dashboard data.
+
+**Q: Can it know the exact token usage of every real session?**
+
+A: Only when the source itself provides session ID and token data. Snapshots and global quota movement are labeled `high`, `medium`, or `low`.
 
 **Q: Can it guarantee lower cost?**
 
-A: No. It explains risk and suggests downgrade or stop actions. Final decisions remain yours.
+A: No. It locates consumption, explains risk, and suggests downgrade or stop actions. Final decisions remain yours.
 
 **Q: Does it store my data?**
 
-A: It stores data only in the local SQLite database path you provide. Use `delete --all --yes` to delete business data.
-
-**Q: Why keep the `probe` command?**
-
-A: `codex-probe` is the primary public command. `probe` is a short alias for local convenience and script compatibility.
+A: It stores data only in the local SQLite database path you provide. Use `delete --ledger --yes` to delete ledger business data, or `delete --all --yes` for the earlier business tables.
 
 ## Author
 

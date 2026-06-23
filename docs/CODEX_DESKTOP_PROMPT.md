@@ -1,6 +1,32 @@
 # Codex 桌面版提示词
 
-复制下面的提示词到 Codex 桌面版 App。适合你已经打开本仓库目录，并希望 Codex 自动调用本地 CLI 完成分析。
+复制下面的提示词到 Codex 桌面版 App。适合你已经打开本仓库目录，并希望 Codex 自动调用本地 CLI 完成会话级账本分析、`/status` 用量体检或 Skill / 输出质量体检。
+
+## 打开本地 Codex token 会话账本
+
+```text
+请用 BLCaptain Codex Probe CLI 打开本地 Codex token 会话账本，分析最近 7 天哪个会话消耗最多，并生成报告。
+
+目标：
+1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
+2. 初始化本地账本：codex-probe ledger init。
+3. 运行安全数据源检查：codex-probe sources doctor。
+4. 使用 examples/ledger-samples/official-export.csv 和 examples/ledger-samples/snapshot-delta.json 导入示例数据。
+5. 生成：
+   - reports/ledger/sessions.md
+   - reports/ledger/session-readme-release.md
+   - reports/ledger/ledger-report.md
+   - reports/ledger/privacy-report.md
+   - reports/ledger/dashboard.html
+6. 用普通话解释：哪个会话最贵、属于哪个项目、发生在哪个时间段、数据源是什么、置信度是什么、建议继续/降配/停止。
+
+边界：
+- 只处理本仓库示例或我显式提供的本地文件。
+- 不读取浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
+- 不抓包，不代理，不修改 Codex 请求。
+- 不上传任何数据。
+- 不承诺省钱、无限额度或额度提升。
+```
 
 ## 分析自己的 `/status`
 
@@ -31,12 +57,13 @@
 请用 BLCaptain Codex Probe CLI 跑一次本地示例：
 
 1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
-2. 使用 examples/status-codex-desktop.txt 和 examples/risky-skill.md 跑 codex-probe doctor。
-3. 报告放到 reports/doctor/。
-4. 删除本地业务数据后确认再次生成报告返回 NO_USAGE_DATA。
-5. 最后告诉我 doctor 报告路径、主要风险、建议继续、降配还是停止。
+2. 使用 examples/ledger-samples/official-export.csv 和 examples/ledger-samples/snapshot-delta.json 跑会话级账本。
+3. 使用 examples/status-codex-desktop.txt 和 examples/risky-skill.md 跑 codex-probe doctor。
+4. 报告放到 reports/ledger/ 和 reports/doctor/。
+5. 删除本地业务数据后确认再次生成旧版用量报告返回 NO_USAGE_DATA。
+6. 最后告诉我报告路径、主要风险、建议继续、降配还是停止。
 
-不要上传任何数据，不要读取浏览器 cookie、token 或系统凭据。
+不要上传任何数据，不要读取浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
 ```
 
 ## 体检自己的 Skill 或输出

@@ -1,5 +1,16 @@
 # 变更日志
 
+## 0.4.0 - 2026-06-23
+
+- 新增本地 Codex 会话级 Token 账本，回答「token/credits 具体消耗在哪个会话、哪个项目、哪个时间段」。
+- 新增 `codex-probe sources doctor`，只探测安全可用数据源，不读取聊天正文、cookie、token 或系统凭据。
+- 新增 `codex-probe ledger init` 和 `codex-probe ledger import`，支持用户显式提供的官方导出 CSV/JSON 与本地快照 delta。
+- 新增 `codex-probe sessions`、`session-report`、`ledger-report`，输出会话排行、单会话时间线和总账报告。
+- 新增 `codex-probe dashboard`，生成本地 HTML Dashboard，展示总览、会话排行、token delta、credits 和置信度。
+- 新增 `codex-probe privacy inspect` 与 `delete --ledger --yes`，支持隐私审计和一键删除账本业务数据。
+- 新增 `examples/ledger-samples/` 脱敏样本库，覆盖 `exact`、`high`、`medium`、`low` 四类置信度。
+- 更新中英文 README、隐私文档和 Codex 桌面版一句话入口。
+
 ## 0.3.2 - 2026-06-22
 
 - 新增 `examples/status-samples/` 脱敏 `/status` 样本库，覆盖继续、降配、停止和英文格式场景。

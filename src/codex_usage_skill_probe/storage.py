@@ -7,6 +7,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from .ledger_storage import delete_ledger_data, ensure_ledger_schema
 from .models import ImportBatch, RiskFinding, TaskUsageRecord, new_id, now_iso
 
 
@@ -89,6 +90,7 @@ class Store:
         self.conn = sqlite3.connect(self.db_path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
+        ensure_ledger_schema(self.conn)
         self.ensure_task_usage_columns()
         self.conn.commit()
 
@@ -247,6 +249,9 @@ class Store:
         self.conn.commit()
         self.conn.execute("VACUUM")
         return total
+
+    def delete_ledger_business_data(self) -> int:
+        return delete_ledger_data(self.conn)
 
 
 def usage_from_row(row: sqlite3.Row) -> TaskUsageRecord:

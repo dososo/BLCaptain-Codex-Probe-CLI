@@ -5,10 +5,29 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from . import __version__
 from . import errors
+from .ledger_adapters import import_official_export, import_snapshot_delta
+from .ledger_reports import (
+    render_dashboard_html,
+    render_ledger_report_markdown,
+    render_privacy_markdown,
+    render_session_detail_markdown,
+    render_sessions_markdown,
+)
+from .ledger_storage import (
+    add_privacy_audit,
+    ledger_summary,
+    privacy_audit_rows,
+    read_watch_state,
+    session_snapshots,
+    source_rows,
+    write_static_file,
+    write_watch_state,
+)
 from .models import ImportBatch
 from .reports import (
     findings_to_json,
@@ -19,12 +38,20 @@ from .reports import (
     write_text,
 )
 from .skill_linter import lint_file
+from .source_doctor import run_source_doctor, source_doctor_payload
 from .storage import Store
 from .usage_analyzer import analyze_usage, build_decision_card
 from .usage_parser import load_manual_json, load_status_file
 
 
 DEFAULT_DB = Path(".probe/probe.db")
+
+
+def add_range_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--range", default="7d", help="Time range: today, yesterday, 24h, 3d, 7d, 30d.")
+    parser.add_argument("--since", default=None, help="Alias range such as 24h or 7d.")
+    parser.add_argument("--from", dest="date_from", default=None, help="Start datetime/date, ISO format.")
+    parser.add_argument("--to", dest="date_to", default=None, help="End datetime/date, ISO format.")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -66,8 +93,50 @@ def build_parser() -> argparse.ArgumentParser:
     lint_cmd.add_argument("path", type=Path, help="Text file to inspect.")
     lint_cmd.add_argument("--out", type=Path, default=Path("reports/skill-lint-report.md"), help="Report output path.")
 
+    sources_cmd = sub.add_parser("sources", help="Inspect safe ledger data sources.")
+    sources_sub = sources_cmd.add_subparsers(dest="sources_command", required=True)
+    sources_sub.add_parser("doctor", help="Detect available safe data sources without reading chat content.")
+
+    ledger_cmd = sub.add_parser("ledger", help="Initialize and import session-level token ledger data.")
+    ledger_sub = ledger_cmd.add_subparsers(dest="ledger_command", required=True)
+    ledger_sub.add_parser("init", help="Initialize local ledger schema and privacy audit.")
+    ledger_import = ledger_sub.add_parser("import", help="Import user-provided ledger data.")
+    ledger_source = ledger_import.add_mutually_exclusive_group(required=True)
+    ledger_source.add_argument("--official-export", type=Path, help="User-provided official CSV/JSON export.")
+    ledger_source.add_argument("--snapshot", type=Path, help="User-provided local snapshot CSV/JSON.")
+
+    watch_cmd = sub.add_parser("watch", help="Control explicit local ledger watcher state.")
+    watch_sub = watch_cmd.add_subparsers(dest="watch_command", required=True)
+    watch_start = watch_sub.add_parser("start", help="Mark watcher as explicitly started.")
+    watch_start.add_argument("--interval-seconds", type=int, default=60, help="Intended capture interval.")
+    watch_sub.add_parser("status", help="Show watcher state.")
+    watch_sub.add_parser("stop", help="Stop watcher state.")
+
+    sessions_cmd = sub.add_parser("sessions", help="Rank Codex sessions by token delta.")
+    add_range_args(sessions_cmd)
+    sessions_cmd.add_argument("--min-confidence", choices=["low", "medium", "high", "exact"], default=None)
+    sessions_cmd.add_argument("--out", type=Path, default=None, help="Optional Markdown report path.")
+
+    session_report = sub.add_parser("session-report", help="Export one session detail report.")
+    session_report.add_argument("session_id", help="Ledger session id.")
+    session_report.add_argument("--out", type=Path, default=Path("reports/ledger/session-report.md"))
+
+    ledger_report = sub.add_parser("ledger-report", help="Export a ledger summary report.")
+    add_range_args(ledger_report)
+    ledger_report.add_argument("--out", type=Path, default=Path("reports/ledger/ledger-report.md"))
+
+    privacy_cmd = sub.add_parser("privacy", help="Inspect local privacy boundaries.")
+    privacy_sub = privacy_cmd.add_subparsers(dest="privacy_command", required=True)
+    privacy_inspect = privacy_sub.add_parser("inspect", help="Show enabled sources and privacy audit logs.")
+    privacy_inspect.add_argument("--out", type=Path, default=Path("reports/ledger/privacy-report.md"))
+
+    dashboard_cmd = sub.add_parser("dashboard", help="Generate a local HTML dashboard.")
+    add_range_args(dashboard_cmd)
+    dashboard_cmd.add_argument("--out", type=Path, default=Path("reports/ledger/dashboard.html"))
+
     delete_cmd = sub.add_parser("delete", help="Delete local business data.")
     delete_cmd.add_argument("--all", action="store_true", help="Delete all local business data.")
+    delete_cmd.add_argument("--ledger", action="store_true", help="Delete local ledger business data.")
     delete_cmd.add_argument("--yes", action="store_true", help="Confirm deletion without prompting.")
 
     return parser
@@ -85,6 +154,22 @@ def main(argv: list[str] | None = None) -> None:
             cmd_skill_lint(args, store)
         elif args.command == "doctor":
             cmd_doctor(args, store)
+        elif args.command == "sources":
+            cmd_sources(args, store)
+        elif args.command == "ledger":
+            cmd_ledger(args, store)
+        elif args.command == "watch":
+            cmd_watch(args, store)
+        elif args.command == "sessions":
+            cmd_sessions(args, store)
+        elif args.command == "session-report":
+            cmd_session_report(args, store)
+        elif args.command == "ledger-report":
+            cmd_ledger_report(args, store)
+        elif args.command == "privacy":
+            cmd_privacy(args, store)
+        elif args.command == "dashboard":
+            cmd_dashboard(args, store)
         elif args.command == "delete":
             cmd_delete(args, store)
         else:
@@ -226,13 +311,153 @@ def cmd_doctor(args: argparse.Namespace, store: Store) -> None:
     print_payload(payload, args.json)
 
 
+def cmd_sources(args: argparse.Namespace, store: Store) -> None:
+    if args.sources_command != "doctor":
+        fail("UNKNOWN_COMMAND", f"Unsupported sources command: {args.sources_command}", args.json)
+    results = run_source_doctor(store.conn, Path.cwd())
+    payload = source_doctor_payload(results)
+    print_payload(payload, args.json)
+
+
+def cmd_ledger(args: argparse.Namespace, store: Store) -> None:
+    if args.ledger_command == "init":
+        results = run_source_doctor(store.conn, Path.cwd())
+        add_privacy_audit(
+            store.conn,
+            "ledger_initialized",
+            {"db_name": store.db_path.name, "source_count": len(results)},
+        )
+        store.conn.commit()
+        payload = {
+            "ok": True,
+            "db_path": str(store.db_path),
+            "sources": len(results),
+            "privacy_boundary": "本地账本不读取浏览器 cookie、OpenAI token、钥匙串、系统凭据或聊天正文。",
+        }
+        print_payload(payload, args.json)
+        return
+
+    if args.ledger_command == "import":
+        try:
+            if args.official_export:
+                result = import_official_export(store.conn, args.official_export)
+                source_type = "official_export"
+            else:
+                result = import_snapshot_delta(store.conn, args.snapshot)
+                source_type = "snapshot_delta"
+        except FileNotFoundError as exc:
+            fail(errors.INVALID_SOURCE, str(exc), args.json)
+        except (ValueError, json.JSONDecodeError) as exc:
+            fail(errors.PARSE_FAILED, str(exc), args.json)
+        payload = {"ok": True, "source_type": source_type, **result}
+        print_payload(payload, args.json)
+        return
+
+    fail("UNKNOWN_COMMAND", f"Unsupported ledger command: {args.ledger_command}", args.json)
+
+
+def cmd_watch(args: argparse.Namespace, store: Store) -> None:
+    if args.watch_command == "start":
+        write_watch_state(
+            store.conn,
+            status="running",
+            interval_seconds=args.interval_seconds,
+            source_ids=[row["id"] for row in source_rows(store.conn) if row["enabled"]],
+            message="watch 已显式启动；P0 只记录状态，不后台读取聊天正文。",
+        )
+        store.conn.commit()
+        print_payload({"ok": True, **read_watch_state(store.conn)}, args.json)
+        return
+    if args.watch_command == "status":
+        print_payload({"ok": True, **read_watch_state(store.conn)}, args.json)
+        return
+    if args.watch_command == "stop":
+        write_watch_state(store.conn, status="stopped", message="watch 已停止。")
+        store.conn.commit()
+        print_payload({"ok": True, **read_watch_state(store.conn)}, args.json)
+        return
+    fail("UNKNOWN_COMMAND", f"Unsupported watch command: {args.watch_command}", args.json)
+
+
+def cmd_sessions(args: argparse.Namespace, store: Store) -> None:
+    range_label, start, end = resolve_range(args)
+    sessions = ledger_summary(store.conn, start=start, end=end, min_confidence=args.min_confidence)
+    if args.out:
+        write_text(args.out, render_sessions_markdown(sessions, range_label))
+        store.add_report("ledger_sessions", str(args.out), f"{len(sessions)} sessions")
+    payload = {
+        "ok": True,
+        "range": range_label,
+        "session_count": len(sessions),
+        "sessions": [session_to_json(item) for item in sessions],
+        "report_path": str(args.out) if args.out else None,
+    }
+    print_payload(payload, args.json)
+    if not args.json:
+        print(render_sessions_markdown(sessions, range_label))
+
+
+def cmd_session_report(args: argparse.Namespace, store: Store) -> None:
+    sessions = ledger_summary(store.conn)
+    session = next((item for item in sessions if item.session_id == args.session_id), None)
+    if session is None:
+        fail("SESSION_NOT_FOUND", f"Session not found: {args.session_id}", args.json)
+    snapshots = session_snapshots(store.conn, args.session_id)
+    write_text(args.out, render_session_detail_markdown(session, snapshots))
+    store.add_report("ledger_session_report", str(args.out), args.session_id)
+    payload = {
+        "ok": True,
+        "session_id": args.session_id,
+        "report_path": str(args.out),
+        "snapshot_count": len(snapshots),
+    }
+    print_payload(payload, args.json)
+
+
+def cmd_ledger_report(args: argparse.Namespace, store: Store) -> None:
+    range_label, start, end = resolve_range(args)
+    sessions = ledger_summary(store.conn, start=start, end=end)
+    write_text(args.out, render_ledger_report_markdown(sessions, range_label))
+    store.add_report("ledger_report", str(args.out), f"{len(sessions)} sessions")
+    print_payload({"ok": True, "range": range_label, "report_path": str(args.out), "session_count": len(sessions)}, args.json)
+
+
+def cmd_privacy(args: argparse.Namespace, store: Store) -> None:
+    if args.privacy_command != "inspect":
+        fail("UNKNOWN_COMMAND", f"Unsupported privacy command: {args.privacy_command}", args.json)
+    sources = source_rows(store.conn)
+    audits = privacy_audit_rows(store.conn)
+    write_text(args.out, render_privacy_markdown(sources, audits))
+    store.add_report("ledger_privacy", str(args.out), f"{len(sources)} sources")
+    payload = {
+        "ok": True,
+        "report_path": str(args.out),
+        "sources": sources,
+        "audit_count": len(audits),
+        "privacy_boundary": "不读取浏览器 cookie、OpenAI token、钥匙串、系统凭据或聊天正文。",
+    }
+    print_payload(payload, args.json)
+
+
+def cmd_dashboard(args: argparse.Namespace, store: Store) -> None:
+    range_label, start, end = resolve_range(args)
+    sessions = ledger_summary(store.conn, start=start, end=end)
+    write_static_file(args.out, render_dashboard_html(sessions, range_label))
+    store.add_report("ledger_dashboard", str(args.out), f"{len(sessions)} sessions")
+    print_payload({"ok": True, "dashboard_path": str(args.out), "session_count": len(sessions)}, args.json)
+
+
 def cmd_delete(args: argparse.Namespace, store: Store) -> None:
-    if not args.all:
-        fail(errors.DELETE_FAILED, "Only --all is supported in the current release.", args.json)
+    if not args.all and not args.ledger:
+        fail(errors.DELETE_FAILED, "Use --all or --ledger to choose deletion scope.", args.json)
     if not args.yes:
         fail(errors.DELETE_FAILED, "Refusing to delete without --yes confirmation.", args.json)
-    deleted = store.delete_business_data()
-    print_payload({"ok": True, "deleted_count": deleted}, args.json)
+    deleted = 0
+    if args.all:
+        deleted += store.delete_business_data()
+    if args.ledger:
+        deleted += store.delete_ledger_business_data()
+    print_payload({"ok": True, "deleted_count": deleted, "scope": "all" if args.all else "ledger"}, args.json)
 
 
 def risk_score(findings: list[object]) -> int:
@@ -241,6 +466,52 @@ def risk_score(findings: list[object]) -> int:
         severity = getattr(finding, "severity", "info")
         score += {"info": 5, "medium": 25, "high": 45}.get(severity, 10)
     return min(100, score)
+
+
+def resolve_range(args: argparse.Namespace) -> tuple[str, str | None, str | None]:
+    if args.date_from or args.date_to:
+        return f"{args.date_from or '开始'}..{args.date_to or '现在'}", normalize_date(args.date_from), normalize_date(args.date_to)
+    token = args.since or getattr(args, "range", None) or "7d"
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    if token == "today":
+        start_dt = now.replace(hour=0, minute=0, second=0)
+    elif token == "yesterday":
+        today = now.replace(hour=0, minute=0, second=0)
+        return "yesterday", (today - timedelta(days=1)).isoformat(), today.isoformat()
+    elif token.endswith("h"):
+        start_dt = now - timedelta(hours=int(token[:-1]))
+    elif token.endswith("d"):
+        start_dt = now - timedelta(days=int(token[:-1]))
+    else:
+        start_dt = now - timedelta(days=7)
+        token = "7d"
+    return token, start_dt.isoformat(), now.isoformat()
+
+
+def normalize_date(value: str | None) -> str | None:
+    if not value:
+        return None
+    if "T" in value:
+        return value
+    return f"{value}T00:00:00+00:00"
+
+
+def session_to_json(session: object) -> dict[str, object]:
+    return {
+        "session_id": session.session_id,
+        "title": session.title,
+        "project": session.project,
+        "started_at": session.started_at,
+        "ended_at": session.ended_at,
+        "token_delta": session.token_delta,
+        "credits_delta": session.credits_delta,
+        "context_peak_percent": session.context_peak_percent,
+        "confidence_level": session.confidence_level,
+        "confidence_score": session.confidence_score,
+        "source_type": session.source_type,
+        "recommendation": session.recommendation,
+        "evidence_summary": session.evidence_summary,
+    }
 
 
 def print_payload(payload: dict[str, object], as_json: bool) -> None:

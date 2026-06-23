@@ -1,0 +1,64 @@
+{
+  "snapshots": [
+    {
+      "session_id": "session_ci_fix",
+      "title": "CI 修复会话",
+      "project": "Codex Probe CLI",
+      "captured_at": "2026-06-23T02:00:00+00:00",
+      "model": "gpt-5.2-codex",
+      "total_tokens": 12000,
+      "credits": 1.20,
+      "context_used_tokens": 12000,
+      "context_limit_tokens": 258000,
+      "source_type": "snapshot_delta"
+    },
+    {
+      "session_id": "session_ci_fix",
+      "title": "CI 修复会话",
+      "project": "Codex Probe CLI",
+      "captured_at": "2026-06-23T02:35:00+00:00",
+      "model": "gpt-5.2-codex",
+      "total_tokens": 34400,
+      "credits": 3.64,
+      "context_used_tokens": 34400,
+      "context_limit_tokens": 258000,
+      "source_type": "snapshot_delta"
+    },
+    {
+      "session_id": "session_research",
+      "title": "竞品调研会话",
+      "project": "Codex Research",
+      "captured_at": "2026-06-23T03:00:00+00:00",
+      "model": "gpt-5.2-codex",
+      "total_tokens": 9000,
+      "credits": 0.80,
+      "context_used_tokens": 9000,
+      "context_limit_tokens": 258000,
+      "active_session_count": 2,
+      "source_type": "snapshot_delta"
+    },
+    {
+      "session_id": "session_research",
+      "title": "竞品调研会话",
+      "project": "Codex Research",
+      "captured_at": "2026-06-23T03:45:00+00:00",
+      "model": "gpt-5.2-codex",
+      "total_tokens": 27200,
+      "credits": 2.60,
+      "context_used_tokens": 27200,
+      "context_limit_tokens": 258000,
+      "active_session_count": 2,
+      "source_type": "snapshot_delta"
+    },
+    {
+      "title": "未知全局额度变化",
+      "project": "未归属项目",
+      "captured_at": "2026-06-23T04:10:00+00:00",
+      "total_tokens": 6400,
+      "token_delta": 6400,
+      "credits": 0.50,
+      "credits_delta": 0.50,
+      "context_remaining_percent": 91
+    }
+  ]
+}
