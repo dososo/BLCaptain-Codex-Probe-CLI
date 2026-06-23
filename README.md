@@ -32,7 +32,15 @@
 > 我会粘贴 Codex /status，请先脱敏明显的 key、cookie、token、邮箱和手机号，保存到 .probe/my-status.txt，再用 BLCaptain Codex Probe CLI 生成 reports/my-usage-report.md，并解释为什么贵、怎么降配、什么时候该停。不要读取浏览器 cookie、token、钥匙串或系统凭据，不要上传任何数据。
 > ```
 
-> **开发者安装**
+> **安装与体验**
+>
+> 在 Codex 桌面版里也可以直接说：
+>
+> ```text
+> 帮我安装这个仓库 https://github.com/dososo/BLCaptain-Codex-Probe-CLI。安装完成后先运行安全 demo，只使用仓库示例数据生成 Codex 用量 Dashboard，不读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串或系统凭据，不上传任何数据。
+> ```
+>
+> 也可以手动运行：
 >
 > ```bash
 > git clone https://github.com/dososo/BLCaptain-Codex-Probe-CLI.git

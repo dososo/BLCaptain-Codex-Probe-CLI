@@ -126,3 +126,4 @@
 - [x] 将 README 顶部 Codex 桌面版入口从单句扩展为安全 demo、本地历史分析、单次 `/status` 三类可复制提示词。
 - [x] 同步 README 正文和 `docs/CODEX_DESKTOP_PROMPT.md`。
 - [x] 明确每类入口的报告路径、隐私边界和最终解释要求。
+- [x] 将“开发者安装”改为“安装与体验”，补充可让 Codex 桌面版直接安装 GitHub 仓库的提示词。

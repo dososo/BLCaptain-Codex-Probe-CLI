@@ -2,6 +2,21 @@
 
 复制下面的提示词到 Codex 桌面版 App。适合你已经打开本仓库目录，并希望 Codex 自动调用本地 CLI 完成会话级账本分析、`/status` 用量体检或 Skill / 输出质量体检。
 
+## 安装这个仓库并体验
+
+```text
+帮我安装这个仓库：https://github.com/dososo/BLCaptain-Codex-Probe-CLI
+
+要求：
+1. 克隆仓库后进入项目目录。
+2. 运行 scripts/setup-local.sh。
+3. 安装完成后先跑安全 demo，只使用仓库 examples/ledger-samples/ 里的示例数据。
+4. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、privacy-report.md 和 watch-status.html。
+5. 最后告诉我 Dashboard 和报告路径，以及示例里哪个会话最贵。
+6. 不要读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
+7. 不要上传任何数据。
+```
+
 ## 安全体验 demo
 
 ```text

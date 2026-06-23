@@ -32,7 +32,15 @@
 > I will paste Codex /status. First redact obvious keys, cookies, tokens, emails, and phone numbers, save it to .probe/my-status.txt, then use BLCaptain Codex Probe CLI to generate reports/my-usage-report.md and explain why it is expensive, how to downgrade, and when to stop. Do not read browser cookies, tokens, keychains, or system credentials. Do not upload any data.
 > ```
 
-> **Developer install**
+> **Install and try**
+>
+> In the Codex desktop app, you can simply say:
+>
+> ```text
+> Help me install this repository: https://github.com/dososo/BLCaptain-Codex-Probe-CLI. After installation, run the safe demo using only repository sample data to generate a Codex usage dashboard. Do not read my real Codex history, browser cookies, tokens, keychains, or system credentials. Do not upload any data.
+> ```
+>
+> Or run it manually:
 >
 > ```bash
 > git clone https://github.com/dososo/BLCaptain-Codex-Probe-CLI.git
