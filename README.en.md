@@ -93,6 +93,10 @@ scripts/macos/build-codex-probe-bar.sh
 open build/CodexProbeBar.app
 ```
 
+<p>
+  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS local beta" width="100%">
+</p>
+
 See [macOS menu bar app](docs/MACOS_MENUBAR_APP.md).
 
 Release boundary: the repository-built `.app` is unsigned and unnotarized by default, so it is only a local beta build. This does not block CLI-first GitHub open-source release. If maintainers later distribute a double-clickable `.app` / `.dmg`, use the signing, notarization, stapling, Gatekeeper preflight, and packaging flow in [macOS release distribution](docs/MACOS_RELEASE_DISTRIBUTION.md).

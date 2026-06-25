@@ -93,6 +93,10 @@ scripts/macos/build-codex-probe-bar.sh
 open build/CodexProbeBar.app
 ```
 
+<p>
+  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS 状态栏本地体验版" width="100%">
+</p>
+
 详见 [macOS 状态栏 App](docs/MACOS_MENUBAR_APP.md)。
 
 发布边界必须讲清楚：仓库本地构建的 `.app` 默认未签名、未公证，只能作为本地体验或 beta 验证；这不影响 CLI 作为 GitHub 开源项目发布。未来如果维护者要提供普通用户双击安装的 `.app` / `.dmg`，再使用 [macOS 正式分发、签名与公证](docs/MACOS_RELEASE_DISTRIBUTION.md) 中的签名、公证、stapling、Gatekeeper preflight 和打包流程。
