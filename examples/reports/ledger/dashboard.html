@@ -34,6 +34,8 @@
     .evidence { font-size: 14px; margin-bottom: 0; }
     .privacy ul { margin: 0; padding-left: 20px; color: #334155; line-height: 1.8; }
     .badge { border-radius: 999px; padding: 4px 10px; font-weight: 700; }
+    .risk { border-radius: 6px; padding: 4px 8px; font-weight: 700; }
+    .critical { background: #fee2e2; color: #991b1b; }
     .exact { background: #d9ff72; }
     .high { background: #bbf7d0; }
     .medium { background: #fde68a; }
@@ -56,12 +58,50 @@
       <p>最高消耗会话：README 发布准备</p>
     </section>
     <section class="grid">
-      <div class="stat"><span>会话数</span><strong>10</strong></div>
-      <div class="stat"><span>token delta</span><strong>436,867</strong></div>
+      <div class="stat"><span>会话数</span><strong>14</strong></div>
+      <div class="stat"><span>token delta</span><strong>522,467</strong></div>
       <div class="stat"><span>credits delta（来源值）</span><strong>40.46</strong></div>
-      <div class="stat"><span>exact/high 会话</span><strong>8</strong></div>
+      <div class="stat"><span>exact/high 会话</span><strong>12</strong></div>
+    </section>
+    <section class="grid" aria-label="风险摘要">
+      <div class="stat"><span>今日 token</span><strong>52,600</strong></div>
+      <div class="stat"><span>本周 token</span><strong>522,467</strong></div>
+      <div class="stat"><span>高风险会话</span><strong>3</strong></div>
+      <div class="stat"><span>高风险项目</span><strong>0</strong></div>
+      <div class="stat"><span>该停会话</span><strong>1</strong></div>
     </section>
     <section class="decision">最耗会话是「README 发布准备」，token delta 为 142,047。建议先停止该长会话，保存成果后拆到新会话。</section>
+    <section class="panel">
+      <h2>本地预算预警</h2>
+      <table>
+        <thead><tr><th>范围</th><th>名称</th><th>token/指标</th><th>使用率</th><th>风险</th><th>建议</th></tr></thead>
+        <tbody><tr><td>session</td><td>README 发布准备</td><td>142,047</td><td>142.0%</td><td><span class="risk critical">critical</span></td><td>停止当前长会话，保存成果后拆到新会话</td></tr>
+<tr><td>ledger</td><td>当前时间范围总账</td><td>522,467</td><td>104.5%</td><td><span class="risk high">high</span></td><td>停止当前长会话，保存成果后拆到新会话</td></tr></tbody>
+      </table>
+    </section>
+    <section class="panel">
+      <h2>数据源可信度</h2>
+      <table>
+        <thead><tr><th>数据源</th><th>置信上限</th><th>快照数</th><th>缺失字段</th><th>诊断</th></tr></thead>
+        <tbody><tr><td>desktop_visible</td><td>medium</td><td>0</td><td>session_id, total_tokens, credits, context_window, context_state, model, project</td><td>已登记数据源，但当前账本没有该来源快照；无法做会话级归因。</td></tr>
+<tr><td>local_codex_rollout</td><td>high</td><td>10</td><td>credits, context_state</td><td>本地 rollout 只读取 token 白名单字段；schema 变动时可能出现缺字段。</td></tr>
+<tr><td>local_status</td><td>high</td><td>0</td><td>session_id, total_tokens, credits, context_window, context_state, model, project</td><td>已登记数据源，但当前账本没有该来源快照；无法做会话级归因。</td></tr>
+<tr><td>official_export</td><td>exact</td><td>6</td><td>无</td><td>字段覆盖完整，可用于当前来源口径下的高质量归因。</td></tr>
+<tr><td>snapshot_delta</td><td>high</td><td>5</td><td>无</td><td>字段覆盖完整，可用于当前来源口径下的高质量归因。</td></tr></tbody>
+      </table>
+    </section>
+    <section class="panel">
+      <h2>任务类型归因</h2>
+      <table>
+        <thead><tr><th>任务类型</th><th>会话数</th><th>token delta</th><th>建议</th></tr></thead>
+        <tbody><tr><td>发布交付</td><td>2</td><td>189,447</td><td>停止当前长会话，保存成果后拆到新会话</td></tr>
+<tr><td>开发实现</td><td>7</td><td>185,800</td><td>停止当前长会话，保存成果后拆到新会话</td></tr>
+<tr><td>素材生成</td><td>1</td><td>61,320</td><td>降配或拆分后续任务，避免继续放大上下文</td></tr>
+<tr><td>验证测试</td><td>2</td><td>61,300</td><td>降配或拆分后续任务，避免继续放大上下文</td></tr>
+<tr><td>调研分析</td><td>1</td><td>18,200</td><td>继续观察</td></tr>
+<tr><td>未知任务</td><td>1</td><td>6,400</td><td>继续观察</td></tr></tbody>
+      </table>
+    </section>
     <section class="panel">
       <h2>会话排行</h2>
       <div class="filters" aria-label="会话筛选">
@@ -90,7 +130,7 @@
           </select>
         </label>
       </div>
-      <p class="filter-count" id="filterCount">显示 10 / 10 个会话</p>
+      <p class="filter-count" id="filterCount">显示 14 / 14 个会话</p>
       <table>
         <thead>
           <tr><th>会话</th><th>项目</th><th>模型</th><th>开始</th><th>结束</th><th>token delta</th><th>credits</th><th>上下文峰值</th><th>置信度</th><th>建议</th></tr>
@@ -144,6 +184,18 @@
           <td><span class="badge exact">exact</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
+        <tr data-project="本地项目 01adcdf4da64ffac" data-confidence="high" data-model="gpt-5.5" data-start="2026-06-25">
+          <td>Codex 会话 0ae8973e</td>
+          <td>本地项目 01adcdf4da64ffac</td>
+          <td>gpt-5.5</td>
+          <td>2026-06-25 16:00:00 UTC+08:00</td>
+          <td>2026-06-25 16:22:30 UTC+08:00</td>
+          <td>43,400</td>
+          <td>未知</td>
+          <td>未知</td>
+          <td><span class="badge high">high</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
         <tr data-project="blcaptain skills" data-confidence="exact" data-model="gpt-5.5" data-start="2026-06-21">
           <td>Skill 优化验收</td>
           <td>BLCaptain Skills</td>
@@ -180,6 +232,18 @@
           <td><span class="badge high">high</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
+        <tr data-project="本地项目 e4b49d9c9744c7c3" data-confidence="high" data-model="gpt-5.5" data-start="2026-06-24">
+          <td>Codex 会话 f7193442</td>
+          <td>本地项目 e4b49d9c9744c7c3</td>
+          <td>gpt-5.5</td>
+          <td>2026-06-24 09:30:00 UTC+08:00</td>
+          <td>2026-06-24 09:30:00 UTC+08:00</td>
+          <td>19,000</td>
+          <td>未知</td>
+          <td>未知</td>
+          <td><span class="badge high">high</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
         <tr data-project="codex research" data-confidence="medium" data-model="gpt-5.5" data-start="2026-06-23">
           <td>竞品调研会话</td>
           <td>Codex Research</td>
@@ -190,6 +254,30 @@
           <td>1.80</td>
           <td>10.54</td>
           <td><span class="badge medium">medium</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
+        <tr data-project="本地项目 ccce1e127068be70" data-confidence="high" data-model="gpt-5.5" data-start="2026-06-24">
+          <td>Codex 会话 6c20b8bc</td>
+          <td>本地项目 ccce1e127068be70</td>
+          <td>gpt-5.5</td>
+          <td>2026-06-24 10:05:00 UTC+08:00</td>
+          <td>2026-06-24 10:05:00 UTC+08:00</td>
+          <td>14,000</td>
+          <td>未知</td>
+          <td>未知</td>
+          <td><span class="badge high">high</span></td>
+          <td>可以继续，但保留停止线</td>
+        </tr>
+        <tr data-project="本地项目 01adcdf4da64ffac" data-confidence="high" data-model="gpt-5.5" data-start="2026-06-25">
+          <td>Codex 会话 1ac11094</td>
+          <td>本地项目 01adcdf4da64ffac</td>
+          <td>gpt-5.5</td>
+          <td>2026-06-25 16:03:00 UTC+08:00</td>
+          <td>2026-06-25 16:03:00 UTC+08:00</td>
+          <td>9,200</td>
+          <td>未知</td>
+          <td>未知</td>
+          <td><span class="badge high">high</span></td>
           <td>可以继续，但保留停止线</td>
         </tr>
         <tr data-project="未归属项目" data-confidence="low" data-model="" data-start="2026-06-23">
@@ -267,21 +355,21 @@
   <p class="evidence">官方导出直接提供会话级用量字段</p>
 </article>
 <article class="detail">
+  <h3>Codex 会话 0ae8973e</h3>
+  <p>本地项目 01adcdf4da64ffac · 2026-06-25 16:00:00 UTC+08:00 → 2026-06-25 16:22:30 UTC+08:00</p>
+  <dl>
+    <div><dt>token delta</dt><dd>43,400</dd></div>
+    <div><dt>置信度</dt><dd>high / 0.88</dd></div>
+    <div><dt>数据源</dt><dd>local_codex_rollout</dd></div>
+    <div><dt>建议</dt><dd>可以继续，但保留停止线</dd></div>
+  </dl>
+  <p class="evidence">本地 Codex rollout 结构化 token 用量字段；未读取聊天正文</p>
+</article>
+<article class="detail">
   <h3>Skill 优化验收</h3>
   <p>BLCaptain Skills · 2026-06-21 23:30:00 UTC+08:00 → 2026-06-22 00:25:00 UTC+08:00</p>
   <dl>
     <div><dt>token delta</dt><dd>38,900</dd></div>
-    <div><dt>置信度</dt><dd>exact / 0.99</dd></div>
-    <div><dt>数据源</dt><dd>official_export</dd></div>
-    <div><dt>建议</dt><dd>可以继续，但保留停止线</dd></div>
-  </dl>
-  <p class="evidence">官方导出直接提供会话级用量字段</p>
-</article>
-<article class="detail">
-  <h3>字段映射导入</h3>
-  <p>codex-probe · 2026-06-22 21:00:00 UTC+08:00 → 2026-06-22 22:05:00 UTC+08:00</p>
-  <dl>
-    <div><dt>token delta</dt><dd>36,600</dd></div>
     <div><dt>置信度</dt><dd>exact / 0.99</dd></div>
     <div><dt>数据源</dt><dd>official_export</dd></div>
     <div><dt>建议</dt><dd>可以继续，但保留停止线</dd></div>

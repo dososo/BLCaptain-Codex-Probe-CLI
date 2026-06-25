@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
-![Release](https://img.shields.io/badge/Release-v0.6.0-4b5563.svg)
+![Release](https://img.shields.io/badge/Release-v0.9.0-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 > **Codex 桌面版最快入口**
@@ -23,7 +23,7 @@
 > 分析自己的本地 Codex 会话：
 >
 > ```text
-> 请用 BLCaptain Codex Probe CLI 分析我本地 Codex 最近 7 天的会话 token 用量。先 dry-run 检查可用数据源，再只读取 token 用量白名单字段，生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md 和 privacy-report.md。最后用普通话告诉我：哪个会话最贵、为什么贵、怎么降配、什么时候该停。不要读取聊天正文、浏览器 cookie、token、钥匙串或系统凭据，不要上传任何数据。
+> 请用 BLCaptain Codex Probe CLI 分析我本地 Codex 最近 7 天的会话 token 用量。先 dry-run 检查可用数据源，再只读取 token 用量白名单字段，生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、project-summary.md、weekly-report.md、timeline.md、alerts.md、source-confidence.md、task-report.md 和 privacy-report.md。最后用普通话告诉我：哪个会话最贵、哪个项目最贵、哪段时间增长最快、主要消耗在哪类任务、为什么贵、怎么降配、什么时候该停。不要读取聊天正文、浏览器 cookie、token、钥匙串或系统凭据，不要上传任何数据。
 > ```
 >
 > 只分析一次 `/status`：
@@ -49,6 +49,17 @@
 > ```
 >
 > 无参数时会跑安全 demo：创建 `.venv`、安装 CLI、初始化账本、dry-run、导入仓库 synthetic 样本、生成并打开 Dashboard。
+>
+> 如果想体验 macOS 状态栏入口：
+>
+> ```bash
+> scripts/macos/build-codex-probe-bar.sh
+> open build/CodexProbeBar.app
+> ```
+>
+> 这是本地体验版。GitHub 开源、CLI 安装和用户本地构建不需要 Apple Developer ID；只有维护者发布给普通用户双击安装的 `.app` / `.dmg` 时，才需要考虑签名、公证和 Gatekeeper 验证。见 [macOS 正式分发、签名与公证](docs/MACOS_RELEASE_DISTRIBUTION.md)。
+>
+> 轻量安装方式见 [安装方式](docs/INSTALL.md)，包括 uvx、pipx 和 Homebrew Formula 草案。
 
 ---
 
@@ -56,9 +67,11 @@
 
 BLCaptain Codex Probe CLI 是一个本地命令行工具，不是 Codex Skill，也不是 OpenAI 官方 dashboard。
 
-v0.6.0 在真实数据源接入和稳定 watcher 之上，继续补齐 **一键 setup、Dashboard 筛选、watcher 状态页和脱敏 rollout 样本采集**。它优先回答这件事：
+当前推荐发布定位：**CLI 是正式开源主入口，macOS 状态栏 App 是可选本地构建体验版**。因此 GitHub 开源发布不需要 Apple Developer Program；签名、公证只适用于维护者未来分发可双击安装的 Mac App。
 
-> 到底是哪条 Codex 会话、哪个项目、哪个时间段烧掉了 token/credits？
+v0.9.0 在真实数据源接入、稳定 watcher、项目聚合、周报和阶段级治理之上，新增 **原生 macOS 状态栏 App**。它把 CLI 的会话账本、预算预警、数据源可信度和 Dashboard 入口放进系统菜单栏，优先回答这件事：
+
+> 到底是哪条 Codex 会话、哪个项目、哪个阶段、哪类任务烧掉了 token/credits？现在该继续、降配，还是先停？
 
 它同时保留两个旧能力：
 
@@ -71,6 +84,19 @@ v0.6.0 在真实数据源接入和稳定 watcher 之上，继续补齐 **一键 
 
 ## 工作效果
 
+### macOS 状态栏 App
+
+v0.9.0 新增 BLCaptain Codex Probe Bar：一个原生 macOS 菜单栏入口。它不重复实现账本逻辑，而是调用本地 `codex-probe --json`，展示最高消耗会话、token 总量、预算预警、数据源可信度和常用动作。
+
+```bash
+scripts/macos/build-codex-probe-bar.sh
+open build/CodexProbeBar.app
+```
+
+详见 [macOS 状态栏 App](docs/MACOS_MENUBAR_APP.md) 和 [状态栏 App /goal](docs/MACOS_MENUBAR_GOAL.md)。
+
+发布边界必须讲清楚：仓库本地构建的 `.app` 默认未签名、未公证，只能作为本地体验或 beta 验证；这不影响 CLI 作为 GitHub 开源项目发布。未来如果维护者要提供普通用户双击安装的 `.app` / `.dmg`，再使用 [macOS 正式分发、签名与公证](docs/MACOS_RELEASE_DISTRIBUTION.md) 中的签名、公证、stapling、Gatekeeper preflight 和打包流程。
+
 ### 会话级 Token 账本
 
 本地账本会按时间范围输出会话排行，每条会话都带上 token delta、credits delta、项目、数据源、置信度和建议动作。
@@ -80,6 +106,12 @@ v0.6.0 在真实数据源接入和稳定 watcher 之上，继续补齐 **一键 
 - [会话排行报告](examples/reports/ledger/sessions.md)
 - [单会话详情报告](examples/reports/ledger/session-readme-release.md)
 - [总账报告](examples/reports/ledger/ledger-report.md)
+- [项目级汇总报告](examples/reports/ledger/project-summary.md)
+- [Codex 周报](examples/reports/ledger/weekly-report.md)
+- [阶段级时间线报告](examples/reports/ledger/timeline.md)
+- [本地预算预警报告](examples/reports/ledger/alerts.md)
+- [数据源可信度报告](examples/reports/ledger/source-confidence.md)
+- [任务类型归因报告](examples/reports/ledger/task-report.md)
 - [隐私审计报告](examples/reports/ledger/privacy-report.md)
 - [本地 HTML Dashboard](examples/reports/ledger/dashboard.html)
 
@@ -106,6 +138,7 @@ v0.6.0 在真实数据源接入和稳定 watcher 之上，继续补齐 **一键 
 | 公开命令 | `codex-probe` |
 | 短别名 | `probe` |
 | 兼容命令 | `blcaptain-codex-probe`、`codex-usage-skill-probe` |
+| macOS 状态栏 App | BLCaptain Codex Probe Bar |
 
 为什么不叫 Skill：它不是给 Agent 读取的 Skill 指令包，而是用户和 Agent 都可以调用的本地 CLI。它可以检查 Skill，但它本身不是 Skill。
 
@@ -114,6 +147,8 @@ v0.6.0 在真实数据源接入和稳定 watcher 之上，继续补齐 **一键 
 | 能力 | 命令 | 结果 |
 |---|---|---|
 | 一键本地 setup | `scripts/setup-local.sh` 或 `codex-probe setup --demo` | 安装/初始化、dry-run、报告、Dashboard 一次完成 |
+| macOS 状态栏 App | `scripts/macos/build-codex-probe-bar.sh` | 原生菜单栏入口，展示风险摘要并打开 Dashboard / 报告 |
+| macOS 发布检查 | `scripts/macos/preflight-codex-probe-bar.sh` | 检查状态栏 App bundle、签名、公证、Gatekeeper 和禁用隐私越界能力 |
 | 数据源安全检查 | `codex-probe sources doctor` | 显示可用数据源、最高置信度和隐私边界 |
 | 深度数据源检查 | `codex-probe sources doctor --deep` | 安全检查本机 Codex rollout 字段覆盖率，只输出哈希和计数 |
 | 初始化本地账本 | `codex-probe ledger init` | 创建 SQLite schema 和隐私审计记录 |
@@ -125,12 +160,21 @@ v0.6.0 在真实数据源接入和稳定 watcher 之上，继续补齐 **一键 
 | 单次采集 | `codex-probe watch once` | 执行一次安全 local history 采集 |
 | 后台采集 | `codex-probe watch start/status/logs/stop` | PID、状态、日志、最近采集时间、错误和采集次数 |
 | 会话排行 | `codex-probe sessions --range 7d` | 找到最耗 token 的会话 |
+| 项目汇总 | `codex-probe projects --range 30d` | 找到最耗 token 的项目、最高消耗会话和置信度分布 |
+| Codex 周报 | `codex-probe weekly-report --range 30d` | 按本地时区 ISO 周复盘会话、项目和高消耗周 |
+| 阶段级时间线 | `codex-probe timeline --range 30d` | 找到会话内 token delta 增长最快的时间区间、阶段标签和建议动作 |
+| 本地预算预警 | `codex-probe alerts --range 30d` | 基于本地阈值输出单会话、项目、总账和上下文停止线 |
+| 任务类型归因 | `codex-probe task-report --range 30d` | 聚合开发、测试、文档、发布、素材、调研等任务类型的消耗 |
+| 数据源可信度 | `codex-probe confidence-report` | 展示来源、字段覆盖、缺失字段、置信上限和为什么不能更精确 |
 | 单会话详情 | `codex-probe session-report <session_id>` | 查看时间线、快照和高消耗区间 |
 | 总账报告 | `codex-probe ledger-report --range 30d` | 汇总 token、credits、项目和建议 |
 | 本地 Dashboard | `codex-probe dashboard` | 生成可打开的本地 HTML 页面 |
 | Dashboard 筛选 | 本地 HTML 内置 | 按项目、开始日期、结束日期、置信度、模型过滤 |
 | Watcher 状态页 | `codex-probe watch status-page` | 生成友好的本地 watcher 状态页 |
 | 脱敏样本采集 | `codex-probe samples collect-rollout` | 输出只含白名单字段和哈希的校准样本 |
+| 轻量安装说明 | [docs/INSTALL.md](docs/INSTALL.md) | Codex 桌面版、仓库脚本、uvx、pipx 和 Homebrew Formula 草案 |
+| 桌面入口评估 | [docs/MENUBAR_OR_DESKTOP_EVAL.md](docs/MENUBAR_OR_DESKTOP_EVAL.md) | 菜单栏 App / 桌面组件路线和隐私边界 |
+| 状态栏 App 文档 | [docs/MACOS_MENUBAR_APP.md](docs/MACOS_MENUBAR_APP.md) | 构建、配置、使用和隐私边界 |
 | 隐私审计 | `codex-probe privacy inspect` | 查看启用数据源、读取字段和审计日志 |
 | 删除 watcher | `codex-probe delete --watcher --yes` | 删除 watcher 状态、lock、stop flag 和日志 |
 | 删除账本 | `codex-probe delete --ledger --yes` | 删除账本业务数据，保留不含敏感原文的审计日志 |
@@ -201,6 +245,29 @@ codex-probe --db .probe/ledger.db ledger-report \
   --range 30d \
   --out reports/ledger/ledger-report.md
 
+codex-probe --db .probe/ledger.db projects \
+  --range 30d \
+  --out reports/ledger/project-summary.md
+
+codex-probe --db .probe/ledger.db weekly-report \
+  --range 30d \
+  --out reports/ledger/weekly-report.md
+
+codex-probe --db .probe/ledger.db timeline \
+  --range 30d \
+  --out reports/ledger/timeline.md
+
+codex-probe --db .probe/ledger.db alerts \
+  --range 30d \
+  --out reports/ledger/alerts.md
+
+codex-probe --db .probe/ledger.db confidence-report \
+  --out reports/ledger/source-confidence.md
+
+codex-probe --db .probe/ledger.db task-report \
+  --range 30d \
+  --out reports/ledger/task-report.md
+
 codex-probe --db .probe/ledger.db dashboard \
   --range 7d \
   --out reports/ledger/dashboard.html
@@ -245,7 +312,9 @@ codex-probe sessions --from 2026-06-01 --to 2026-06-23
 | `examples/ledger-samples/snapshot-delta.json` | 脱敏快照样本，覆盖 high / medium / low 置信度 |
 | `examples/ledger-samples/local-status-snapshots.json` | local_status allowlist 示例 |
 | `examples/ledger-samples/local-codex/` | synthetic Codex rollout 样本，用于验证本地历史导入 |
-| `examples/reports/ledger/` | v0.6.0 会话账本示例报告 |
+| `examples/ledger-samples/local-codex-variants/` | synthetic Codex rollout 变体样本，覆盖字段别名、缺失模型、多项目和多会话 |
+| `examples/ledger-samples/local-codex-stress/` | synthetic Codex rollout 压力样本，覆盖重复快照、多会话重叠、异常时间戳和缺失字段 |
+| `examples/reports/ledger/` | v0.9.0 会话账本、阶段时间线、预警、可信度、任务归因、项目汇总和周报示例报告 |
 | `examples/status-samples/` | 旧版 `/status` 样本库 |
 | `examples/risky-skill.md` | Skill / 输出质量体检风险样例 |
 
@@ -274,7 +343,7 @@ codex-probe --db .probe/probe.db samples collect-rollout \
 要求：
 1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
 2. 只使用仓库 examples/ledger-samples/ 里的 demo 样本。
-3. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、privacy-report.md 和 watch-status.html。
+3. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、project-summary.md、weekly-report.md、timeline.md、alerts.md、source-confidence.md、task-report.md、privacy-report.md 和 watch-status.html。
 4. 最后告诉我 Dashboard 和报告路径，以及示例里哪个会话最贵。
 5. 不要读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
 6. 不要上传任何数据。
@@ -290,8 +359,8 @@ codex-probe --db .probe/probe.db samples collect-rollout \
 2. 先运行 dry-run 检查可用数据源，不要直接导入未知内容。
 3. 只读取 Codex rollout JSONL 中的 token 用量白名单字段。
 4. 如果 dry-run 显示有可导入 token 记录，再导入本地历史。
-5. 生成 reports/ledger/sessions.md、ledger-report.md、privacy-report.md、dashboard.html 和 watch-status.html。
-6. 用普通话告诉我：哪个会话最贵、属于哪个项目、发生在哪个时间段、置信度是什么、为什么贵、怎么降配、什么时候该停。
+5. 生成 reports/ledger/sessions.md、ledger-report.md、project-summary.md、weekly-report.md、timeline.md、alerts.md、source-confidence.md、task-report.md、privacy-report.md、dashboard.html 和 watch-status.html。
+6. 用普通话告诉我：哪个会话最贵、哪个项目最贵、哪段时间增长最快、主要消耗在哪类任务、置信度是什么、为什么贵、怎么降配、什么时候该停。
 7. 明确说明：credits 不等同于美元、人民币或官方账单金额；置信度和建议只是治理参考。
 8. 不要读取聊天正文、prompt、assistant 输出、浏览器 cookie、token、钥匙串、系统凭据或完整私密路径。
 9. 不要上传任何数据。
@@ -352,7 +421,12 @@ codex-probe --db .probe/demo.db skill-lint \
 体检会检查：
 
 - AI 味和模板化表达。
-- 自动安装插件、绕登录、拼车、规避计费等风险表达。
+- 自动安装插件或连接器。
+- 绕登录、共享账号、拼车、规避计费、绕额度等风险表达。
+- 代理、拦截、抓包或修改 Codex / OpenAI 请求。
+- 默认外传、上传到第三方服务器或 webhook。
+- 伪装真人、冒充身份或绕过平台风控。
+- 保证省钱、100% 准确、永久免费等过度承诺。
 - 缺失验收标准。
 - 缺失隐私和删除边界。
 - API key、cookie、token、邮箱或手机号等敏感信息。
@@ -427,7 +501,9 @@ BLCaptain-Codex-Probe-CLI/
 ├── pyproject.toml                    # Python 包与 CLI 入口
 ├── docs/
 │   ├── CODEX_DESKTOP_PROMPT.md       # Codex 桌面版提示词
+│   ├── INSTALL.md                     # 轻量安装方式
 │   ├── MACOS_WATCHER.md              # macOS LaunchAgent watcher 入口
+│   ├── MENUBAR_OR_DESKTOP_EVAL.md    # 菜单栏 App / 桌面组件评估
 │   ├── PRIVACY_SECURITY.md           # 隐私与安全边界
 │   ├── RELEASE_CHECKLIST.md          # 发布前检查清单
 │   └── SOCIAL_POSTS.md               # 社媒短文草稿
@@ -440,16 +516,25 @@ BLCaptain-Codex-Probe-CLI/
 
 ## 发布验收标准
 
-发布 v0.6.0 前必须满足：
+发布 v0.9.0 前必须满足：
 
 - 可以从干净环境 `python -m pip install .` 安装。
-- `codex-probe --version` 返回 `0.6.0`。
+- `codex-probe --version` 返回 `0.9.0`。
 - 能导入官方导出 CSV / JSON / JSONL、mapping 样本、本地历史 synthetic rollout 和快照样本。
 - 能跑通 `sources doctor --deep`、`ledger inspect-export`、`ledger map-export`、`ledger import-history --dry-run`。
 - 能跑通 `setup --demo`、`watch once/start/status/logs/stop/status-page` 和 `delete --watcher --yes`。
-- 能输出会话排行、单会话报告、总账报告、隐私审计报告、本地 HTML Dashboard 和 watcher 状态页。
+- 能输出会话排行、单会话报告、总账报告、阶段级时间线、本地预算预警、任务类型归因、数据源可信度、隐私审计报告、本地 HTML Dashboard 和 watcher 状态页。
+- 能输出项目级汇总报告和 Codex 周报。
+- macOS 状态栏 App 可以 `swift build`，并可通过脚本打包为 `build/CodexProbeBar.app`。
+- 状态栏 App 复用 CLI JSON 输出，不直接读取 cookie、token、钥匙串、聊天正文或网络请求。
 - Dashboard 支持按项目、日期、置信度和模型筛选。
+- Dashboard 首屏包含今日、本周、高风险会话、该停会话、预算预警、数据源可信度和任务类型归因。
 - 能生成只含白名单字段和哈希的脱敏 rollout 校准样本。
+- 样本库覆盖 rollout 字段别名、缺失模型、缺项目路径、缺上下文窗口、异常时间戳、重复快照、多项目和多会话场景。
+- JSON / HTML 报告契约测试覆盖 sessions、ledger、project summary、weekly report、timeline、alerts、task report、confidence report、privacy report 和 dashboard。
+- Skill 体检规则覆盖自动安装、绕登录/计费、外传数据、请求拦截、伪装真人和过度承诺。
+- 安装文档包含 Codex 桌面版、仓库脚本、uvx、pipx 和 Homebrew Formula 草案。
+- 菜单栏 App / 桌面组件评估说明不读取登录态的产品路径。
 - 每条会话都有数据源和 `exact/high/medium/low` 置信度。
 - 能删除本地账本业务数据。
 - 报告不泄露完整 API key、cookie、token、邮箱、手机号或用户私密路径。
@@ -457,12 +542,10 @@ BLCaptain-Codex-Probe-CLI/
 
 ## Roadmap
 
-- 扩充真实脱敏 rollout 样本库，继续校准不同 Codex 版本的数据结构。
-- 增加项目级聚合和周报。
-- 增加 HTML / JSON 报告 schema 快照测试。
-- 增加更细的 Skill 风险规则。
-- 提供 Homebrew / uvx 等更轻的安装方式。
-- 评估菜单栏 App 或桌面组件，但不以读取登录态为代价。
+- 持续收集更多真实脱敏 rollout 样本，校准不同 Codex 版本的数据结构。
+- 正式发布 PyPI 包，并在验证后发布 Homebrew tap。
+- 根据用户反馈决定是否实现极薄 macOS 菜单栏 App。
+- 增加更细的趋势图、阈值配置文件和可导出的 Dashboard JSON schema。
 
 ## FAQ
 

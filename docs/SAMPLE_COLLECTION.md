@@ -1,6 +1,12 @@
 # 脱敏 rollout 样本采集
 
-v0.6.0 开始支持脱敏 rollout 样本采集。真实 Codex rollout 结构可能随版本变化，为了校准字段兼容性，可以让 beta 用户本地生成脱敏校准样本，再人工确认后提交 issue 或 PR。
+v0.9.0 继续扩充脱敏 rollout 样本库。真实 Codex rollout 结构可能随版本变化，为了校准字段兼容性，可以让 beta 用户本地生成脱敏校准样本，再人工确认后提交 issue 或 PR。
+
+仓库内已有三类 synthetic 样本：
+
+- `examples/ledger-samples/local-codex/`：稳定基础样本，用于 demo、watcher 和导入链路。
+- `examples/ledger-samples/local-codex-variants/`：字段变体样本，覆盖 `lastTokenUsage`、`totalTokenUsage`、嵌套 `usage`、缺失模型、多项目、多会话等情况。
+- `examples/ledger-samples/local-codex-stress/`：压力样本，覆盖多会话重叠、重复快照、异常时间戳、缺失模型、缺项目路径和缺上下文窗口。
 
 ## 采集命令
 
@@ -37,3 +43,17 @@ codex-probe --db .probe/probe.db samples collect-rollout \
 ## 提交前建议
 
 先人工打开输出文件，确认没有真实正文、真实路径、邮箱、手机号、密钥或公司敏感信息，再提交给维护者。
+
+建议重点说明：
+
+- Codex 版本或大致发布时间。
+- 本地系统平台和时区。
+- 样本是否来自真实工作流的脱敏输出。
+- 是否观察到字段缺失、字段重命名或模型字段为空。
+
+不要提交：
+
+- 原始 `~/.codex` 文件。
+- 聊天正文、prompt、assistant 输出或工具参数。
+- 完整本地路径。
+- cookie、token、Bearer、API key、邮箱或手机号。

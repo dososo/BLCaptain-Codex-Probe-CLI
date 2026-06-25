@@ -4,10 +4,22 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections import defaultdict
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from .ledger_models import SessionSummary, SnapshotSummary, confidence_score
+from .ledger_models import (
+    BudgetAlert,
+    ProjectSummary,
+    SessionIntervalSummary,
+    SessionSummary,
+    SnapshotSummary,
+    SourceConfidenceSummary,
+    TaskTypeSummary,
+    WeeklySummary,
+    confidence_score,
+)
 from .models import new_id, now_iso
 
 
@@ -430,6 +442,455 @@ def summary_recommendation(token_delta: int, fallback: str) -> str:
     if token_delta >= 50_000:
         return "降配或拆分后续任务，避免继续放大上下文"
     return fallback or "可以继续，但保留停止线"
+
+
+def project_summary(
+    conn: sqlite3.Connection,
+    start: str | None = None,
+    end: str | None = None,
+    min_confidence: str | None = None,
+) -> list[ProjectSummary]:
+    sessions = ledger_summary(conn, start=start, end=end, min_confidence=min_confidence)
+    grouped: dict[str, list[SessionSummary]] = defaultdict(list)
+    for session in sessions:
+        grouped[session.project].append(session)
+    summaries = [build_project_summary(project, items) for project, items in grouped.items()]
+    return sorted(summaries, key=lambda item: (item.token_delta, item.session_count), reverse=True)
+
+
+def build_project_summary(project: str, sessions: list[SessionSummary]) -> ProjectSummary:
+    top = max(sessions, key=lambda item: item.token_delta)
+    token_total = sum(item.token_delta for item in sessions)
+    credits = sum_known_credits(sessions)
+    return ProjectSummary(
+        project=project,
+        session_count=len(sessions),
+        token_delta=token_total,
+        credits_delta=credits,
+        top_session_id=top.session_id,
+        top_session_title=top.title,
+        top_session_tokens=top.token_delta,
+        confidence_counts=confidence_counts(sessions),
+        recommendation=summary_recommendation(token_total, "可以继续，但保留停止线"),
+    )
+
+
+def weekly_summary(
+    conn: sqlite3.Connection,
+    start: str | None = None,
+    end: str | None = None,
+    min_confidence: str | None = None,
+) -> list[WeeklySummary]:
+    sessions = ledger_summary(conn, start=start, end=end, min_confidence=min_confidence)
+    grouped: dict[tuple[int, int], list[SessionSummary]] = defaultdict(list)
+    for session in sessions:
+        grouped[local_week_key(session.ended_at or session.started_at)].append(session)
+
+    summaries = []
+    for (year, week), items in grouped.items():
+        week_start = datetime.fromisocalendar(year, week, 1).date()
+        week_end = week_start + timedelta(days=6)
+        project_totals: dict[str, int] = defaultdict(int)
+        for item in items:
+            project_totals[item.project] += item.token_delta
+        top_project = max(project_totals.items(), key=lambda item: item[1])[0]
+        top_session = max(items, key=lambda item: item.token_delta)
+        token_total = sum(item.token_delta for item in items)
+        summaries.append(
+            WeeklySummary(
+                week_label=f"{year}-W{week:02d}",
+                week_start=week_start.isoformat(),
+                week_end=week_end.isoformat(),
+                session_count=len(items),
+                project_count=len(project_totals),
+                token_delta=token_total,
+                credits_delta=sum_known_credits(items),
+                top_project=top_project,
+                top_session_id=top_session.session_id,
+                top_session_title=top_session.title,
+                top_session_tokens=top_session.token_delta,
+                confidence_counts=confidence_counts(items),
+                recommendation=summary_recommendation(token_total, "可以继续，但保留停止线"),
+            )
+        )
+    return sorted(summaries, key=lambda item: item.week_start, reverse=True)
+
+
+def session_intervals(
+    conn: sqlite3.Connection,
+    start: str | None = None,
+    end: str | None = None,
+    *,
+    session_id: str | None = None,
+) -> list[SessionIntervalSummary]:
+    sessions = ledger_summary(conn, start=start, end=end)
+    if session_id:
+        sessions = [item for item in sessions if item.session_id == session_id]
+    intervals: list[SessionIntervalSummary] = []
+    for session in sessions:
+        snapshots = session_snapshots(conn, session.session_id)
+        if len(snapshots) >= 2:
+            previous = snapshots[0]
+            for current in snapshots[1:]:
+                token_delta = max(0, int(current.total_tokens or 0) - int(previous.total_tokens or 0))
+                credits_delta = interval_credits_delta(previous, current)
+                intervals.append(build_interval_summary(session, previous, current, token_delta, credits_delta))
+                previous = current
+        elif session.token_delta > 0:
+            intervals.append(
+                SessionIntervalSummary(
+                    session_id=session.session_id,
+                    title=session.title,
+                    project=session.project,
+                    model=session.model,
+                    start_at=session.started_at,
+                    end_at=session.ended_at,
+                    token_delta=session.token_delta,
+                    credits_delta=session.credits_delta,
+                    context_used_percent=session.context_peak_percent,
+                    stage_label=infer_task_type(session),
+                    severity=usage_severity(session.token_delta),
+                    confidence_level=session.confidence_level,
+                    source_type=session.source_type,
+                    recommendation=interval_recommendation(session.token_delta, session.context_peak_percent),
+                    evidence_summary=session.evidence_summary,
+                )
+            )
+    return sorted(intervals, key=lambda item: (item.token_delta, item.end_at), reverse=True)
+
+
+def build_interval_summary(
+    session: SessionSummary,
+    previous: SnapshotSummary,
+    current: SnapshotSummary,
+    token_delta: int,
+    credits_delta: float | None,
+) -> SessionIntervalSummary:
+    context_used = context_used_percent(current)
+    return SessionIntervalSummary(
+        session_id=session.session_id,
+        title=session.title,
+        project=session.project,
+        model=session.model,
+        start_at=previous.captured_at,
+        end_at=current.captured_at,
+        token_delta=token_delta,
+        credits_delta=credits_delta,
+        context_used_percent=context_used,
+        stage_label=infer_task_type(session),
+        severity=usage_severity(token_delta),
+        confidence_level=session.confidence_level,
+        source_type=current.source_type or session.source_type,
+        recommendation=interval_recommendation(token_delta, context_used),
+        evidence_summary=session.evidence_summary,
+    )
+
+
+def budget_alerts(
+    conn: sqlite3.Connection,
+    start: str | None = None,
+    end: str | None = None,
+    *,
+    session_threshold: int = 100_000,
+    project_threshold: int = 250_000,
+    ledger_threshold: int = 500_000,
+    context_remaining_threshold: float = 20.0,
+) -> list[BudgetAlert]:
+    sessions = ledger_summary(conn, start=start, end=end)
+    projects = project_summary(conn, start=start, end=end)
+    alerts: list[BudgetAlert] = []
+    for session in sessions:
+        if session.token_delta >= session_threshold:
+            alerts.append(
+                build_alert(
+                    "session",
+                    session.session_id,
+                    session.title,
+                    session.token_delta,
+                    session_threshold,
+                    session.confidence_level,
+                    "单会话 token delta 超过本地预算阈值",
+                    summary_recommendation(session.token_delta, session.recommendation),
+                )
+            )
+        if session.context_peak_percent is not None:
+            remaining = max(0.0, 100.0 - float(session.context_peak_percent))
+            if remaining <= context_remaining_threshold:
+                alerts.append(
+                    build_alert(
+                        "context",
+                        session.session_id,
+                        session.title,
+                        int(round(session.context_peak_percent)),
+                        max(1.0, 100.0 - context_remaining_threshold),
+                        session.confidence_level,
+                        f"上下文剩余约 {remaining:.1f}%，低于本地阈值 {context_remaining_threshold:.1f}%",
+                        "停止继续堆上下文，保存结论后开新会话",
+                    )
+                )
+    for project in projects:
+        if project.token_delta >= project_threshold:
+            alerts.append(
+                build_alert(
+                    "project",
+                    project.project,
+                    project.project,
+                    project.token_delta,
+                    project_threshold,
+                    strongest_confidence(project.confidence_counts),
+                    "项目周期 token delta 超过本地预算阈值",
+                    project.recommendation,
+                )
+            )
+    ledger_total = sum(item.token_delta for item in sessions)
+    if ledger_total >= ledger_threshold:
+        alerts.append(
+            build_alert(
+                "ledger",
+                "current_range",
+                "当前时间范围总账",
+                ledger_total,
+                ledger_threshold,
+                strongest_confidence(confidence_counts(sessions)),
+                "当前时间范围总账超过本地预算阈值",
+                summary_recommendation(ledger_total, "暂停大任务，拆分会话和项目再继续"),
+            )
+        )
+    return sorted(alerts, key=lambda item: (severity_rank(item.severity), item.usage_percent), reverse=True)
+
+
+def build_alert(
+    scope: str,
+    scope_id: str,
+    name: str,
+    token_delta: int,
+    threshold: float,
+    confidence_level: str,
+    reason: str,
+    recommendation: str,
+) -> BudgetAlert:
+    usage_percent = float(token_delta) * 100.0 / threshold if threshold else 0.0
+    return BudgetAlert(
+        scope=scope,
+        scope_id=scope_id,
+        name=name,
+        token_delta=token_delta,
+        threshold=threshold,
+        usage_percent=usage_percent,
+        severity=alert_severity(usage_percent),
+        confidence_level=confidence_level,
+        reason=reason,
+        recommendation=recommendation,
+    )
+
+
+def task_type_summary(
+    conn: sqlite3.Connection,
+    start: str | None = None,
+    end: str | None = None,
+) -> list[TaskTypeSummary]:
+    sessions = ledger_summary(conn, start=start, end=end)
+    grouped: dict[str, list[SessionSummary]] = defaultdict(list)
+    for session in sessions:
+        grouped[infer_task_type(session)].append(session)
+    results = []
+    for task_type, items in grouped.items():
+        top = max(items, key=lambda item: item.token_delta)
+        token_total = sum(item.token_delta for item in items)
+        results.append(
+            TaskTypeSummary(
+                task_type=task_type,
+                session_count=len(items),
+                token_delta=token_total,
+                credits_delta=sum_known_credits(items),
+                top_session_id=top.session_id,
+                top_session_title=top.title,
+                top_session_tokens=top.token_delta,
+                confidence_counts=confidence_counts(items),
+                recommendation=summary_recommendation(token_total, "继续观察"),
+            )
+        )
+    return sorted(results, key=lambda item: (item.token_delta, item.session_count), reverse=True)
+
+
+def source_confidence_summary(conn: sqlite3.Connection) -> list[SourceConfidenceSummary]:
+    rows = conn.execute(
+        """
+        SELECT
+          src.type AS source_type,
+          src.enabled AS enabled,
+          src.confidence_ceiling AS confidence_ceiling,
+          src.permission_scope AS permission_scope,
+          COUNT(DISTINCT s.id) AS session_count,
+          COUNT(DISTINCT us.id) AS snapshot_count,
+          SUM(CASE WHEN us.session_id IS NOT NULL THEN 1 ELSE 0 END) AS session_field_count,
+          SUM(CASE WHEN us.total_tokens IS NOT NULL THEN 1 ELSE 0 END) AS total_tokens_count,
+          SUM(CASE WHEN us.credits IS NOT NULL THEN 1 ELSE 0 END) AS credits_count,
+          SUM(CASE WHEN us.context_limit_tokens IS NOT NULL THEN 1 ELSE 0 END) AS context_limit_count,
+          SUM(CASE WHEN us.context_remaining_percent IS NOT NULL OR us.context_used_tokens IS NOT NULL THEN 1 ELSE 0 END) AS context_state_count,
+          SUM(CASE WHEN s.model IS NOT NULL AND s.model != '' THEN 1 ELSE 0 END) AS model_count,
+          SUM(CASE WHEN s.project_id IS NOT NULL THEN 1 ELSE 0 END) AS project_count
+        FROM sources src
+        LEFT JOIN usage_snapshots us ON us.source_id = src.id
+        LEFT JOIN sessions s ON s.id = us.session_id OR s.source_id = src.id
+        GROUP BY src.id
+        ORDER BY src.type
+        """
+    ).fetchall()
+    summaries: list[SourceConfidenceSummary] = []
+    for row in rows:
+        snapshot_count = int(row["snapshot_count"] or 0)
+        fields_present, missing_fields = source_fields(row, snapshot_count)
+        summaries.append(
+            SourceConfidenceSummary(
+                source_type=row["source_type"],
+                enabled=bool(row["enabled"]),
+                confidence_ceiling=row["confidence_ceiling"],
+                session_count=int(row["session_count"] or 0),
+                snapshot_count=snapshot_count,
+                fields_present=fields_present,
+                missing_fields=missing_fields,
+                diagnosis=source_diagnosis(row["source_type"], row["confidence_ceiling"], missing_fields, snapshot_count),
+                privacy_note=row["permission_scope"],
+            )
+        )
+    return summaries
+
+
+def local_week_key(value: str) -> tuple[int, int]:
+    try:
+        parsed = datetime.fromisoformat((value or "").replace("Z", "+00:00"))
+    except ValueError:
+        parsed = datetime.now().astimezone()
+    parsed = parsed.astimezone() if parsed.tzinfo else parsed
+    year, week, _ = parsed.date().isocalendar()
+    return year, week
+
+
+def sum_known_credits(sessions: list[SessionSummary]) -> float | None:
+    values = [item.credits_delta for item in sessions if item.credits_delta is not None]
+    if not values:
+        return None
+    return sum(values)
+
+
+def confidence_counts(sessions: list[SessionSummary]) -> dict[str, int]:
+    counts = {"exact": 0, "high": 0, "medium": 0, "low": 0}
+    for session in sessions:
+        counts[session.confidence_level if session.confidence_level in counts else "low"] += 1
+    return counts
+
+
+def interval_credits_delta(previous: SnapshotSummary, current: SnapshotSummary) -> float | None:
+    if previous.credits is None or current.credits is None:
+        return None
+    if previous.source_type != current.source_type or current.source_type == "local_codex_rollout":
+        return None
+    return max(0.0, float(current.credits) - float(previous.credits))
+
+
+def context_used_percent(snapshot: SnapshotSummary) -> float | None:
+    if snapshot.context_used_tokens is not None and snapshot.context_limit_tokens:
+        return float(snapshot.context_used_tokens) * 100.0 / float(snapshot.context_limit_tokens)
+    if snapshot.context_remaining_percent is not None:
+        return max(0.0, 100.0 - float(snapshot.context_remaining_percent))
+    return None
+
+
+def usage_severity(token_delta: int) -> str:
+    if token_delta >= 80_000:
+        return "critical"
+    if token_delta >= 50_000:
+        return "high"
+    if token_delta >= 20_000:
+        return "medium"
+    return "low"
+
+
+def severity_rank(severity: str) -> int:
+    return {"critical": 4, "high": 3, "medium": 2, "low": 1}.get(severity, 0)
+
+
+def alert_severity(usage_percent: float) -> str:
+    if usage_percent >= 130:
+        return "critical"
+    if usage_percent >= 100:
+        return "high"
+    if usage_percent >= 80:
+        return "medium"
+    return "low"
+
+
+def interval_recommendation(token_delta: int, context_used_percent_value: float | None) -> str:
+    if context_used_percent_value is not None and context_used_percent_value >= 80:
+        return "停止继续堆上下文，保存结论后开新会话"
+    if token_delta >= 80_000:
+        return "停止当前阶段，沉淀结果后拆到新会话"
+    if token_delta >= 50_000:
+        return "降配收尾，避免继续放大上下文"
+    if token_delta >= 20_000:
+        return "观察该阶段，后续只带必要文件和结论"
+    return "可以继续，但保留停止线"
+
+
+def infer_task_type(session: SessionSummary) -> str:
+    text = " ".join([session.title, session.project, session.evidence_summary, session.recommendation]).lower()
+    rules = [
+        ("发布交付", ["release", "github", "push", "commit", "tag", "发布", "提交", "推送"]),
+        ("验证测试", ["test", "ci", "compile", "acceptance", "verify", "验收", "验证", "测试"]),
+        ("调试修复", ["debug", "fix", "bug", "error", "failure", "修复", "报错"]),
+        ("文档报告", ["readme", "doc", "docs", "report", "markdown", "文档", "报告", "周报"]),
+        ("素材生成", ["image", "screenshot", "cover", "poster", "xiaohongshu", "截图", "封面", "小红书"]),
+        ("调研分析", ["prd", "research", "analysis", "opportunity", "调研", "分析", "机会"]),
+        ("开发实现", ["code", "cli", "feature", "storage", "dashboard", "开发", "实现"]),
+    ]
+    for label, keywords in rules:
+        if any(keyword in text for keyword in keywords):
+            return label
+    return "未知任务"
+
+
+def strongest_confidence(counts: dict[str, int]) -> str:
+    for level in ["exact", "high", "medium", "low"]:
+        if counts.get(level, 0):
+            return level
+    return "low"
+
+
+def source_fields(row: sqlite3.Row, snapshot_count: int) -> tuple[list[str], list[str]]:
+    checks = {
+        "session_id": row["session_field_count"],
+        "total_tokens": row["total_tokens_count"],
+        "credits": row["credits_count"],
+        "context_window": row["context_limit_count"],
+        "context_state": row["context_state_count"],
+        "model": row["model_count"],
+        "project": row["project_count"],
+    }
+    present: list[str] = []
+    missing: list[str] = []
+    for field, count in checks.items():
+        if int(count or 0) > 0:
+            present.append(field)
+        elif snapshot_count > 0:
+            missing.append(field)
+        else:
+            missing.append(field)
+    return present, missing
+
+
+def source_diagnosis(source_type: str, confidence_ceiling: str, missing_fields: list[str], snapshot_count: int) -> str:
+    if snapshot_count == 0:
+        return "已登记数据源，但当前账本没有该来源快照；无法做会话级归因。"
+    if not missing_fields:
+        return "字段覆盖完整，可用于当前来源口径下的高质量归因。"
+    if "total_tokens" in missing_fields:
+        return "缺少 total_tokens，无法精确计算会话级 token delta。"
+    if confidence_ceiling == "exact":
+        return "官方或等价导出字段可用，但仍需注意 credits 口径不等同于账单金额。"
+    if source_type == "local_codex_rollout":
+        return "本地 rollout 只读取 token 白名单字段；schema 变动时可能出现缺字段。"
+    return "可用于治理参考，但缺字段会降低精细度。"
 
 
 def session_snapshots(conn: sqlite3.Connection, session_id: str) -> list[SnapshotSummary]:

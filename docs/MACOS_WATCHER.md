@@ -1,6 +1,6 @@
 # macOS Watcher 入口
 
-v0.6.0 提供一个轻量 LaunchAgent 入口和本地状态页，用来在 macOS 登录会话里启动并查看 watcher。它不是菜单栏 App，也不会登录 OpenAI、读取浏览器 cookie、读取 token、读取钥匙串或上传数据。
+v0.9.0 继续保留轻量 LaunchAgent 入口和本地状态页，并新增独立的状态栏 App 文档。watcher 不会登录 OpenAI、读取浏览器 cookie、读取 token、读取钥匙串或上传数据。
 
 ## 安装前
 
@@ -49,6 +49,8 @@ codex-probe --db .probe/probe.db watch status
 codex-probe --db .probe/probe.db watch logs
 codex-probe --db .probe/probe.db watch status-page --open
 codex-probe --db .probe/probe.db sessions --range 7d
+codex-probe --db .probe/probe.db projects --range 30d
+codex-probe --db .probe/probe.db weekly-report --range 30d
 ```
 
 `watch status-page` 会生成本地 HTML 状态页，展示 watcher 状态、最近日志和最近会话排行。它不启动服务，也不上传数据。

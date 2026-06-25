@@ -32,6 +32,12 @@ def main() -> int:
     ledger_sessions = out_dir / "ledger-sessions.md"
     ledger_session_report = out_dir / "ledger-session-report.md"
     ledger_report = out_dir / "ledger-report.md"
+    project_summary_report = out_dir / "project-summary.md"
+    weekly_report = out_dir / "weekly-report.md"
+    timeline_report = out_dir / "timeline.md"
+    alerts_report = out_dir / "alerts.md"
+    task_report = out_dir / "task-report.md"
+    confidence_report = out_dir / "source-confidence.md"
     ledger_privacy_report = out_dir / "ledger-privacy-report.md"
     ledger_dashboard = out_dir / "ledger-dashboard.html"
     mapping_json = out_dir / "official-export-alt.mapping.json"
@@ -489,6 +495,118 @@ def main() -> int:
             ],
             "expect": 0,
             "must_contain": "ledger-report.md",
+        },
+        {
+            "name": "project_summary",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(db),
+                "--json",
+                "projects",
+                "--range",
+                "30d",
+                "--out",
+                str(project_summary_report),
+            ],
+            "expect": 0,
+            "must_contain": "project-summary.md",
+        },
+        {
+            "name": "weekly_report",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(db),
+                "--json",
+                "weekly-report",
+                "--range",
+                "30d",
+                "--out",
+                str(weekly_report),
+            ],
+            "expect": 0,
+            "must_contain": "weekly-report.md",
+        },
+        {
+            "name": "timeline_report",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(db),
+                "--json",
+                "timeline",
+                "--range",
+                "30d",
+                "--out",
+                str(timeline_report),
+            ],
+            "expect": 0,
+            "must_contain": "timeline.md",
+        },
+        {
+            "name": "alerts_report",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(db),
+                "--json",
+                "alerts",
+                "--range",
+                "30d",
+                "--session-threshold",
+                "20000",
+                "--project-threshold",
+                "60000",
+                "--ledger-threshold",
+                "120000",
+                "--out",
+                str(alerts_report),
+            ],
+            "expect": 0,
+            "must_contain": "alerts.md",
+        },
+        {
+            "name": "task_report",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(db),
+                "--json",
+                "task-report",
+                "--range",
+                "30d",
+                "--out",
+                str(task_report),
+            ],
+            "expect": 0,
+            "must_contain": "task-report.md",
+        },
+        {
+            "name": "confidence_report",
+            "cmd": [
+                sys.executable,
+                "-m",
+                "codex_usage_skill_probe",
+                "--db",
+                str(db),
+                "--json",
+                "confidence-report",
+                "--out",
+                str(confidence_report),
+            ],
+            "expect": 0,
+            "must_contain": "source-confidence.md",
         },
         {
             "name": "ledger_privacy",

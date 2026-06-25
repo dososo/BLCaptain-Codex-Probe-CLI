@@ -4,8 +4,27 @@ from pathlib import Path
 
 from codex_usage_skill_probe.export_mapping import inspect_export
 from codex_usage_skill_probe.ledger_adapters import import_official_export, import_snapshot_delta
-from codex_usage_skill_probe.ledger_reports import local_time, render_sessions_markdown
-from codex_usage_skill_probe.ledger_storage import delete_ledger_data, ledger_summary, privacy_audit_rows
+from codex_usage_skill_probe.ledger_reports import (
+    local_time,
+    render_alerts_markdown,
+    render_confidence_markdown,
+    render_project_summary_markdown,
+    render_sessions_markdown,
+    render_task_report_markdown,
+    render_timeline_markdown,
+    render_weekly_report_markdown,
+)
+from codex_usage_skill_probe.ledger_storage import (
+    budget_alerts,
+    delete_ledger_data,
+    ledger_summary,
+    privacy_audit_rows,
+    project_summary,
+    session_intervals,
+    source_confidence_summary,
+    task_type_summary,
+    weekly_summary,
+)
 from codex_usage_skill_probe.local_history import import_local_history, inspect_local_codex
 from codex_usage_skill_probe.source_doctor import run_source_doctor, source_doctor_payload
 from codex_usage_skill_probe.storage import Store
@@ -99,6 +118,27 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual(sessions[0].model, "gpt-5.5")
         self.assertIn("降配", sessions[0].recommendation)
 
+    def test_local_codex_history_variant_aliases_and_missing_model(self):
+        root = ROOT / "examples" / "ledger-samples" / "local-codex-variants"
+        dry = inspect_local_codex(root)
+        self.assertEqual(dry.file_count, 1)
+        self.assertEqual(dry.importable_record_count, 3)
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(Path(tmp) / "ledger.db")
+            try:
+                result = import_local_history(store.conn, root)
+                sessions = ledger_summary(store.conn)
+            finally:
+                store.close()
+
+        self.assertEqual(result["imported_snapshots"], 3)
+        by_id = {item.session_id: item for item in sessions}
+        self.assertEqual(len(sessions), 3)
+        self.assertTrue(any(item.model == "gpt-5.5" for item in sessions))
+        self.assertTrue(any(item.model == "" for item in sessions))
+        self.assertTrue(any(item.token_delta == 19_000 for item in sessions))
+        self.assertTrue(all("[REDACTED_PROJECT_PATH" not in item.project for item in sessions))
+
     def test_reports_show_local_time_and_precision_notes(self):
         with tempfile.TemporaryDirectory() as tmp:
             store = Store(Path(tmp) / "ledger.db")
@@ -114,6 +154,63 @@ class LedgerTests(unittest.TestCase):
         self.assertIn("credits delta（来源值）", rendered)
         self.assertIn("本工具不换算成美元、人民币或官方账单金额", rendered)
         self.assertRegex(local_time("2026-06-22T09:00:00+00:00"), r"2026-06-22 .* UTC[+-][0-9]{2}:[0-9]{2}")
+
+    def test_project_summary_and_weekly_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(Path(tmp) / "ledger.db")
+            try:
+                import_official_export(store.conn, ROOT / "examples" / "ledger-samples" / "official-export.csv")
+                import_snapshot_delta(store.conn, ROOT / "examples" / "ledger-samples" / "snapshot-delta.json")
+                projects = project_summary(store.conn)
+                weeks = weekly_summary(store.conn)
+            finally:
+                store.close()
+
+        self.assertGreaterEqual(len(projects), 2)
+        cli_project = next(item for item in projects if item.project == "Codex Probe CLI")
+        self.assertGreaterEqual(cli_project.token_delta, 203367)
+        self.assertEqual(cli_project.confidence_counts["exact"], 2)
+        self.assertIn("停止", cli_project.recommendation)
+        self.assertTrue(any(item.week_label.startswith("2026-W") for item in weeks))
+
+        project_report = render_project_summary_markdown(projects, "30d")
+        weekly_report = render_weekly_report_markdown(weeks, "30d")
+        self.assertIn("Codex 项目级用量汇总", project_report)
+        self.assertIn("置信度分布", project_report)
+        self.assertIn("Codex 周报", weekly_report)
+        self.assertIn("本地日期范围", weekly_report)
+
+    def test_v080_timeline_alerts_tasks_and_source_confidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(Path(tmp) / "ledger.db")
+            try:
+                import_official_export(store.conn, ROOT / "examples" / "ledger-samples" / "official-export.csv")
+                import_snapshot_delta(store.conn, ROOT / "examples" / "ledger-samples" / "snapshot-delta.json")
+                import_local_history(store.conn, ROOT / "examples" / "ledger-samples" / "local-codex-stress")
+                intervals = session_intervals(store.conn)
+                alerts = budget_alerts(store.conn, session_threshold=20_000, project_threshold=60_000, ledger_threshold=120_000)
+                tasks = task_type_summary(store.conn)
+                sources = source_confidence_summary(store.conn)
+            finally:
+                store.close()
+
+        self.assertTrue(any(item.stage_label in {"文档报告", "调试修复", "调研分析", "未知任务"} for item in intervals))
+        self.assertTrue(any(item.token_delta >= 20_000 for item in intervals))
+        self.assertTrue(any(item.scope == "session" for item in alerts))
+        self.assertTrue(any(item.scope == "ledger" for item in alerts))
+        self.assertTrue(any(item.task_type == "发布交付" for item in tasks))
+        self.assertTrue(any(item.source_type == "local_codex_rollout" for item in sources))
+        self.assertTrue(any("total_tokens" in item.fields_present for item in sources))
+
+        timeline_report = render_timeline_markdown(intervals, "30d")
+        alerts_report = render_alerts_markdown(alerts, "30d")
+        task_report = render_task_report_markdown(tasks, "30d")
+        confidence_report = render_confidence_markdown(sources)
+        self.assertIn("阶段级高消耗时间线", timeline_report)
+        self.assertIn("本地预算与停止线预警", alerts_report)
+        self.assertIn("任务类型归因报告", task_report)
+        self.assertIn("数据源可信度报告", confidence_report)
+        self.assertIn("为什么有些字段不能更精确", confidence_report)
 
     def test_delete_ledger_keeps_privacy_audit(self):
         with tempfile.TemporaryDirectory() as tmp:

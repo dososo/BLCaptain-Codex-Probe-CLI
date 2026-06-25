@@ -9,7 +9,7 @@
 | 用量报告 | [usage-report.md](usage-report.md) |
 | Skill / 输出体检 | [skill-lint-report.md](skill-lint-report.md) |
 | 用量风险数 | 1 |
-| Skill 风险数 | 4 |
+| Skill 风险数 | 5 |
 | 建议动作 | **停止** |
 | 为什么贵 | 当前任务已累计 142,047 tokens，上下文规模已经偏大；会话上下文只剩 45% |
 | 怎么降配 | 开新会话时只带最终 README、目标仓库路径、最新 commit 和必要错误日志；不要默认重读全项目，先点名必要文件；把发布准备、CI 修复、README 微调拆成独立小任务。 |

@@ -66,7 +66,8 @@ class CliE2ETests(unittest.TestCase):
             lint_payload = json.loads(linted.stdout)
             lint_labels = {f["finding_type"] for f in lint_payload["findings"]}
             self.assertIn("AI_SMELL", lint_labels)
-            self.assertIn("PLUGIN_RISK", lint_labels)
+            self.assertIn("AUTO_INSTALL_RISK", lint_labels)
+            self.assertIn("LOGIN_BILLING_BYPASS", lint_labels)
             self.assertTrue(skill_report.exists())
 
             doctor = self.run_probe(
@@ -112,6 +113,12 @@ class CliE2ETests(unittest.TestCase):
             db = tmp_path / "ledger.db"
             session_report = tmp_path / "session.md"
             ledger_report = tmp_path / "ledger.md"
+            project_report = tmp_path / "project-summary.md"
+            weekly_report = tmp_path / "weekly.md"
+            timeline_report = tmp_path / "timeline.md"
+            alerts_report = tmp_path / "alerts.md"
+            task_report = tmp_path / "task-report.md"
+            confidence_report = tmp_path / "source-confidence.md"
             privacy_report = tmp_path / "privacy.md"
             dashboard = tmp_path / "dashboard.html"
 
@@ -243,6 +250,105 @@ class CliE2ETests(unittest.TestCase):
             confidences = {item["confidence_level"] for item in ranked_payload["sessions"]}
             self.assertTrue({"exact", "high", "medium", "low"}.issubset(confidences))
 
+            ranked_text = self.run_probe("--db", str(db), "sessions", "--range", "7d")
+            self.assertIn("Codex 会话级 Token 账本", ranked_text.stdout)
+            self.assertNotIn("session_count:", ranked_text.stdout)
+
+            projects = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "projects",
+                "--range",
+                "30d",
+                "--out",
+                str(project_report),
+            )
+            projects_payload = json.loads(projects.stdout)
+            project_names = {item["project"] for item in projects_payload["projects"]}
+            self.assertIn("Codex Probe CLI", project_names)
+            self.assertTrue(project_report.exists())
+            self.assertIn("Codex 项目级用量汇总", project_report.read_text(encoding="utf-8"))
+
+            weekly = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "weekly-report",
+                "--range",
+                "30d",
+                "--out",
+                str(weekly_report),
+            )
+            weekly_payload = json.loads(weekly.stdout)
+            self.assertGreaterEqual(weekly_payload["week_count"], 1)
+            self.assertTrue(weekly_report.exists())
+            self.assertIn("Codex 周报", weekly_report.read_text(encoding="utf-8"))
+
+            timeline = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "timeline",
+                "--range",
+                "30d",
+                "--out",
+                str(timeline_report),
+            )
+            timeline_payload = json.loads(timeline.stdout)
+            self.assertGreaterEqual(timeline_payload["interval_count"], 1)
+            self.assertTrue(timeline_report.exists())
+            self.assertIn("阶段级高消耗时间线", timeline_report.read_text(encoding="utf-8"))
+
+            alerts = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "alerts",
+                "--range",
+                "30d",
+                "--session-threshold",
+                "20000",
+                "--project-threshold",
+                "60000",
+                "--ledger-threshold",
+                "120000",
+                "--out",
+                str(alerts_report),
+            )
+            alerts_payload = json.loads(alerts.stdout)
+            self.assertGreaterEqual(alerts_payload["alert_count"], 1)
+            self.assertTrue(alerts_report.exists())
+            self.assertIn("本地预算与停止线预警", alerts_report.read_text(encoding="utf-8"))
+
+            tasks = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "task-report",
+                "--range",
+                "30d",
+                "--out",
+                str(task_report),
+            )
+            tasks_payload = json.loads(tasks.stdout)
+            self.assertGreaterEqual(tasks_payload["task_type_count"], 1)
+            self.assertTrue(task_report.exists())
+            self.assertIn("任务类型归因报告", task_report.read_text(encoding="utf-8"))
+
+            confidence = self.run_probe(
+                "--db",
+                str(db),
+                "--json",
+                "confidence-report",
+                "--out",
+                str(confidence_report),
+            )
+            confidence_payload = json.loads(confidence.stdout)
+            self.assertGreaterEqual(confidence_payload["source_count"], 1)
+            self.assertTrue(confidence_report.exists())
+            self.assertIn("数据源可信度报告", confidence_report.read_text(encoding="utf-8"))
+
             self.run_probe(
                 "--db",
                 str(db),
@@ -264,6 +370,10 @@ class CliE2ETests(unittest.TestCase):
             self.run_probe("--db", str(db), "--json", "dashboard", "--range", "7d", "--out", str(dashboard))
             html = dashboard.read_text(encoding="utf-8")
             self.assertIn("Codex 会话级 Token 账本", html)
+            self.assertIn("本地预算预警", html)
+            self.assertIn("数据源可信度", html)
+            self.assertIn("任务类型归因", html)
+            self.assertIn("高风险项目", html)
             self.assertIn("projectFilter", html)
             self.assertIn("confidenceFilter", html)
             self.assertIn("modelFilter", html)
@@ -328,6 +438,12 @@ class CliE2ETests(unittest.TestCase):
             self.assertTrue(payload["ok"])
             self.assertTrue((out_dir / "dashboard.html").exists())
             self.assertTrue((out_dir / "watch-status.html").exists())
+            self.assertTrue((out_dir / "project-summary.md").exists())
+            self.assertTrue((out_dir / "weekly-report.md").exists())
+            self.assertTrue((out_dir / "timeline.md").exists())
+            self.assertTrue((out_dir / "alerts.md").exists())
+            self.assertTrue((out_dir / "source-confidence.md").exists())
+            self.assertTrue((out_dir / "task-report.md").exists())
             self.assertIn("projectFilter", (out_dir / "dashboard.html").read_text(encoding="utf-8"))
 
 

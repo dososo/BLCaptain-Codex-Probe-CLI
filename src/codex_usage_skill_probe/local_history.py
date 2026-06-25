@@ -21,7 +21,16 @@ from .ledger_storage import (
 )
 
 
-TOKEN_MARKERS = ("last_token_usage", "total_token_usage", "rate_limits")
+TOKEN_MARKERS = (
+    "last_token_usage",
+    "total_token_usage",
+    "lastTokenUsage",
+    "totalTokenUsage",
+    "token_usage",
+    "tokenUsage",
+    '"usage"',
+    "rate_limits",
+)
 SKIP_MARKERS = ("response_item", "assistant_message", "user_message", '"content"', '"arguments"')
 UUID_RE = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 
@@ -172,8 +181,30 @@ def import_local_history(
 def extract_usage_record(event: dict[str, Any], path: Path, line_number: int) -> dict[str, Any] | None:
     payload = event.get("payload") if isinstance(event.get("payload"), dict) else event
     info = payload.get("info") if isinstance(payload.get("info"), dict) else {}
-    last_usage = first_dict(info.get("last_token_usage"), payload.get("last_token_usage"))
-    total_usage = first_dict(info.get("total_token_usage"), payload.get("total_token_usage"))
+    usage = first_dict(
+        info.get("usage"),
+        payload.get("usage"),
+        info.get("token_usage"),
+        payload.get("token_usage"),
+        info.get("tokenUsage"),
+        payload.get("tokenUsage"),
+    )
+    last_usage = first_dict(
+        info.get("last_token_usage"),
+        payload.get("last_token_usage"),
+        info.get("lastTokenUsage"),
+        payload.get("lastTokenUsage"),
+        usage.get("last"),
+        usage.get("delta"),
+    )
+    total_usage = first_dict(
+        info.get("total_token_usage"),
+        payload.get("total_token_usage"),
+        info.get("totalTokenUsage"),
+        payload.get("totalTokenUsage"),
+        usage.get("total"),
+        usage,
+    )
     if not last_usage and not total_usage:
         return None
     session_id = extract_session_id(path, event, payload)
@@ -184,11 +215,25 @@ def extract_usage_record(event: dict[str, Any], path: Path, line_number: int) ->
         payload.get("started_at"),
         timestamp_from_filename(path),
     )
-    input_tokens = token_value(last_usage, "input_tokens", "prompt_tokens", "request_tokens")
-    cached_tokens = token_value(last_usage, "cached_input_tokens", "cached_tokens", "cache_read_tokens")
-    output_tokens = token_value(last_usage, "output_tokens", "completion_tokens", "response_tokens")
-    last_total = token_value(last_usage, "total_tokens", "tokens")
-    total_tokens = token_value(total_usage, "total_tokens", "tokens")
+    input_tokens = token_value(last_usage, "input_tokens", "inputTokens", "prompt_tokens", "promptTokens", "request_tokens")
+    cached_tokens = token_value(
+        last_usage,
+        "cached_input_tokens",
+        "cachedInputTokens",
+        "cached_tokens",
+        "cachedTokens",
+        "cache_read_tokens",
+    )
+    output_tokens = token_value(
+        last_usage,
+        "output_tokens",
+        "outputTokens",
+        "completion_tokens",
+        "completionTokens",
+        "response_tokens",
+    )
+    last_total = token_value(last_usage, "total_tokens", "totalTokens", "tokens")
+    total_tokens = token_value(total_usage, "total_tokens", "totalTokens", "tokens")
     if total_tokens is None:
         total_tokens = sum_tokens(input_tokens, cached_tokens, output_tokens) or last_total
     token_delta = last_total if last_total is not None else sum_tokens(input_tokens, cached_tokens, output_tokens)
@@ -196,9 +241,11 @@ def extract_usage_record(event: dict[str, Any], path: Path, line_number: int) ->
     credits = None
     if isinstance(rate_limits.get("credits"), dict):
         credits = coerce_float(rate_limits["credits"].get("remaining"))
-    model = first_text(payload.get("model"), info.get("model"))
-    cwd = first_text(payload.get("cwd"), info.get("cwd"))
-    turn_id = first_text(payload.get("turn_id"), info.get("turn_id"))
+    model_info = first_dict(payload.get("model_info"), info.get("model_info"), payload.get("modelInfo"), info.get("modelInfo"))
+    project_info = first_dict(payload.get("project"), info.get("project"))
+    model = optional_text(payload.get("model"), info.get("model"), model_info.get("id"), model_info.get("name"))
+    cwd = optional_text(payload.get("cwd"), info.get("cwd"), payload.get("project_path"), info.get("project_path"), project_info.get("path"))
+    turn_id = optional_text(payload.get("turn_id"), info.get("turn_id"))
     return {
         "session_id": session_id,
         "title": f"Codex 会话 {session_id[-8:]}",
@@ -211,7 +258,13 @@ def extract_usage_record(event: dict[str, Any], path: Path, line_number: int) ->
         "total_tokens": total_tokens,
         "token_delta": token_delta or 0,
         "credits": credits,
-        "context_limit_tokens": coerce_int(payload.get("model_context_window") or info.get("model_context_window")),
+        "context_limit_tokens": coerce_int(
+            payload.get("model_context_window")
+            or info.get("model_context_window")
+            or payload.get("context_window")
+            or info.get("context_window")
+            or model_info.get("context_window")
+        ),
         "model": model,
         "turn_id": turn_id,
         "raw_ref": f"local:{hash_label(str(path))}:{line_number}",
@@ -293,6 +346,13 @@ def first_text(*values: Any) -> str:
         if isinstance(value, str) and value:
             return value
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def optional_text(*values: Any) -> str:
+    for value in values:
+        if isinstance(value, str) and value:
+            return value
+    return ""
 
 
 def timestamp_from_filename(path: Path) -> str:

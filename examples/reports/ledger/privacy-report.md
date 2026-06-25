@@ -14,22 +14,26 @@
 
 | 时间 | 动作 | 摘要 |
 |---|---|---|
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": false, "source_type": "official_export"} |
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": false, "source_type": "snapshot_delta"} |
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": false, "source_type": "local_status"} |
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": false, "source_type": "local_codex_rollout"} |
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "medium", "enabled": false, "source_type": "desktop_visible"} |
-| 2026-06-23T13:05:55+00:00 | ledger_initialized | {"db_name": "codex-probe-ledger-example-13651.db", "source_count": 5} |
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": true, "source_type": "official_export"} |
-| 2026-06-23T13:05:55+00:00 | official_export_imported | {"filename": "official-export.csv", "format": "csv", "sessions": 3, "snapshots": 3} |
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": true, "source_type": "official_export"} |
-| 2026-06-23T13:05:55+00:00 | official_export_imported | {"filename": "official-export.jsonl", "format": "jsonl", "sessions": 2, "snapshots": 2} |
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": true, "source_type": "official_export"} |
-| 2026-06-23T13:05:55+00:00 | official_export_imported | {"filename": "official-export-alt.json", "format": "json", "sessions": 1, "snapshots": 1} |
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": true, "source_type": "snapshot_delta"} |
-| 2026-06-23T13:05:55+00:00 | snapshot_delta_imported | {"filename": "snapshot-delta.json", "snapshots": 5} |
-| 2026-06-23T13:05:55+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": true, "source_type": "local_codex_rollout"} |
-| 2026-06-23T13:05:55+00:00 | local_codex_history_imported | {"files": 1, "imported": 2, "root_hash": "a6d05971f2bf6c82", "skipped_duplicates": 0, "token_records": 2} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": false, "source_type": "official_export"} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": false, "source_type": "snapshot_delta"} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": false, "source_type": "local_status"} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": false, "source_type": "local_codex_rollout"} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "medium", "enabled": false, "source_type": "desktop_visible"} |
+| 2026-06-25T11:37:32+00:00 | setup_initialized | {"db_name": "codex-probe-v080-examples-2.db", "demo": true, "local_codex_records": 2} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": true, "source_type": "official_export"} |
+| 2026-06-25T11:37:32+00:00 | official_export_imported | {"filename": "official-export.csv", "format": "csv", "sessions": 3, "snapshots": 3} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": true, "source_type": "official_export"} |
+| 2026-06-25T11:37:32+00:00 | official_export_imported | {"filename": "official-export.jsonl", "format": "jsonl", "sessions": 2, "snapshots": 2} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": true, "source_type": "official_export"} |
+| 2026-06-25T11:37:32+00:00 | official_export_imported | {"filename": "official-export-alt.json", "format": "json", "sessions": 1, "snapshots": 1} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": true, "source_type": "snapshot_delta"} |
+| 2026-06-25T11:37:32+00:00 | snapshot_delta_imported | {"filename": "snapshot-delta.json", "snapshots": 5} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": true, "source_type": "local_codex_rollout"} |
+| 2026-06-25T11:37:32+00:00 | local_codex_history_imported | {"files": 1, "imported": 3, "root_hash": "bf1fb3af65341a4d", "skipped_duplicates": 0, "token_records": 3} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": true, "source_type": "local_codex_rollout"} |
+| 2026-06-25T11:37:32+00:00 | local_codex_history_imported | {"files": 1, "imported": 5, "root_hash": "ebeef085f9977512", "skipped_duplicates": 0, "token_records": 5} |
+| 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": true, "source_type": "local_codex_rollout"} |
+| 2026-06-25T11:37:32+00:00 | local_codex_history_imported | {"files": 1, "imported": 2, "root_hash": "a6d05971f2bf6c82", "skipped_duplicates": 0, "token_records": 2} |
 
 ## 明确不读取
 

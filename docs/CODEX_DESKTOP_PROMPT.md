@@ -11,10 +11,24 @@
 1. 克隆仓库后进入项目目录。
 2. 运行 scripts/setup-local.sh。
 3. 安装完成后先跑安全 demo，只使用仓库 examples/ledger-samples/ 里的示例数据。
-4. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、privacy-report.md 和 watch-status.html。
+4. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、project-summary.md、weekly-report.md、timeline.md、alerts.md、source-confidence.md、task-report.md、privacy-report.md 和 watch-status.html。
 5. 最后告诉我 Dashboard 和报告路径，以及示例里哪个会话最贵。
 6. 不要读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
 7. 不要上传任何数据。
+```
+
+## 构建 macOS 状态栏 App
+
+```text
+请帮我构建并启动 BLCaptain Codex Probe Bar 这个 macOS 状态栏 App。
+
+要求：
+1. 先确认本仓库 CLI 已安装；如果没有，请运行 scripts/setup-local.sh。
+2. 运行 scripts/macos/build-codex-probe-bar.sh。
+3. 打开 build/CodexProbeBar.app。
+4. 告诉我状态栏 App 的配置、报告目录和 Dashboard 路径。
+5. 不要读取浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
+6. 不要上传任何数据。
 ```
 
 ## 安全体验 demo
@@ -25,7 +39,7 @@
 要求：
 1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
 2. 只使用仓库 examples/ledger-samples/ 里的 demo 样本。
-3. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、privacy-report.md 和 watch-status.html。
+3. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、project-summary.md、weekly-report.md、timeline.md、alerts.md、source-confidence.md、task-report.md、privacy-report.md 和 watch-status.html。
 4. 最后告诉我 Dashboard 和报告路径，以及示例里哪个会话最贵。
 5. 不要读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
 6. 不要上传任何数据。
@@ -44,10 +58,16 @@
 5. 生成：
    - reports/ledger/sessions.md
    - reports/ledger/ledger-report.md
+   - reports/ledger/project-summary.md
+   - reports/ledger/weekly-report.md
+   - reports/ledger/timeline.md
+   - reports/ledger/alerts.md
+   - reports/ledger/source-confidence.md
+   - reports/ledger/task-report.md
    - reports/ledger/privacy-report.md
    - reports/ledger/dashboard.html
    - reports/ledger/watch-status.html
-6. 用普通话解释：哪个会话最贵、属于哪个项目、发生在哪个本机时区时间段、credits 代表什么、数据源是什么、置信度是什么、建议继续/降配/停止。
+6. 用普通话解释：哪个会话最贵、哪个项目最贵、哪段时间增长最快、主要消耗在哪类任务、发生在哪个本机时区时间段、credits 代表什么、数据源是什么、置信度是什么、建议继续/降配/停止。
 7. 明确说明：credits 不等同于美元、人民币或官方账单金额；置信度和建议是治理参考，不替代官方 dashboard。
 
 边界：
@@ -88,7 +108,7 @@
 请用 BLCaptain Codex Probe CLI 跑一次本地示例：
 
 1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
-2. 使用 examples/ledger-samples/official-export.csv 和 examples/ledger-samples/snapshot-delta.json 跑会话级账本。
+2. 使用 examples/ledger-samples/official-export.csv、examples/ledger-samples/snapshot-delta.json、examples/ledger-samples/local-codex-variants/ 和 examples/ledger-samples/local-codex-stress/ 跑会话级账本、阶段时间线、预算预警、数据源可信度、任务归因、项目汇总和周报。
 3. 使用 examples/status-codex-desktop.txt 和 examples/risky-skill.md 跑 codex-probe doctor。
 4. 报告放到 reports/ledger/ 和 reports/doctor/。
 5. 删除本地业务数据后确认再次生成旧版用量报告返回 NO_USAGE_DATA。

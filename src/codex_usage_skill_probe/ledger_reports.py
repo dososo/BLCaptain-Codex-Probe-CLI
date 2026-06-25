@@ -5,7 +5,16 @@ from __future__ import annotations
 from datetime import datetime
 from html import escape as html_escape
 
-from .ledger_models import SessionSummary, SnapshotSummary
+from .ledger_models import (
+    BudgetAlert,
+    ProjectSummary,
+    SessionIntervalSummary,
+    SessionSummary,
+    SnapshotSummary,
+    SourceConfidenceSummary,
+    TaskTypeSummary,
+    WeeklySummary,
+)
 
 
 def fmt(value: object) -> str:
@@ -46,6 +55,16 @@ def timezone_note() -> str:
 
 def local_timezone_label() -> str:
     return local_time(datetime.now().astimezone().isoformat()).split()[-1]
+
+
+def local_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed.astimezone() if parsed.tzinfo else parsed.astimezone()
 
 
 def render_sessions_markdown(sessions: list[SessionSummary], range_label: str) -> str:
@@ -120,6 +139,231 @@ def render_ledger_report_markdown(sessions: list[SessionSummary], range_label: s
             "- 本报告不包含聊天正文。",
             "- 本报告不包含浏览器 cookie、OpenAI token、钥匙串、系统凭据或完整私密路径。",
             "- 低置信归因只能作为估算，不应作为精确账单。",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_project_summary_markdown(projects: list[ProjectSummary], range_label: str) -> str:
+    total_tokens = sum(item.token_delta for item in projects)
+    total_credits = sum(item.credits_delta or 0 for item in projects)
+    lines = [
+        "# Codex 项目级用量汇总",
+        "",
+        "定位：按项目聚合本地会话级账本，帮助判断哪个项目最消耗上下文。本报告不替代官方 usage dashboard 或账单。",
+        "",
+        "## 总览",
+        "",
+        "| 字段 | 值 |",
+        "|---|---|",
+        f"| 时间范围 | {range_label} |",
+        f"| 时间显示 | {timezone_note()} |",
+        f"| 项目数 | {len(projects)} |",
+        f"| token delta | {total_tokens} |",
+        f"| credits delta（来源值） | {total_credits:.2f} |",
+        "",
+        "## 项目排行",
+        "",
+        "| 排名 | 项目 | 会话数 | token delta | credits delta（来源值） | 最高消耗会话 | 最高会话 token | 置信度分布 | 建议 |",
+        "|---:|---|---:|---:|---:|---|---:|---|---|",
+    ]
+    for index, item in enumerate(projects, 1):
+        lines.append(
+            f"| {index} | {md_cell(item.project)} | {item.session_count} | {item.token_delta} | {fmt(item.credits_delta)} | {md_cell(item.top_session_title)} | {item.top_session_tokens} | {md_cell(format_confidence_counts(item.confidence_counts))} | {md_cell(item.recommendation)} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## 项目治理建议",
+            "",
+            project_conclusion(projects),
+            "",
+            "## 严谨性说明",
+            "",
+            *precision_notes(),
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_weekly_report_markdown(weeks: list[WeeklySummary], range_label: str) -> str:
+    total_tokens = sum(item.token_delta for item in weeks)
+    total_credits = sum(item.credits_delta or 0 for item in weeks)
+    lines = [
+        "# Codex 周报",
+        "",
+        "定位：按本地系统时区的 ISO 周汇总 Codex 会话级账本，适合复盘一周内哪个项目和会话最消耗上下文。",
+        "",
+        "## 总览",
+        "",
+        "| 字段 | 值 |",
+        "|---|---|",
+        f"| 时间范围 | {range_label} |",
+        f"| 时间显示 | {timezone_note()} |",
+        f"| 周数 | {len(weeks)} |",
+        f"| token delta | {total_tokens} |",
+        f"| credits delta（来源值） | {total_credits:.2f} |",
+        "",
+        "## 周排行",
+        "",
+        "| 周 | 本地日期范围 | 会话数 | 项目数 | token delta | credits delta（来源值） | 最耗项目 | 最耗会话 | 最高会话 token | 置信度分布 | 建议 |",
+        "|---|---|---:|---:|---:|---:|---|---|---:|---|---|",
+    ]
+    for item in weeks:
+        lines.append(
+            f"| {md_cell(item.week_label)} | {md_cell(item.week_start + ' 至 ' + item.week_end)} | {item.session_count} | {item.project_count} | {item.token_delta} | {fmt(item.credits_delta)} | {md_cell(item.top_project)} | {md_cell(item.top_session_title)} | {item.top_session_tokens} | {md_cell(format_confidence_counts(item.confidence_counts))} | {md_cell(item.recommendation)} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## 周报结论",
+            "",
+            weekly_conclusion(weeks),
+            "",
+            "## 严谨性说明",
+            "",
+            *precision_notes(),
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_timeline_markdown(intervals: list[SessionIntervalSummary], range_label: str) -> str:
+    lines = [
+        "# Codex 阶段级高消耗时间线",
+        "",
+        "定位：把本地账本中的会话快照拆成阶段区间，帮助判断 token delta 是在哪一段时间增长的。本报告不读取聊天正文，也不替代官方账单。",
+        "",
+        f"时间范围：{range_label}",
+        timezone_note(),
+        "",
+        "## 高消耗区间",
+        "",
+        "| 排名 | 会话 | 项目 | 阶段 | 开始 | 结束 | token delta | credits delta（来源值） | 上下文使用 | 风险 | 置信度 | 建议 |",
+        "|---:|---|---|---|---|---|---:|---:|---:|---|---|---|",
+    ]
+    for index, item in enumerate(intervals, 1):
+        lines.append(
+            f"| {index} | {md_cell(item.title)} | {md_cell(item.project)} | {md_cell(item.stage_label)} | {md_cell(local_time(item.start_at))} | {md_cell(local_time(item.end_at))} | {item.token_delta} | {fmt(item.credits_delta)} | {fmt(item.context_used_percent)} | {md_cell(item.severity)} | {md_cell(item.confidence_level)} | {md_cell(item.recommendation)} |"
+        )
+    if not intervals:
+        lines.append("|  | 暂无可计算区间 |  |  |  |  | 0 | 未知 | 未知 | low | low | 请先导入含 token 快照的数据源 |")
+    lines.extend(
+        [
+            "",
+            "## 阶段标签说明",
+            "",
+            "- 阶段标签来自会话标题、项目名、来源证据和建议文本的保守关键词推断。",
+            "- 如果标题和来源字段不足，阶段会显示为 `未知任务`，不会硬猜。",
+            "- 本报告只展示 token/credits 元信息，不展示 prompt、assistant 输出或工具参数。",
+            "",
+            "## 严谨性说明",
+            "",
+            *precision_notes(),
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_alerts_markdown(alerts: list[BudgetAlert], range_label: str) -> str:
+    lines = [
+        "# Codex 本地预算与停止线预警",
+        "",
+        "定位：基于本地阈值判断单会话、项目、总账和上下文健康度风险。它不是官方账单，也不承诺省钱。",
+        "",
+        f"时间范围：{range_label}",
+        timezone_note(),
+        "",
+        "## 预警列表",
+        "",
+        "| 范围 | 名称 | token/指标 | 阈值 | 使用率 | 风险 | 置信度 | 原因 | 建议 |",
+        "|---|---|---:|---:|---:|---|---|---|---|",
+    ]
+    for item in alerts:
+        lines.append(
+            f"| {md_cell(item.scope)} | {md_cell(item.name)} | {item.token_delta} | {fmt(item.threshold)} | {item.usage_percent:.1f}% | {md_cell(item.severity)} | {md_cell(item.confidence_level)} | {md_cell(item.reason)} | {md_cell(item.recommendation)} |"
+        )
+    if not alerts:
+        lines.append("| 当前范围 | 暂无预警 | 0 | 未触发 | 0.0% | low | low | 未超过本地阈值 | 可以继续观察 |")
+    lines.extend(
+        [
+            "",
+            "## 停止线口径",
+            "",
+            "- 单会话达到本地阈值：建议停止或拆到新会话。",
+            "- 项目周期达到本地阈值：建议先做项目级总结，再拆分后续目标。",
+            "- 当前时间范围总账达到本地阈值：建议暂停大任务，分批执行。",
+            "- 上下文剩余低于阈值：建议停止继续堆上下文，避免后续每步都变贵。",
+            "",
+            "## 严谨性说明",
+            "",
+            *precision_notes(),
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_task_report_markdown(tasks: list[TaskTypeSummary], range_label: str) -> str:
+    lines = [
+        "# Codex 任务类型归因报告",
+        "",
+        "定位：按保守任务类型聚合本地会话级账本，帮助判断 token 主要消耗在开发、测试、文档、发布还是调研阶段。",
+        "",
+        f"时间范围：{range_label}",
+        timezone_note(),
+        "",
+        "| 排名 | 任务类型 | 会话数 | token delta | credits delta（来源值） | 最高消耗会话 | 最高会话 token | 置信度分布 | 建议 |",
+        "|---:|---|---:|---:|---:|---|---:|---|---|",
+    ]
+    for index, item in enumerate(tasks, 1):
+        lines.append(
+            f"| {index} | {md_cell(item.task_type)} | {item.session_count} | {item.token_delta} | {fmt(item.credits_delta)} | {md_cell(item.top_session_title)} | {item.top_session_tokens} | {md_cell(format_confidence_counts(item.confidence_counts))} | {md_cell(item.recommendation)} |"
+        )
+    if not tasks:
+        lines.append("|  | 暂无任务归因 | 0 | 0 | 未知 | 暂无 | 0 | 未知 | 请先导入会话级账本数据 |")
+    lines.extend(
+        [
+            "",
+            "## 归因边界",
+            "",
+            "- 任务类型来自标题、项目名和来源证据的关键词推断，不读取聊天正文。",
+            "- 证据不足时使用 `未知任务`，不伪造阶段。",
+            "- 建议用于工作流治理，不用于财务结算。",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_confidence_markdown(sources: list[SourceConfidenceSummary]) -> str:
+    lines = [
+        "# Codex 数据源可信度报告",
+        "",
+        "定位：解释每个数据源能支持多精细的 token 归因，以及为什么有些字段不能更精确。",
+        "",
+        "| 数据源 | 启用 | 置信上限 | 会话数 | 快照数 | 已有字段 | 缺失字段 | 诊断 |",
+        "|---|---|---|---:|---:|---|---|---|",
+    ]
+    for item in sources:
+        lines.append(
+            f"| {md_cell(item.source_type)} | {item.enabled} | {md_cell(item.confidence_ceiling)} | {item.session_count} | {item.snapshot_count} | {md_cell(', '.join(item.fields_present) or '无')} | {md_cell(', '.join(item.missing_fields) or '无')} | {md_cell(item.diagnosis)} |"
+        )
+    if not sources:
+        lines.append("| 暂无数据源 | False | low | 0 | 0 | 无 | 全部 | 请先初始化或导入数据源 |")
+    lines.extend(
+        [
+            "",
+            "## 口径说明",
+            "",
+            "- `official_export`：用户显式提供的官方或等价结构化导出，若含会话级 token 字段，置信上限可到 `exact`。",
+            "- `local_codex_rollout`：本地结构化 rollout token 字段，置信上限通常为 `high`，不是官方账单。",
+            "- `snapshot_delta`：用户显式提供或本地快照推导的 delta，置信度取决于是否能稳定关联会话和时间窗口。",
+            "- 如果缺少 `total_tokens`、模型、项目或上下文窗口，本工具会显示缺失，不会补造。",
+            "",
+            "## 隐私边界",
+            "",
+            "- 不登录 OpenAI，不读取浏览器 cookie、OpenAI token、钥匙串或系统凭据。",
+            "- 不抓包、不代理、不拦截请求、不读取聊天正文。",
+            "- 所有报告均基于本地用户显式提供或本机可见的结构化用量字段。",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -281,11 +525,35 @@ def render_privacy_markdown(sources: list[dict[str, object]], audits: list[dict[
     return "\n".join(lines) + "\n"
 
 
-def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> str:
+def render_dashboard_html(
+    sessions: list[SessionSummary],
+    range_label: str,
+    *,
+    alerts: list[BudgetAlert] | None = None,
+    sources: list[SourceConfidenceSummary] | None = None,
+    tasks: list[TaskTypeSummary] | None = None,
+) -> str:
     total_tokens = sum(item.token_delta for item in sessions)
     total_credits = sum(item.credits_delta or 0 for item in sessions)
     exact_high = len([item for item in sessions if item.confidence_level in {"exact", "high"}])
     top = sessions[0] if sessions else None
+    alert_items = alerts or []
+    source_items = sources or []
+    task_items = tasks or []
+    now = datetime.now().astimezone()
+    today_tokens = sum(item.token_delta for item in sessions if (local_datetime(item.ended_at) or local_datetime(item.started_at) or now).date() == now.date())
+    current_year, current_week, _ = now.date().isocalendar()
+    week_tokens = 0
+    for item in sessions:
+        dt = local_datetime(item.ended_at) or local_datetime(item.started_at)
+        if dt and dt.date().isocalendar()[:2] == (current_year, current_week):
+            week_tokens += item.token_delta
+    stop_sessions = [item for item in sessions if item.token_delta >= 100_000 or (item.context_peak_percent or 0) >= 80]
+    high_risk_sessions = [item for item in sessions if item.token_delta >= 50_000 or (item.context_peak_percent or 0) >= 70]
+    project_totals: dict[str, int] = {}
+    for item in sessions:
+        project_totals[item.project] = project_totals.get(item.project, 0) + item.token_delta
+    high_risk_projects = [name for name, value in project_totals.items() if value >= 250_000]
     model_options = sorted({item.model for item in sessions if item.model})
     row_blocks = []
     for item in sessions:
@@ -331,6 +599,18 @@ def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> s
         )
     details = "\n".join(detail_blocks) or "<p>暂无单会话详情。</p>"
     decision = html_escape(ledger_conclusion(sessions))
+    alert_rows = "\n".join(
+        f"<tr><td>{html_escape(item.scope)}</td><td>{html_escape(item.name)}</td><td>{item.token_delta:,}</td><td>{item.usage_percent:.1f}%</td><td><span class=\"risk {html_escape(item.severity)}\">{html_escape(item.severity)}</span></td><td>{html_escape(item.recommendation)}</td></tr>"
+        for item in alert_items[:8]
+    ) or "<tr><td colspan=\"6\">暂无本地预算预警</td></tr>"
+    source_rows = "\n".join(
+        f"<tr><td>{html_escape(item.source_type)}</td><td>{html_escape(item.confidence_ceiling)}</td><td>{item.snapshot_count}</td><td>{html_escape(', '.join(item.missing_fields) or '无')}</td><td>{html_escape(item.diagnosis)}</td></tr>"
+        for item in source_items
+    ) or "<tr><td colspan=\"5\">暂无数据源可信度记录</td></tr>"
+    task_rows = "\n".join(
+        f"<tr><td>{html_escape(item.task_type)}</td><td>{item.session_count}</td><td>{item.token_delta:,}</td><td>{html_escape(item.recommendation)}</td></tr>"
+        for item in task_items[:8]
+    ) or "<tr><td colspan=\"4\">暂无任务归因</td></tr>"
     model_select_options = "\n".join(
         f"<option value=\"{html_escape(model.lower())}\">{html_escape(model)}</option>" for model in model_options
     )
@@ -370,6 +650,8 @@ def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> s
     .evidence {{ font-size: 14px; margin-bottom: 0; }}
     .privacy ul {{ margin: 0; padding-left: 20px; color: #334155; line-height: 1.8; }}
     .badge {{ border-radius: 999px; padding: 4px 10px; font-weight: 700; }}
+    .risk {{ border-radius: 6px; padding: 4px 8px; font-weight: 700; }}
+    .critical {{ background: #fee2e2; color: #991b1b; }}
     .exact {{ background: #d9ff72; }}
     .high {{ background: #bbf7d0; }}
     .medium {{ background: #fde68a; }}
@@ -397,7 +679,35 @@ def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> s
       <div class="stat"><span>credits delta（来源值）</span><strong>{total_credits:.2f}</strong></div>
       <div class="stat"><span>exact/high 会话</span><strong>{exact_high}</strong></div>
     </section>
+    <section class="grid" aria-label="风险摘要">
+      <div class="stat"><span>今日 token</span><strong>{today_tokens:,}</strong></div>
+      <div class="stat"><span>本周 token</span><strong>{week_tokens:,}</strong></div>
+      <div class="stat"><span>高风险会话</span><strong>{len(high_risk_sessions)}</strong></div>
+      <div class="stat"><span>高风险项目</span><strong>{len(high_risk_projects)}</strong></div>
+      <div class="stat"><span>该停会话</span><strong>{len(stop_sessions)}</strong></div>
+    </section>
     <section class="decision">{decision}</section>
+    <section class="panel">
+      <h2>本地预算预警</h2>
+      <table>
+        <thead><tr><th>范围</th><th>名称</th><th>token/指标</th><th>使用率</th><th>风险</th><th>建议</th></tr></thead>
+        <tbody>{alert_rows}</tbody>
+      </table>
+    </section>
+    <section class="panel">
+      <h2>数据源可信度</h2>
+      <table>
+        <thead><tr><th>数据源</th><th>置信上限</th><th>快照数</th><th>缺失字段</th><th>诊断</th></tr></thead>
+        <tbody>{source_rows}</tbody>
+      </table>
+    </section>
+    <section class="panel">
+      <h2>任务类型归因</h2>
+      <table>
+        <thead><tr><th>任务类型</th><th>会话数</th><th>token delta</th><th>建议</th></tr></thead>
+        <tbody>{task_rows}</tbody>
+      </table>
+    </section>
     <section class="panel">
       <h2>会话排行</h2>
       <div class="filters" aria-label="会话筛选">
@@ -495,7 +805,13 @@ def render_dashboard_html(sessions: list[SessionSummary], range_label: str) -> s
 """
 
 
-def render_watch_status_html(state: dict[str, object], logs: list[str], sessions: list[SessionSummary]) -> str:
+def render_watch_status_html(
+    state: dict[str, object],
+    logs: list[str],
+    sessions: list[SessionSummary],
+    *,
+    alerts: list[BudgetAlert] | None = None,
+) -> str:
     status = str(state.get("status") or "unknown")
     status_class = "running" if status == "running" else "error" if status == "error" else "stopped"
     rows = "\n".join(
@@ -510,6 +826,10 @@ def render_watch_status_html(state: dict[str, object], logs: list[str], sessions
         f"<tr><td>{html_escape(item.title)}</td><td>{item.token_delta:,}</td><td>{html_escape(item.confidence_level)}</td><td>{html_escape(item.recommendation)}</td></tr>"
         for item in sessions[:8]
     ) or "<tr><td colspan=\"4\">暂无会话数据</td></tr>"
+    alert_rows = "\n".join(
+        f"<tr><td>{html_escape(item.scope)}</td><td>{html_escape(item.name)}</td><td>{item.token_delta:,}</td><td>{html_escape(item.severity)}</td><td>{html_escape(item.recommendation)}</td></tr>"
+        for item in (alerts or [])[:8]
+    ) or "<tr><td colspan=\"5\">暂无本地预算预警</td></tr>"
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -549,6 +869,13 @@ def render_watch_status_html(state: dict[str, object], logs: list[str], sessions
         <ul>{log_items}</ul>
       </section>
     </div>
+    <section style="margin-top:14px">
+      <h2>最近预警</h2>
+      <table>
+        <thead><tr><th>范围</th><th>名称</th><th>token/指标</th><th>风险</th><th>建议</th></tr></thead>
+        <tbody>{alert_rows}</tbody>
+      </table>
+    </section>
     <section style="margin-top:14px">
       <h2>最近会话排行</h2>
       <table>
@@ -591,3 +918,32 @@ def ledger_conclusion(sessions: list[SessionSummary]) -> str:
     if top.token_delta >= 50_000:
         return f"最耗会话是「{top.title}」，token delta 为 {top.token_delta:,}。建议降配收尾或拆分后续任务。"
     return f"最耗会话是「{top.title}」，token delta 为 {top.token_delta:,}。当前可继续观察。"
+
+
+def project_conclusion(projects: list[ProjectSummary]) -> str:
+    if not projects:
+        return "暂无项目级账本数据。请先导入官方导出、本地历史或快照样本。"
+    top = projects[0]
+    return (
+        f"最耗项目是「{top.project}」，token delta 为 {top.token_delta:,}，"
+        f"最高消耗会话是「{top.top_session_title}」。{top.recommendation}。"
+    )
+
+
+def weekly_conclusion(weeks: list[WeeklySummary]) -> str:
+    if not weeks:
+        return "暂无周报数据。请先导入会话级账本数据。"
+    top = max(weeks, key=lambda item: item.token_delta)
+    return (
+        f"最高消耗周是 {top.week_label}（{top.week_start} 至 {top.week_end}），"
+        f"token delta 为 {top.token_delta:,}，最耗项目是「{top.top_project}」。{top.recommendation}。"
+    )
+
+
+def format_confidence_counts(counts: dict[str, int]) -> str:
+    parts = []
+    for level in ["exact", "high", "medium", "low"]:
+        count = counts.get(level, 0)
+        if count:
+            parts.append(f"{level}:{count}")
+    return " / ".join(parts) if parts else "未知"

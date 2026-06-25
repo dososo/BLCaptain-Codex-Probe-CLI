@@ -2,6 +2,45 @@
 
 ## 未发布
 
+- 暂无。
+
+## 0.9.0 - 2026-06-25
+
+- 新增原生 macOS 状态栏 App：BLCaptain Codex Probe Bar，基于 Swift/AppKit 实现，点击状态栏即可查看本地 Codex 用量摘要。
+- 状态栏面板展示 token delta、会话数、预警数、最高消耗会话、建议动作、预算预警、数据源可信度和隐私边界。
+- 状态栏面板支持刷新、采集一次、生成/打开 Dashboard、打开报告目录、生成/打开隐私报告和退出。
+- App 复用 `codex-probe --json` 命令，不重复实现账本归因逻辑；默认不登录、不读 cookie、不碰 token/钥匙串、不抓包、不上传。
+- 新增 `desktop/macos/CodexProbeBar` Swift Package。
+- 新增 `scripts/macos/build-codex-probe-bar.sh`，可构建 `build/CodexProbeBar.app`，并写入 `LSUIElement` 菜单栏应用配置。
+- 新增 `docs/MACOS_MENUBAR_APP.md` 和 `docs/MACOS_MENUBAR_GOAL.md`，说明状态栏 App 的目标、构建、配置、隐私边界和发布限制。
+- 新增 macOS 状态栏 App 契约测试，确保 App 复用 CLI 且不包含 Keychain、cookie、网络请求或抓包能力。
+- 新增 macOS 正式分发工程：签名、公证、打包和 preflight 脚本，并明确本地未签名构建与正式 release 的边界。
+- 新增 `docs/MACOS_RELEASE_DISTRIBUTION.md`，说明 Developer ID 签名、notarization、公证 stapling、Gatekeeper 验证、普通用户安装体验和发布 `/goal`。
+
+## 0.8.0 - 2026-06-25
+
+- 新增 `codex-probe timeline` 阶段级高消耗时间线，按会话快照计算 token delta 区间，输出阶段标签、风险等级、置信度和建议动作。
+- 新增 `codex-probe alerts` 本地预算与停止线预警，覆盖单会话、项目周期、当前范围总账和上下文剩余风险。
+- 新增 `codex-probe task-report` 任务类型归因报告，按发布交付、开发实现、验证测试、文档报告、素材生成、调研分析和未知任务聚合消耗。
+- 新增 `codex-probe confidence-report` 数据源可信度报告，展示来源、字段覆盖、缺失字段、置信上限、诊断和隐私边界。
+- Dashboard 首屏新增今日 token、本周 token、高风险会话、该停会话、本地预算预警、数据源可信度和任务类型归因。
+- `watch status-page` 新增最近预警摘要，帮助用户从 watcher 入口判断是否该停止长会话。
+- `setup --demo` 自动生成 `timeline.md`、`alerts.md`、`source-confidence.md` 和 `task-report.md`，普通用户一条命令即可看到新增治理报告。
+- 扩充 synthetic rollout 样本库，新增 `examples/ledger-samples/local-codex-stress/`，覆盖多会话重叠、重复快照、异常时间戳、缺失模型、缺项目路径和缺上下文窗口。
+- 更新报告契约测试和端到端验收脚本，覆盖 timeline、alerts、task report、confidence report 和 Dashboard 新模块。
+- 刷新中英文 README、示例报告和 Dashboard 截图，继续强调本地优先、不读取登录态、不替代官方账单。
+
+## 0.7.0 - 2026-06-25
+
+- 新增 `codex-probe projects` 项目级聚合报告，按项目汇总 token delta、credits delta、会话数、最高消耗会话、置信度分布和建议动作。
+- 新增 `codex-probe weekly-report` Codex 周报，按本地系统时区的 ISO 周汇总会话、项目、最高消耗会话和治理建议。
+- 扩充 synthetic rollout 样本库，新增 `examples/ledger-samples/local-codex-variants/`，覆盖字段别名、缺失模型、多项目、多会话和不同 Codex schema 变体。
+- 增强本地 rollout 解析，支持 `lastTokenUsage`、`totalTokenUsage`、嵌套 `usage`、`modelInfo`、`project.path` 等字段结构；缺失模型时显示未知，不再猜测。
+- 新增 HTML / JSON 报告契约测试，覆盖 sessions、project summary、weekly report、privacy report 和 dashboard 核心结构。
+- 增强 Skill / 输出体检规则，拆分自动安装、绕登录/计费、请求拦截、外传数据、伪装真人和过度承诺等风险类型。
+- 新增 `docs/INSTALL.md`，说明 Codex 桌面版、仓库脚本、uvx、pipx 和 Homebrew Formula 草案。
+- 新增 `docs/MENUBAR_OR_DESKTOP_EVAL.md`，评估菜单栏 App / 桌面组件路线，并明确不读取登录态、cookie、token 或钥匙串。
+- 优化 `setup` 和 `sessions` 的普通用户输出；`--json` 保持机器可读，非 JSON 模式更适合人读。
 - 修正 README 会话级 Token 账本示例：统一公开样本模型字段为 `gpt-5.5`，并说明模型列来自数据源 `model` 字段，CLI 不猜测或强制改写。
 - 完善 README 和 Codex 桌面版提示词，增加安全 demo、本地历史分析、单次 `/status` 三类普通用户入口。
 - 将“开发者安装”改为“安装与体验”，补充可直接让 Codex 桌面版安装 GitHub 仓库的提示词。

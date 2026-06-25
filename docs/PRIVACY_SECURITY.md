@@ -2,7 +2,7 @@
 
 BLCaptain Codex Probe CLI 默认本地运行，不需要 OpenAI API Key，不需要登录 Codex，也不需要云端服务。
 
-v0.6.0 新增一键 setup、Dashboard 筛选、watcher 状态页和脱敏 rollout 样本采集。它仍然遵守同一个原则：
+v0.9.0 新增原生 macOS 状态栏 App，并保留阶段级高消耗时间线、本地预算预警、任务类型归因、数据源可信度报告和 synthetic rollout 样本。它仍然遵守同一个原则：
 
 > 只处理用户显式提供或显式启用的数据源；只保存 allowlist 字段；不读登录态、不读聊天正文、不上传云端。
 
@@ -78,6 +78,11 @@ codex-probe --db .probe/ledger.db ledger init
 
 - `last_token_usage`
 - `total_token_usage`
+- `lastTokenUsage`
+- `totalTokenUsage`
+- `token_usage`
+- `tokenUsage`
+- `usage`
 - `rate_limits`
 
 读取和保存的字段限定为：
@@ -96,11 +101,28 @@ codex-probe --db .probe/ledger.db ledger init
 
 如果本地日志没有 token 字段，工具只能报告不可导入或只保留元信息；不会伪造会话 token。
 
+## 项目汇总、周报、时间线和预警
+
+`projects`、`weekly-report`、`timeline`、`alerts`、`task-report` 和 `confidence-report` 都只基于已经进入本地 SQLite 的会话级账本聚合，不额外读取新数据源。
+
+它们会展示：
+
+- 项目名或项目 hash。
+- 会话数、token delta、credits delta。
+- 最高消耗会话。
+- 置信度分布。
+- 阶段级 token delta 区间、阶段标签和建议动作。
+- 本地预算阈值、上下文剩余风险和停止线。
+- 数据源字段覆盖、缺失字段和为什么不能更精确。
+- 基于阈值的继续、降配或停止建议。
+
+它们不会展示聊天正文、prompt、assistant 输出、工具参数、完整私密路径、cookie、token、钥匙串或系统凭据。
+
 ## Watch 行为
 
 `watch start` 必须由用户显式执行。
 
-v0.6.0 的 watcher 是真实后台进程，会记录：
+v0.9.0 的 watcher 是真实后台进程，会记录：
 
 - PID。
 - 状态文件。
@@ -126,6 +148,14 @@ codex-probe --db .probe/ledger.db dashboard --out reports/ledger/dashboard.html
 ```
 
 它不会启动云端服务，也不会上传数据。HTML 页面只展示本地 SQLite 查询结果和脱敏后的示例字段。
+
+v0.9.0 的 Dashboard 会展示今日 token、本周 token、高风险会话、该停会话、预算预警、数据源可信度和任务类型归因。这些模块均来自本地账本聚合，不读取额外正文或登录态。
+
+## macOS 状态栏 App 行为
+
+BLCaptain Codex Probe Bar 只调用本地 `codex-probe --json` 命令，并展示 CLI 返回的摘要。它不直接读取 SQLite、浏览器、cookie、token、钥匙串、系统凭据、聊天正文或网络请求。
+
+状态栏 App 的「采集一次」按钮调用现有 `codex-probe watch once`，仍然使用 local history 白名单读取逻辑。
 
 ## 删除
 
