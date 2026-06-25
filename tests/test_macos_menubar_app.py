@@ -11,12 +11,12 @@ class MacOSMenuBarAppTests(unittest.TestCase):
         package = ROOT / "desktop" / "macos" / "CodexProbeBar" / "Package.swift"
         source = ROOT / "desktop" / "macos" / "CodexProbeBar" / "Sources" / "CodexProbeBar" / "main.swift"
         script = ROOT / "scripts" / "macos" / "build-codex-probe-bar.sh"
-        goal = ROOT / "docs" / "MACOS_MENUBAR_GOAL.md"
+        app_doc = ROOT / "docs" / "MACOS_MENUBAR_APP.md"
         release_doc = ROOT / "docs" / "MACOS_RELEASE_DISTRIBUTION.md"
         self.assertTrue(package.exists())
         self.assertTrue(source.exists())
         self.assertTrue(script.exists())
-        self.assertTrue(goal.exists())
+        self.assertTrue(app_doc.exists())
         self.assertTrue(release_doc.exists())
         self.assertTrue(os.access(script, os.X_OK))
 

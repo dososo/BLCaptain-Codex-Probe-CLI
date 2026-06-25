@@ -93,7 +93,7 @@ scripts/macos/build-codex-probe-bar.sh
 open build/CodexProbeBar.app
 ```
 
-See [macOS menu bar app](docs/MACOS_MENUBAR_APP.md) and [menu bar app /goal](docs/MACOS_MENUBAR_GOAL.md).
+See [macOS menu bar app](docs/MACOS_MENUBAR_APP.md).
 
 Release boundary: the repository-built `.app` is unsigned and unnotarized by default, so it is only a local beta build. This does not block CLI-first GitHub open-source release. If maintainers later distribute a double-clickable `.app` / `.dmg`, use the signing, notarization, stapling, Gatekeeper preflight, and packaging flow in [macOS release distribution](docs/MACOS_RELEASE_DISTRIBUTION.md).
 
@@ -173,7 +173,6 @@ Why not call it a Skill: this project is not an instruction package loaded by an
 | Watcher status page | `codex-probe watch status-page` | Generates a friendly local watcher status page |
 | Redacted sample collection | `codex-probe samples collect-rollout` | Writes calibration samples with allowlisted fields and hashes only |
 | Lightweight install guide | [docs/INSTALL.md](docs/INSTALL.md) | Codex desktop, repository script, uvx, pipx, and Homebrew Formula draft |
-| Desktop entry evaluation | [docs/MENUBAR_OR_DESKTOP_EVAL.md](docs/MENUBAR_OR_DESKTOP_EVAL.md) | Menu bar app / desktop component path and privacy boundary |
 | Menu bar app docs | [docs/MACOS_MENUBAR_APP.md](docs/MACOS_MENUBAR_APP.md) | Build, configuration, usage, and privacy boundary |
 | Privacy audit | `codex-probe privacy inspect` | Shows enabled sources, read fields, and audit logs |
 | Delete watcher data | `codex-probe delete --watcher --yes` | Deletes watcher state, lock, stop flag, and logs |
@@ -468,24 +467,7 @@ End-to-end acceptance:
 python3 scripts/run_acceptance.py
 ```
 
-The acceptance script writes local evidence:
-
-```text
-acceptance-artifacts/<timestamp>/
-├── commands.md
-├── commands.json
-├── usage-report.md
-├── skill-lint-report.md
-├── doctor/
-├── ledger-sessions.md
-├── ledger-session-report.md
-├── ledger-report.md
-├── ledger-privacy-report.md
-├── ledger-dashboard.html
-└── probe.db
-```
-
-`acceptance-artifacts/` is ignored by Git and should not be committed.
+The acceptance script writes local temporary artifacts. These artifacts are ignored by Git and should not be committed.
 
 ## Directory Structure
 
@@ -502,11 +484,11 @@ BLCaptain-Codex-Probe-CLI/
 ├── docs/
 │   ├── CODEX_DESKTOP_PROMPT.md       # Codex desktop prompts
 │   ├── INSTALL.md                     # Lightweight install options
+│   ├── MACOS_MENUBAR_APP.md          # macOS menu bar local beta
+│   ├── MACOS_RELEASE_DISTRIBUTION.md # macOS app release distribution boundary
 │   ├── MACOS_WATCHER.md              # macOS LaunchAgent watcher entry
-│   ├── MENUBAR_OR_DESKTOP_EVAL.md    # Menu bar app / desktop component evaluation
 │   ├── PRIVACY_SECURITY.md           # Privacy and security boundaries
-│   ├── RELEASE_CHECKLIST.md          # Release checklist
-│   └── SOCIAL_POSTS.md               # Social post drafts
+│   └── SAMPLE_COLLECTION.md          # Redacted sample collection guide
 ├── scripts/
 │   ├── macos/                        # macOS LaunchAgent install/uninstall scripts
 │   └── run_acceptance.py             # End-to-end acceptance script

@@ -36,15 +36,14 @@ class MacOSReleaseDistributionTests(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         install = (ROOT / "docs" / "INSTALL.md").read_text(encoding="utf-8")
         release_doc = (ROOT / "docs" / "MACOS_RELEASE_DISTRIBUTION.md").read_text(encoding="utf-8")
-        checklist = (ROOT / "docs" / "RELEASE_CHECKLIST.md").read_text(encoding="utf-8")
 
-        for text in [readme, install, release_doc, checklist]:
+        for text in [readme, install, release_doc]:
             self.assertIn("签名", text)
             self.assertIn("公证", text)
 
         self.assertIn("默认未签名、未公证", readme)
         self.assertIn("不能承诺普通用户", release_doc)
-        self.assertIn("--require-signed --require-notarized", checklist)
+        self.assertIn("--require-signed --require-notarized", release_doc)
 
     def test_no_apple_credentials_are_hardcoded(self):
         candidates = [

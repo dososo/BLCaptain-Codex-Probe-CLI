@@ -12,10 +12,10 @@
 - App 复用 `codex-probe --json` 命令，不重复实现账本归因逻辑；默认不登录、不读 cookie、不碰 token/钥匙串、不抓包、不上传。
 - 新增 `desktop/macos/CodexProbeBar` Swift Package。
 - 新增 `scripts/macos/build-codex-probe-bar.sh`，可构建 `build/CodexProbeBar.app`，并写入 `LSUIElement` 菜单栏应用配置。
-- 新增 `docs/MACOS_MENUBAR_APP.md` 和 `docs/MACOS_MENUBAR_GOAL.md`，说明状态栏 App 的目标、构建、配置、隐私边界和发布限制。
+- 新增 `docs/MACOS_MENUBAR_APP.md`，说明状态栏 App 的构建、配置、隐私边界和发布限制。
 - 新增 macOS 状态栏 App 契约测试，确保 App 复用 CLI 且不包含 Keychain、cookie、网络请求或抓包能力。
 - 新增 macOS 正式分发工程：签名、公证、打包和 preflight 脚本，并明确本地未签名构建与正式 release 的边界。
-- 新增 `docs/MACOS_RELEASE_DISTRIBUTION.md`，说明 Developer ID 签名、notarization、公证 stapling、Gatekeeper 验证、普通用户安装体验和发布 `/goal`。
+- 新增 `docs/MACOS_RELEASE_DISTRIBUTION.md`，说明 Developer ID 签名、notarization、公证 stapling、Gatekeeper 验证和普通用户安装体验。
 
 ## 0.8.0 - 2026-06-25
 
@@ -39,7 +39,6 @@
 - 新增 HTML / JSON 报告契约测试，覆盖 sessions、project summary、weekly report、privacy report 和 dashboard 核心结构。
 - 增强 Skill / 输出体检规则，拆分自动安装、绕登录/计费、请求拦截、外传数据、伪装真人和过度承诺等风险类型。
 - 新增 `docs/INSTALL.md`，说明 Codex 桌面版、仓库脚本、uvx、pipx 和 Homebrew Formula 草案。
-- 新增 `docs/MENUBAR_OR_DESKTOP_EVAL.md`，评估菜单栏 App / 桌面组件路线，并明确不读取登录态、cookie、token 或钥匙串。
 - 优化 `setup` 和 `sessions` 的普通用户输出；`--json` 保持机器可读，非 JSON 模式更适合人读。
 - 修正 README 会话级 Token 账本示例：统一公开样本模型字段为 `gpt-5.5`，并说明模型列来自数据源 `model` 字段，CLI 不猜测或强制改写。
 - 完善 README 和 Codex 桌面版提示词，增加安全 demo、本地历史分析、单次 `/status` 三类普通用户入口。

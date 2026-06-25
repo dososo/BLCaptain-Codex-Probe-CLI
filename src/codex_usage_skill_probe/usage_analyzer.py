@@ -61,7 +61,7 @@ def analyze_usage(
                 "high",
                 0.9,
                 f"credits={record.credits} 超过 budget_credits={budget_credits}",
-                "停止本轮；复盘是否使用了高成本模型、Fast mode 或过长上下文。",
+                "停止当前任务；复盘是否使用了高成本模型、Fast mode 或过长上下文。",
                 "E-011,E-012,R-002",
             )
         )

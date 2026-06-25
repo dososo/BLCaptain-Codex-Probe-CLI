@@ -85,45 +85,6 @@ scripts/macos/preflight-codex-probe-bar.sh --require-signed --require-notarized
 
 preflight 脚本会扫描这些禁用能力。如果未来引入自动更新、登录项或偏好设置，需要重新做权限、签名、隐私和用户提示审计。
 
-## 可执行 /goal 提示词
-
-```text
-/goal 基于当前 BLCaptain Codex Probe CLI 和已实现的 BLCaptain Codex Probe Bar，完成 macOS 正式分发工程加固，目标是让维护者能够产出符合普通 macOS 用户下载体验的签名、公证、可验证 release 包。
-
-严格按 8 步执行：调研 → 分析 → 计划 → 开发 → 验证 → 测试 → 审计验收 → 总结。
-
-目标：
-1. 审计现有 macOS 状态栏 App 是否符合 macOS 状态栏工具、签名、公证、Gatekeeper 和隐私边界要求。
-2. 明确区分本地 beta 构建和正式签名公证 release。
-3. 新增签名脚本、公证脚本、打包脚本和 preflight 脚本。
-4. 文档说明普通用户无摩擦安装所需条件、维护者 release 流程、必要环境变量和失败排查。
-5. 测试覆盖脚本存在性、关键命令、禁用敏感能力和凭据不落仓库。
-
-约束：
-- 不提交 Apple ID、app-specific password、Developer ID 证书、私钥、notary 凭据或任何系统凭据。
-- 不读取浏览器 cookie、OpenAI token、钥匙串、系统凭据、聊天正文或真实 ~/.codex 原始数据。
-- 不绕过 Gatekeeper，不教用户关闭安全机制，不把未签名版本包装成正式发行版。
-- 不引入网络服务、自动更新框架或安装器，除非有明确测试和隐私审计。
-- 不提交 build、dist、.probe、reports、.venv、acceptance-artifacts 或无关素材。
-
-验证：
-- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests`
-- `PYTHONDONTWRITEBYTECODE=1 python3 -m compileall src tests scripts/run_acceptance.py`
-- `swift build --package-path desktop/macos/CodexProbeBar`
-- `scripts/macos/build-codex-probe-bar.sh`
-- `scripts/macos/preflight-codex-probe-bar.sh`
-- `scripts/macos/package-codex-probe-bar.sh --skip-dmg`
-
-完成条件：
-- 本地未签名构建的风险被明确标注。
-- 维护者有清晰命令完成签名、公证、stapling、Gatekeeper 验证和打包。
-- preflight 能识别未签名/未公证状态，并可在正式发布模式下失败。
-- 测试和审计通过，未发现凭据、隐私越界能力或误导性文案。
-
-暂停条件：
-- 需要真实 Apple Developer 账号操作、证书私钥、notary 凭据、付费服务、生产分发账号、真实用户数据或破坏性操作时暂停并说明。
-```
-
 ## 参考
 
 - Apple 官方文档：Notarizing macOS software before distribution  

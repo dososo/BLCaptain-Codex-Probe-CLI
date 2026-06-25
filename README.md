@@ -93,7 +93,7 @@ scripts/macos/build-codex-probe-bar.sh
 open build/CodexProbeBar.app
 ```
 
-详见 [macOS 状态栏 App](docs/MACOS_MENUBAR_APP.md) 和 [状态栏 App /goal](docs/MACOS_MENUBAR_GOAL.md)。
+详见 [macOS 状态栏 App](docs/MACOS_MENUBAR_APP.md)。
 
 发布边界必须讲清楚：仓库本地构建的 `.app` 默认未签名、未公证，只能作为本地体验或 beta 验证；这不影响 CLI 作为 GitHub 开源项目发布。未来如果维护者要提供普通用户双击安装的 `.app` / `.dmg`，再使用 [macOS 正式分发、签名与公证](docs/MACOS_RELEASE_DISTRIBUTION.md) 中的签名、公证、stapling、Gatekeeper preflight 和打包流程。
 
@@ -173,7 +173,6 @@ open build/CodexProbeBar.app
 | Watcher 状态页 | `codex-probe watch status-page` | 生成友好的本地 watcher 状态页 |
 | 脱敏样本采集 | `codex-probe samples collect-rollout` | 输出只含白名单字段和哈希的校准样本 |
 | 轻量安装说明 | [docs/INSTALL.md](docs/INSTALL.md) | Codex 桌面版、仓库脚本、uvx、pipx 和 Homebrew Formula 草案 |
-| 桌面入口评估 | [docs/MENUBAR_OR_DESKTOP_EVAL.md](docs/MENUBAR_OR_DESKTOP_EVAL.md) | 菜单栏 App / 桌面组件路线和隐私边界 |
 | 状态栏 App 文档 | [docs/MACOS_MENUBAR_APP.md](docs/MACOS_MENUBAR_APP.md) | 构建、配置、使用和隐私边界 |
 | 隐私审计 | `codex-probe privacy inspect` | 查看启用数据源、读取字段和审计日志 |
 | 删除 watcher | `codex-probe delete --watcher --yes` | 删除 watcher 状态、lock、stop flag 和日志 |
@@ -468,24 +467,7 @@ python3 -m compileall src tests scripts/run_acceptance.py
 python3 scripts/run_acceptance.py
 ```
 
-验收脚本会生成本地证据目录：
-
-```text
-acceptance-artifacts/<timestamp>/
-├── commands.md
-├── commands.json
-├── usage-report.md
-├── skill-lint-report.md
-├── doctor/
-├── ledger-sessions.md
-├── ledger-session-report.md
-├── ledger-report.md
-├── ledger-privacy-report.md
-├── ledger-dashboard.html
-└── probe.db
-```
-
-`acceptance-artifacts/` 已被 `.gitignore` 忽略，不应提交到 GitHub。
+验收脚本只写入本地临时验收产物；这些产物已被 `.gitignore` 忽略，不应提交到 GitHub。
 
 ## 目录结构
 
@@ -502,11 +484,11 @@ BLCaptain-Codex-Probe-CLI/
 ├── docs/
 │   ├── CODEX_DESKTOP_PROMPT.md       # Codex 桌面版提示词
 │   ├── INSTALL.md                     # 轻量安装方式
+│   ├── MACOS_MENUBAR_APP.md          # macOS 状态栏 App 本地体验版
+│   ├── MACOS_RELEASE_DISTRIBUTION.md # macOS App 正式分发边界
 │   ├── MACOS_WATCHER.md              # macOS LaunchAgent watcher 入口
-│   ├── MENUBAR_OR_DESKTOP_EVAL.md    # 菜单栏 App / 桌面组件评估
 │   ├── PRIVACY_SECURITY.md           # 隐私与安全边界
-│   ├── RELEASE_CHECKLIST.md          # 发布前检查清单
-│   └── SOCIAL_POSTS.md               # 社媒短文草稿
+│   └── SAMPLE_COLLECTION.md          # 脱敏样本采集说明
 ├── scripts/
 │   ├── macos/                        # macOS LaunchAgent 安装/卸载脚本
 │   └── run_acceptance.py             # 端到端验收脚本
