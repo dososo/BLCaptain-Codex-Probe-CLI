@@ -94,7 +94,7 @@ open build/CodexProbeBar.app
 ```
 
 <p>
-  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS 状态栏源码本地构建入口" width="100%">
+  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS 状态栏下拉面板" width="100%">
 </p>
 
 详见 [macOS 状态栏 App](docs/MACOS_MENUBAR_APP.md)。
@@ -522,7 +522,7 @@ BLCaptain-Codex-Probe-CLI/
 - JSON / HTML 报告契约测试覆盖 sessions、ledger、project summary、weekly report、timeline、alerts、task report、confidence report、privacy report 和 dashboard。
 - Skill 体检规则覆盖自动安装、绕登录/计费、外传数据、请求拦截、伪装真人和过度承诺。
 - 安装文档包含 Codex 桌面版、仓库脚本、uvx、pipx 和 Homebrew Formula 草案。
-- 菜单栏 App / 桌面组件评估说明不读取登录态的产品路径。
+- 状态栏 App 已实现为本地菜单栏入口，复用 CLI JSON 输出，不读取登录态。
 - 每条会话都有数据源和 `exact/high/medium/low` 置信度。
 - 能删除本地账本业务数据。
 - 报告不泄露完整 API key、cookie、token、邮箱、手机号或用户私密路径。
@@ -532,7 +532,7 @@ BLCaptain-Codex-Probe-CLI/
 
 - 持续收集更多真实脱敏 rollout 样本，校准不同 Codex 版本的数据结构。
 - 正式发布 PyPI 包，并在验证后发布 Homebrew tap。
-- 根据用户反馈决定是否实现极薄 macOS 菜单栏 App。
+- 优化 macOS 状态栏 App 的偏好设置、启动项和已签名分发路径。
 - 增加更细的趋势图、阈值配置文件和可导出的 Dashboard JSON schema。
 
 ## FAQ

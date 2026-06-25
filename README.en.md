@@ -94,7 +94,7 @@ open build/CodexProbeBar.app
 ```
 
 <p>
-  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS local build" width="100%">
+  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS menu bar popover" width="100%">
 </p>
 
 See [macOS menu bar app](docs/MACOS_MENUBAR_APP.md).
@@ -522,7 +522,7 @@ Before v0.9.0 release:
 - JSON / HTML report contract tests cover sessions, ledger, project summary, weekly report, timeline, alerts, task report, confidence report, privacy report, and dashboard.
 - Skill inspection covers automatic installation, login/billing bypass, data exfiltration, request interception, impersonation, and overpromise risks.
 - Install docs cover Codex desktop, repository scripts, uvx, pipx, and a Homebrew Formula draft.
-- Menu bar app / desktop component evaluation explains a product path that does not read login state.
+- The menu bar app is implemented as a local status-bar entry, reusing CLI JSON output without reading login state.
 - Every session has a source and `exact/high/medium/low` confidence.
 - The CLI can delete local ledger business data.
 - Reports do not leak full API keys, cookies, tokens, emails, phone numbers, or private user paths.
@@ -532,7 +532,7 @@ Before v0.9.0 release:
 
 - Keep collecting more real redacted rollout samples and calibrate across Codex versions.
 - Publish an official PyPI package, then publish a Homebrew tap after validation.
-- Decide whether to build a thin macOS menu bar app based on user feedback.
+- Improve the macOS menu bar app with preferences, login-item setup, and signed distribution.
 - Add finer trend charts, threshold configuration files, and exportable dashboard JSON schemas.
 
 ## FAQ
