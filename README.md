@@ -99,7 +99,7 @@ open build/CodexProbeBar.app
 
 详见 [macOS 状态栏 App](docs/MACOS_MENUBAR_APP.md)。
 
-发布边界必须讲清楚：仓库本地构建的 `.app` 默认未签名、未公证，适合作为源码本地构建和本地验证入口；这不影响 CLI 作为 GitHub 开源项目发布。未来如果维护者要提供普通用户双击安装的 `.app` / `.dmg`，再使用 [macOS 正式分发、签名与公证](docs/MACOS_RELEASE_DISTRIBUTION.md) 中的签名、公证、stapling、Gatekeeper preflight 和打包流程。
+发布边界必须讲清楚：仓库本地构建的 `.app` 会做免费 ad-hoc 本地签名，适合作为源码本地构建和本地验证入口；它仍然不是 Developer ID 签名，也未经过 Apple 公证。这不影响 CLI 作为 GitHub 开源项目发布。未来如果维护者要提供普通用户双击安装的 `.app` / `.dmg`，再使用 [macOS 正式分发、签名与公证](docs/MACOS_RELEASE_DISTRIBUTION.md) 中的 Developer ID 签名、公证、stapling、Gatekeeper preflight 和打包流程。
 
 ### 会话级 Token 账本
 

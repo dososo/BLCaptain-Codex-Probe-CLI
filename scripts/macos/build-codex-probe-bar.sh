@@ -4,7 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PACKAGE_DIR="$ROOT/desktop/macos/CodexProbeBar"
 APP_DIR="$ROOT/build/CodexProbeBar.app"
-CONTENTS_DIR="$APP_DIR/Contents"
+STAGING_APP="$ROOT/build/CodexProbeBar.app.staging.$$"
+CONTENTS_DIR="$STAGING_APP/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 EXECUTABLE="$MACOS_DIR/CodexProbeBar"
@@ -65,6 +66,21 @@ cat > "$RESOURCES_DIR/defaults.json" <<JSON
 }
 JSON
 
+xattr -cr "$APP_DIR" 2>/dev/null || true
+xattr -cr "$STAGING_APP" 2>/dev/null || true
+codesign --force --deep --sign - "$STAGING_APP"
+
+if [[ -d "$APP_DIR" ]]; then
+  PREVIOUS_APP="$ROOT/build/CodexProbeBar.previous.$(date +%Y%m%d%H%M%S).app"
+  mv "$APP_DIR" "$PREVIOUS_APP"
+  echo "Previous build moved to: $PREVIOUS_APP"
+fi
+mv "$STAGING_APP" "$APP_DIR"
+xattr -d com.apple.FinderInfo "$APP_DIR" 2>/dev/null || true
+xattr -d 'com.apple.fileprovider.fpfs#P' "$APP_DIR" 2>/dev/null || true
+codesign --verify --deep --strict --verbose=2 "$APP_DIR"
+
 echo "Built: $APP_DIR"
 echo "CLI: $CLI_PATH"
 echo "Reports: $HOME/CodexProbeReports/ledger"
+echo "Signature: ad-hoc local bundle signature"

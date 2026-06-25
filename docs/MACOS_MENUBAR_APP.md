@@ -35,7 +35,7 @@ build/CodexProbeBar.app
 open build/CodexProbeBar.app
 ```
 
-注意：这个入口适合源码本地构建和本地验证；如果要给普通用户发 release 包，必须走 Developer ID 签名、notarization 公证和 Gatekeeper 验证。完整流程见 [macOS 正式分发、签名与公证](MACOS_RELEASE_DISTRIBUTION.md)。
+注意：这个入口适合源码本地构建和本地验证。构建脚本会做免费 ad-hoc 本地签名，保证 `.app` bundle、Info.plist 和资源文件完整参与签名；但它不是 Developer ID 签名，也没有 notarization 公证。如果要给普通用户发 release 包，必须走 Developer ID 签名、notarization 公证和 Gatekeeper 验证。完整流程见 [macOS 正式分发、签名与公证](MACOS_RELEASE_DISTRIBUTION.md)。
 
 ## 面板能力
 
@@ -57,6 +57,35 @@ open build/CodexProbeBar.app
 - 报告目录：打开本地报告目录。
 - 隐私报告：生成并打开本地隐私报告。
 - 退出：关闭状态栏 App。
+
+## 截取真实状态栏效果
+
+真实截图必须在 macOS 图形会话里完成，不能只用 README 渲染图替代。
+
+推荐流程：
+
+```bash
+scripts/macos/build-codex-probe-bar.sh
+open build/CodexProbeBar.app
+```
+
+然后手动点击菜单栏里的 `Codex`，让 Popover 保持展开，再使用系统截图快捷键：
+
+- `Command + Shift + 5`：选择区域截图。
+- `Command + Shift + 4`：框选状态栏和下拉面板区域。
+
+如果要用命令行自动截图，需要给执行命令的 App 授权：
+
+- 系统设置 → 隐私与安全性 → 屏幕录制：允许 Terminal / Codex。
+- 系统设置 → 隐私与安全性 → 辅助功能：如果要自动点击菜单栏项，允许 Terminal / Codex。
+
+授权后可使用：
+
+```bash
+screencapture -x -T 5 assets/screenshots/macos-menubar-real.png
+```
+
+`-T 5` 会延迟 5 秒，方便先点开菜单栏 Popover。若没有屏幕录制权限，macOS 会返回 `could not create image from display`。
 
 ## 配置
 
@@ -95,7 +124,7 @@ App 会优先读取环境变量，其次读取 app bundle 内的 `Resources/defa
 
 ## 当前发布边界
 
-当前状态栏 App 是源码本地构建入口。本地构建出来的 `.app` 默认未签名、未公证，不能承诺普通用户下载后完全没有 Gatekeeper 提示。
+当前状态栏 App 是源码本地构建入口。本地构建出来的 `.app` 默认只有 ad-hoc 本地签名，未经过 Developer ID 签名和 Apple 公证，不能承诺普通用户下载后完全没有 Gatekeeper 提示。
 
 当前状态栏 App 不包含：
 

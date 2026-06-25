@@ -4,7 +4,7 @@
 
 ## 当前结论
 
-当前仓库可以构建本地 `.app`，适合开发者、本地验证和本地构建 体验；但如果没有 Apple Developer ID 签名、notarization 公证和 stapling，不能承诺普通用户从 GitHub 下载后完全无 Gatekeeper 提示。
+当前仓库可以构建本地 `.app`，适合开发者、本地验证和源码本地构建。构建脚本会执行免费 ad-hoc 本地签名，让 bundle、Info.plist 和资源文件通过本地签名校验；但如果没有 Apple Developer ID 签名、notarization 公证和 stapling，不能承诺普通用户从 GitHub 下载后完全无 Gatekeeper 提示。
 
 要达到正式对外分发标准，必须完成：
 
@@ -69,7 +69,7 @@ scripts/macos/preflight-codex-probe-bar.sh --require-signed --require-notarized
 4. 状态栏出现 BLCaptain Codex Probe Bar。
 5. 用户点击刷新或生成 Dashboard 时，只调用本地 `codex-probe`。
 
-如果没有签名和公证，README 必须把入口描述为「本地构建体验」或「本地构建」，不能写成无摩擦正式安装。
+如果只有 ad-hoc 本地签名、没有 Developer ID 签名和公证，README 必须把入口描述为「源码本地构建」或「本地验证」，不能写成无摩擦正式安装。
 
 ## 权限与隐私边界
 

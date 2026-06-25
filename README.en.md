@@ -99,7 +99,7 @@ open build/CodexProbeBar.app
 
 See [macOS menu bar app](docs/MACOS_MENUBAR_APP.md).
 
-Release boundary: the repository-built `.app` is unsigned and unnotarized by default, so it is only a local build. This does not block CLI-first GitHub open-source release. If maintainers later distribute a double-clickable `.app` / `.dmg`, use the signing, notarization, stapling, Gatekeeper preflight, and packaging flow in [macOS release distribution](docs/MACOS_RELEASE_DISTRIBUTION.md).
+Release boundary: the repository-built `.app` receives a free local ad-hoc bundle signature, so it is suitable for source-based local builds and validation. It is still not Developer ID signed and not Apple-notarized. This does not block CLI-first GitHub open-source release. If maintainers later distribute a double-clickable `.app` / `.dmg`, use the Developer ID signing, notarization, stapling, Gatekeeper preflight, and packaging flow in [macOS release distribution](docs/MACOS_RELEASE_DISTRIBUTION.md).
 
 ### Session-Level Token Ledger
 

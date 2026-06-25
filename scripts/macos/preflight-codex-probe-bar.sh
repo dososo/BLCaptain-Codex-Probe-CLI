@@ -33,6 +33,10 @@ failures=0
 pass() { echo "PASS $1"; }
 warn() { echo "WARN $1"; }
 fail() { echo "FAIL $1"; failures=$((failures + 1)); }
+clear_bundle_detritus() {
+  xattr -d com.apple.FinderInfo "$APP_DIR" 2>/dev/null || true
+  xattr -d 'com.apple.fileprovider.fpfs#P' "$APP_DIR" 2>/dev/null || true
+}
 
 INFO="$APP_DIR/Contents/Info.plist"
 EXECUTABLE="$APP_DIR/Contents/MacOS/CodexProbeBar"
@@ -58,6 +62,7 @@ else
   pass "No forbidden privacy/network/system APIs found in macOS source"
 fi
 
+clear_bundle_detritus
 if codesign --verify --deep --strict --verbose=2 "$APP_DIR" >/tmp/codex-probe-codesign.txt 2>&1; then
   pass "Code signature verifies"
   codesign -dv "$APP_DIR" 2>&1 | sed -n '1,20p'
@@ -65,12 +70,13 @@ else
   if [[ "$REQUIRE_SIGNED" -eq 1 ]]; then
     fail "Code signature verification failed"
   else
-    warn "Code signature verification failed; local build is unsigned"
+    warn "Code signature verification failed; rebuild with scripts/macos/build-codex-probe-bar.sh to apply local ad-hoc signing"
   fi
   sed -n '1,40p' /tmp/codex-probe-codesign.txt
 fi
 
 if command -v spctl >/dev/null 2>&1; then
+  clear_bundle_detritus
   if spctl --assess --type execute --verbose=4 "$APP_DIR" >/tmp/codex-probe-spctl.txt 2>&1; then
     pass "Gatekeeper assessment passes"
   else

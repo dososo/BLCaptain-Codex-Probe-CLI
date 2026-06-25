@@ -31,8 +31,10 @@ class MacOSReleaseDistributionTests(unittest.TestCase):
         self.assertIn("ditto -c -k --keepParent", scripts["package-codex-probe-bar.sh"])
         self.assertIn("spctl --assess", scripts["preflight-codex-probe-bar.sh"])
         self.assertIn("stapler validate", scripts["preflight-codex-probe-bar.sh"])
+        build_script = (ROOT / "scripts" / "macos" / "build-codex-probe-bar.sh").read_text(encoding="utf-8")
+        self.assertIn("codesign --force --deep --sign -", build_script)
 
-    def test_release_distribution_docs_disclose_unsigned_local_build_boundary(self):
+    def test_release_distribution_docs_disclose_ad_hoc_local_build_boundary(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         install = (ROOT / "docs" / "INSTALL.md").read_text(encoding="utf-8")
         release_doc = (ROOT / "docs" / "MACOS_RELEASE_DISTRIBUTION.md").read_text(encoding="utf-8")
@@ -41,7 +43,8 @@ class MacOSReleaseDistributionTests(unittest.TestCase):
             self.assertIn("签名", text)
             self.assertIn("公证", text)
 
-        self.assertIn("默认未签名、未公证", readme)
+        self.assertIn("ad-hoc 本地签名", readme)
+        self.assertIn("不是 Developer ID 签名", readme)
         self.assertIn("不能承诺普通用户", release_doc)
         self.assertIn("--require-signed --require-notarized", release_doc)
 
