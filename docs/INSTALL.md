@@ -33,7 +33,7 @@ scripts/macos/build-codex-probe-bar.sh
 open build/CodexProbeBar.app
 ```
 
-它会优先使用当前仓库 `.venv/bin/codex-probe`，并把报告写到 `~/CodexProbeReports/ledger`。详细配置见 [macOS 状态栏 App](MACOS_MENUBAR_APP.md)。
+它会刷新并优先使用当前仓库 `.venv/bin/codex-probe`，默认把状态栏 App 的账本写到 `.probe/codex-probe-bar.db`，报告写到 `reports/ledger`。详细配置见 [macOS 状态栏 App](MACOS_MENUBAR_APP.md)。
 
 这条路径适合从源码本地构建。普通用户正式下载使用时，维护者应发布经过 Developer ID 签名、Apple notarization 公证和 stapling 的 zip / dmg。对应发布流程见 [macOS 正式分发、签名与公证](MACOS_RELEASE_DISTRIBUTION.md)。
 

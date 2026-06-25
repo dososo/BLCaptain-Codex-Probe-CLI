@@ -94,16 +94,16 @@ App 会优先读取环境变量，其次读取 app bundle 内的 `Resources/defa
 | 配置 | 环境变量 | 默认 |
 |---|---|---|
 | CLI 路径 | `CODEX_PROBE_CLI` | 自动寻找 `codex-probe` |
-| DB 路径 | `CODEX_PROBE_DB` | `~/.codex-probe/probe.db` |
-| 报告目录 | `CODEX_PROBE_REPORTS_DIR` | `~/CodexProbeReports/ledger` |
+| DB 路径 | `CODEX_PROBE_DB` | `.probe/codex-probe-bar.db` |
+| 报告目录 | `CODEX_PROBE_REPORTS_DIR` | `reports/ledger` |
 | 时间范围 | `CODEX_PROBE_RANGE` | `7d` |
 | 工作目录 | `CODEX_PROBE_PROJECT_DIR` | 用户主目录或构建脚本写入的仓库路径 |
 
 构建脚本会写入默认配置：
 
-- CLI：优先使用当前仓库 `.venv/bin/codex-probe`。
-- DB：`~/.codex-probe/probe.db`。
-- 报告：`~/CodexProbeReports/ledger`。
+- CLI：刷新并优先使用当前仓库 `.venv/bin/codex-probe`。
+- DB：`.probe/codex-probe-bar.db`。
+- 报告：`reports/ledger`。
 - 工作目录：当前仓库根目录。
 
 ## 隐私边界

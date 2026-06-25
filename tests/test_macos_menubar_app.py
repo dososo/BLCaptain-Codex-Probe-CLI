@@ -30,7 +30,12 @@ class MacOSMenuBarAppTests(unittest.TestCase):
         self.assertIn("alerts", source)
         self.assertIn("confidence-report", source)
         self.assertIn("dashboard", source)
-        self.assertIn("不登录、不读 cookie、不碰 token/钥匙串、不抓包、不上传", source)
+        self.assertIn("runner.prepare()", source)
+        self.assertIn("statusTitle(\"Codex\")", source)
+        self.assertNotIn("Codex" + " ?", source)
+        self.assertIn("NSSize(width: 360, height: 500)", source)
+        self.assertIn("codex-probe-bar.db", source)
+        self.assertIn("不登录、不读 cookie/token/钥匙串、不抓包、不上传", source)
         forbidden = [
             "Keychain",
             "SecItemCopyMatching",
@@ -49,6 +54,9 @@ class MacOSMenuBarAppTests(unittest.TestCase):
         self.assertIn("LSUIElement", script)
         self.assertIn("defaults.json", script)
         self.assertIn("CODEX_PROBE_CLI", script)
+        self.assertIn("pip install --quiet \"$ROOT\"", script)
+        self.assertIn(".probe/codex-probe-bar.db", script)
+        self.assertIn("reports/ledger", script)
         self.assertIn("0.9.0", script)
 
 

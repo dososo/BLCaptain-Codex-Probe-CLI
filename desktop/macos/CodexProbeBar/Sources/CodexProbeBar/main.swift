@@ -13,22 +13,31 @@ struct ProbeConfig: Equatable, Sendable {
         let env = ProcessInfo.processInfo.environment
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         let bundle = BundleDefaults.load()
+        let cwd = env["CODEX_PROBE_PROJECT_DIR"]
+            ?? bundle.projectDir
+            ?? home
         let cli = env["CODEX_PROBE_CLI"]
             ?? bundle.cliPath
             ?? ProbeConfig.findCLI(home: home)
             ?? "codex-probe"
-        let db = env["CODEX_PROBE_DB"]
-            ?? bundle.dbPath
-            ?? "\(home)/.codex-probe/probe.db"
-        let reports = env["CODEX_PROBE_REPORTS_DIR"]
-            ?? bundle.reportsDir
-            ?? "\(home)/CodexProbeReports/ledger"
+        let db = ProbeConfig.firstWritableFile(
+            preferred: env["CODEX_PROBE_DB"] ?? bundle.dbPath ?? "\(cwd)/.probe/codex-probe-bar.db",
+            fallbackDirectories: [
+                "\(cwd)/.probe",
+                "\(home)/Library/Application Support/BLCaptain Codex Probe",
+                NSTemporaryDirectory()
+            ],
+            filename: "codex-probe-bar.db"
+        )
+        let reports = ProbeConfig.firstWritableDirectory([
+            env["CODEX_PROBE_REPORTS_DIR"] ?? bundle.reportsDir ?? "\(cwd)/reports/ledger",
+            "\(cwd)/reports/ledger",
+            "\(home)/Library/Application Support/BLCaptain Codex Probe/Reports",
+            NSTemporaryDirectory() + "codex-probe-reports"
+        ])
         let range = env["CODEX_PROBE_RANGE"]
             ?? bundle.range
             ?? "7d"
-        let cwd = env["CODEX_PROBE_PROJECT_DIR"]
-            ?? bundle.projectDir
-            ?? home
         return ProbeConfig(cliPath: cli, dbPath: db, reportsDir: reports, range: range, workingDirectory: cwd)
     }
 
@@ -41,6 +50,50 @@ struct ProbeConfig: Equatable, Sendable {
             "/usr/local/bin/codex-probe"
         ]
         return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
+    private static func firstWritableDirectory(_ candidates: [String]) -> String {
+        let manager = FileManager.default
+        for candidate in candidates {
+            guard !candidate.isEmpty else { continue }
+            do {
+                try manager.createDirectory(atPath: candidate, withIntermediateDirectories: true)
+                let marker = "\(candidate)/.codex-probe-write-test"
+                try "ok".write(toFile: marker, atomically: true, encoding: .utf8)
+                try? manager.removeItem(atPath: marker)
+                return candidate
+            } catch {
+                continue
+            }
+        }
+        return NSTemporaryDirectory()
+    }
+
+    private static func firstWritableFile(preferred: String, fallbackDirectories: [String], filename: String) -> String {
+        let manager = FileManager.default
+        let preferredURL = URL(fileURLWithPath: preferred)
+        let preferredDir = preferredURL.deletingLastPathComponent().path
+        if canWriteDirectory(preferredDir, manager: manager) {
+            return preferred
+        }
+        for directory in fallbackDirectories {
+            if canWriteDirectory(directory, manager: manager) {
+                return URL(fileURLWithPath: directory).appendingPathComponent(filename).path
+            }
+        }
+        return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(filename).path
+    }
+
+    private static func canWriteDirectory(_ path: String, manager: FileManager) -> Bool {
+        do {
+            try manager.createDirectory(atPath: path, withIntermediateDirectories: true)
+            let marker = "\(path)/.codex-probe-write-test"
+            try "ok".write(toFile: marker, atomically: true, encoding: .utf8)
+            try? manager.removeItem(atPath: marker)
+            return true
+        } catch {
+            return false
+        }
     }
 }
 
@@ -131,6 +184,7 @@ struct ConfidencePayload: Decodable, Sendable {
 
 struct SourceItem: Decodable, Identifiable, Sendable {
     let sourceType: String
+    let enabled: Bool
     let confidenceCeiling: String
     let snapshotCount: Int
     let missingFields: [String]
@@ -140,10 +194,21 @@ struct SourceItem: Decodable, Identifiable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case sourceType = "source_type"
+        case enabled
         case confidenceCeiling = "confidence_ceiling"
         case snapshotCount = "snapshot_count"
         case missingFields = "missing_fields"
         case diagnosis
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        sourceType = try container.decode(String.self, forKey: .sourceType)
+        enabled = (try? container.decode(Bool.self, forKey: .enabled)) ?? true
+        confidenceCeiling = try container.decode(String.self, forKey: .confidenceCeiling)
+        snapshotCount = try container.decode(Int.self, forKey: .snapshotCount)
+        missingFields = try container.decode([String].self, forKey: .missingFields)
+        diagnosis = try container.decode(String.self, forKey: .diagnosis)
     }
 }
 
@@ -170,15 +235,30 @@ final class ProbeRunner: @unchecked Sendable {
     init(config: ProbeConfig) {
         self.config = config
         try? FileManager.default.createDirectory(atPath: config.reportsDir, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(
+            atPath: URL(fileURLWithPath: config.dbPath).deletingLastPathComponent().path,
+            withIntermediateDirectories: true
+        )
     }
 
     func run(_ args: [String]) throws -> CommandResult {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: config.cliPath)
-        process.arguments = args
+        if config.cliPath.contains("/") {
+            guard FileManager.default.isExecutableFile(atPath: config.cliPath) else {
+                throw RuntimeError("找不到可执行的 codex-probe CLI：\(config.cliPath)。请先运行 scripts/setup-local.sh 或 scripts/macos/build-codex-probe-bar.sh。")
+            }
+            process.executableURL = URL(fileURLWithPath: config.cliPath)
+            process.arguments = args
+        } else {
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+            process.arguments = [config.cliPath] + args
+        }
         process.currentDirectoryURL = URL(fileURLWithPath: config.workingDirectory)
+        let currentPath = ProcessInfo.processInfo.environment["PATH"] ?? ""
+        let localBin = "\(config.workingDirectory)/.venv/bin"
         process.environment = ProcessInfo.processInfo.environment.merging([
-            "PYTHONDONTWRITEBYTECODE": "1"
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PATH": "\(localBin):/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:\(currentPath)"
         ]) { _, new in new }
 
         let out = Pipe()
@@ -193,12 +273,46 @@ final class ProbeRunner: @unchecked Sendable {
         return CommandResult(status: process.terminationStatus, stdout: stdout, stderr: stderr)
     }
 
+    func prepare() throws {
+        try FileManager.default.createDirectory(atPath: config.reportsDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            atPath: URL(fileURLWithPath: config.dbPath).deletingLastPathComponent().path,
+            withIntermediateDirectories: true
+        )
+
+        let help = try run(["--help"])
+        guard help.status == 0 else {
+            throw RuntimeError((help.stderr.isEmpty ? help.stdout : help.stderr).trimmingCharacters(in: .whitespacesAndNewlines))
+        }
+        guard help.stdout.contains("alerts"), help.stdout.contains("confidence-report") else {
+            throw RuntimeError("当前 codex-probe CLI 版本过旧，不支持状态栏 App 所需命令。请重新运行 scripts/setup-local.sh 或 scripts/macos/build-codex-probe-bar.sh。")
+        }
+
+        if !FileManager.default.fileExists(atPath: config.dbPath) {
+            let setup = try run([
+                "--db", config.dbPath,
+                "--json",
+                "setup",
+                "--sample",
+                "--no-open",
+                "--out-dir", config.reportsDir
+            ])
+            guard setup.status == 0 else {
+                throw RuntimeError((setup.stderr.isEmpty ? setup.stdout : setup.stderr).trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+        }
+    }
+
     func json<T: Decodable>(_ type: T.Type, _ command: [String]) throws -> T {
         let result = try run(["--db", config.dbPath, "--json"] + command)
         guard result.status == 0 else {
             throw RuntimeError(result.stderr.isEmpty ? result.stdout : result.stderr)
         }
-        return try JSONDecoder().decode(T.self, from: Data(result.stdout.utf8))
+        do {
+            return try JSONDecoder().decode(T.self, from: Data(result.stdout.utf8))
+        } catch {
+            throw RuntimeError("CLI JSON 解析失败：\(error.localizedDescription)。输出：\(String(result.stdout.prefix(300)))")
+        }
     }
 
     func reportPath(_ name: String) -> String {
@@ -236,6 +350,7 @@ final class ProbeStore: ObservableObject {
         lastError = nil
         Task.detached { [runner] in
             do {
+                try runner.prepare()
                 let sessions: SessionsPayload = try runner.json(
                     SessionsPayload.self,
                     [
@@ -281,14 +396,14 @@ final class ProbeStore: ObservableObject {
                 await MainActor.run {
                     self.snapshot = updated
                     self.isLoading = false
-                    self.statusTitle(alerts.alertCount > 0 ? "Codex !" : "Codex OK")
+                    self.statusTitle("Codex")
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
                     self.lastError = error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
-                    self.snapshot.message = "无法读取本地账本"
-                    self.statusTitle("Codex ?")
+                    self.snapshot.message = "需要检查本地 CLI"
+                    self.statusTitle("Codex")
                 }
             }
         }
@@ -300,6 +415,7 @@ final class ProbeStore: ObservableObject {
         lastError = nil
         Task.detached { [runner] in
             do {
+                try runner.prepare()
                 _ = try runner.run(["--db", runner.config.dbPath, "--json", "watch", "once"])
                 await MainActor.run {
                     self.isLoading = false
@@ -320,6 +436,7 @@ final class ProbeStore: ObservableObject {
         lastError = nil
         Task.detached { [runner] in
             do {
+                try runner.prepare()
                 _ = try runner.run([
                     "--db", runner.config.dbPath,
                     "--json",
@@ -354,6 +471,7 @@ final class ProbeStore: ObservableObject {
         lastError = nil
         Task.detached { [runner] in
             do {
+                try runner.prepare()
                 _ = try runner.run([
                     "--db", runner.config.dbPath,
                     "--json",
@@ -381,64 +499,107 @@ struct CodexProbePanel: View {
     @ObservedObject var store: ProbeStore
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            header
-            if let error = store.lastError, !error.isEmpty {
-                errorBanner(error)
+        ZStack(alignment: .top) {
+            Color(nsColor: .windowBackgroundColor)
+            LinearGradient(
+                colors: [
+                    Color(red: 0.04, green: 0.12, blue: 0.26),
+                    Color(red: 0.02, green: 0.42, blue: 0.48),
+                    Color(red: 0.12, green: 0.50, blue: 0.30)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .frame(height: 126)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(.white.opacity(0.10))
+                    .frame(height: 1)
             }
-            summaryGrid
-            decisionPanel
-            alertsPanel
-            sourcePanel
-            actions
-            privacyFooter
+
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        header
+                        if let error = store.lastError, !error.isEmpty {
+                            errorBanner(error)
+                        }
+                        summaryGrid
+                        decisionPanel
+                        alertsPanel
+                        sourcePanel
+                        privacyFooter
+                    }
+                    .padding(14)
+                }
+                actions
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .background(.regularMaterial)
+            }
         }
-        .padding(18)
-        .frame(width: 430)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(width: 360, height: 500)
     }
 
     private var header: some View {
-        HStack(alignment: .top) {
+        HStack(alignment: .center, spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(.white.opacity(0.18))
+                    .frame(width: 38, height: 38)
+                Image(systemName: "gauge.with.dots.needle.50percent")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
             VStack(alignment: .leading, spacing: 4) {
                 Text("BLCaptain Codex Probe")
-                    .font(.title3.weight(.semibold))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
                 Text(store.snapshot.message)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.76))
+                    .lineLimit(1)
             }
             Spacer()
-            Label("本地", systemImage: "lock.shield")
+            Label("本地", systemImage: "lock.shield.fill")
                 .font(.caption.weight(.semibold))
                 .labelStyle(.titleAndIcon)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 5)
-                .background(Color.green.opacity(0.14), in: Capsule())
+                .foregroundStyle(Color(red: 0.05, green: 0.28, blue: 0.17))
+                .background(.white.opacity(0.82), in: Capsule())
         }
     }
 
     private var summaryGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-            StatCard(title: "token delta", value: formatNumber(store.snapshot.totalTokens), detail: "本地账本范围 \(store.config.range)")
-            StatCard(title: "会话数", value: "\(store.snapshot.sessionCount)", detail: "已导入会话")
-            StatCard(title: "预警", value: "\(store.snapshot.alertCount)", detail: store.snapshot.alertCount > 0 ? "建议处理" : "暂无本地预警")
-            StatCard(title: "更新", value: timeText(store.snapshot.lastUpdated), detail: "系统本地时间")
+        HStack(spacing: 8) {
+            MetricPill(title: "token", value: formatNumber(store.snapshot.totalTokens), accent: .cyan)
+            MetricPill(title: "会话", value: "\(store.snapshot.sessionCount)", accent: .green)
+            MetricPill(title: "预警", value: "\(store.snapshot.alertCount)", accent: store.snapshot.alertCount > 0 ? .red : .mint)
         }
     }
 
     private var decisionPanel: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("当前判断")
-                .font(.headline)
+            panelTitle("当前判断", systemImage: "bolt.circle.fill", tint: .orange)
             if let top = store.snapshot.topSession {
-                Text("最耗会话是「\(top.title)」，token delta \(formatNumber(top.tokenDelta))。")
-                    .font(.subheadline)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(top.title)
+                        .font(.callout.weight(.semibold))
+                        .lineLimit(1)
+                    Spacer()
+                    Text(formatNumber(top.tokenDelta))
+                        .font(.callout.weight(.bold))
+                        .monospacedDigit()
+                        .foregroundStyle(.orange)
+                }
                 Text(top.recommendation)
-                    .font(.callout.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(store.snapshot.alertCount > 0 ? .red : .primary)
+                    .lineLimit(2)
             } else {
                 Text("暂无会话账本数据。先运行仓库示例数据流程、导入官方导出，或点击「采集一次」。")
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
@@ -447,14 +608,13 @@ struct CodexProbePanel: View {
 
     private var alertsPanel: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("预算预警")
-                .font(.headline)
+            panelTitle("预算预警", systemImage: "exclamationmark.triangle.fill", tint: store.snapshot.alertCount > 0 ? .red : .green)
             if store.snapshot.alerts.isEmpty {
                 Text("当前本地阈值没有触发预警。")
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(store.snapshot.alerts.prefix(3)) { item in
+                ForEach(store.snapshot.alerts.prefix(2)) { item in
                     HStack(alignment: .top, spacing: 8) {
                         SeverityDot(severity: item.severity)
                         VStack(alignment: .leading, spacing: 2) {
@@ -477,14 +637,13 @@ struct CodexProbePanel: View {
 
     private var sourcePanel: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("数据源可信度")
-                .font(.headline)
+            panelTitle("数据源可信度", systemImage: "checkmark.seal.fill", tint: .mint)
             if store.snapshot.sources.isEmpty {
                 Text("暂无数据源记录。")
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(store.snapshot.sources.prefix(3)) { source in
+                ForEach(activeSources.prefix(2)) { source in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(source.sourceType)
@@ -506,26 +665,47 @@ struct CodexProbePanel: View {
         .panelStyle()
     }
 
+    private var activeSources: [SourceItem] {
+        let enabled = store.snapshot.sources.filter { $0.enabled }
+        return enabled.isEmpty ? store.snapshot.sources : enabled
+    }
+
     private var actions: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-            ActionButton(title: store.isLoading ? "处理中" : "刷新", systemImage: "arrow.clockwise") {
-                store.refresh()
-            }
-            ActionButton(title: "采集一次", systemImage: "tray.and.arrow.down") {
-                store.runOnce()
-            }
-            ActionButton(title: "打开 Dashboard", systemImage: "safari") {
+        HStack(spacing: 8) {
+            Button {
                 store.generateDashboardAndOpen()
+            } label: {
+                Label("Dashboard", systemImage: "safari")
             }
-            ActionButton(title: "报告目录", systemImage: "folder") {
-                store.openReports()
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+
+            Button {
+                store.runOnce()
+            } label: {
+                Label("采集", systemImage: "tray.and.arrow.down")
             }
-            ActionButton(title: "隐私报告", systemImage: "lock.doc") {
-                store.generatePrivacyAndOpen()
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+
+            Button {
+                store.refresh()
+            } label: {
+                Image(systemName: store.isLoading ? "hourglass" : "arrow.clockwise")
             }
-            ActionButton(title: "退出", systemImage: "xmark.circle") {
-                NSApp.terminate(nil)
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+
+            Menu {
+                Button("报告目录", systemImage: "folder") { store.openReports() }
+                Button("隐私报告", systemImage: "lock.doc") { store.generatePrivacyAndOpen() }
+                Divider()
+                Button("退出", systemImage: "xmark.circle") { NSApp.terminate(nil) }
+            } label: {
+                Image(systemName: "ellipsis.circle")
             }
+            .menuStyle(.borderlessButton)
+            .frame(width: 32)
         }
         .disabled(store.isLoading)
     }
@@ -534,7 +714,7 @@ struct CodexProbePanel: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("隐私边界")
                 .font(.caption.weight(.semibold))
-            Text("只调用本地 codex-probe CLI；不登录、不读 cookie、不碰 token/钥匙串、不抓包、不上传。")
+            Text("只调用本地 CLI；不登录、不读 cookie/token/钥匙串、不抓包、不上传。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text("DB：\(store.config.dbPath)")
@@ -547,7 +727,7 @@ struct CodexProbePanel: View {
 
     private func errorBanner(_ error: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text("无法读取 CLI")
+            Text("CLI 未就绪")
                 .font(.subheadline.weight(.semibold))
             Text(error)
                 .font(.caption)
@@ -559,55 +739,55 @@ struct CodexProbePanel: View {
         .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
     }
 
-    private func timeText(_ date: Date?) -> String {
-        guard let date else { return "未刷新" }
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .none
-        return formatter.string(from: date)
+    private func panelTitle(_ title: String, systemImage: String, tint: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage)
+                .foregroundStyle(tint)
+            Text(title)
+        }
+        .font(.subheadline.weight(.semibold))
     }
+
 }
 
-struct StatCard: View {
+struct MetricPill: View {
     let title: String
     let value: String
-    let detail: String
+    let accent: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.title2.weight(.bold))
+                .font(.title3.weight(.bold))
                 .monospacedDigit()
-            Text(detail)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.74)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 9)
+        .background(
+            LinearGradient(
+                colors: [accent.opacity(0.18), Color(nsColor: .controlBackgroundColor)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 10)
         )
-    }
-}
-
-struct ActionButton: View {
-    let title: String
-    let systemImage: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .frame(maxWidth: .infinity)
+        .overlay(alignment: .topLeading) {
+            Capsule()
+                .fill(accent)
+                .frame(width: 28, height: 3)
+                .padding(.top, 7)
+                .padding(.leading, 10)
         }
-        .buttonStyle(.bordered)
-        .controlSize(.large)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(accent.opacity(0.26), lineWidth: 0.8)
+        )
     }
 }
 
@@ -625,12 +805,12 @@ struct SeverityDot: View {
 extension View {
     func panelStyle() -> some View {
         self
-            .padding(12)
+            .padding(11)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color(nsColor: .separatorColor).opacity(0.58), lineWidth: 0.6)
             )
     }
 }
@@ -684,7 +864,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         popover = NSPopover()
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: 430, height: 650)
+        popover.contentSize = NSSize(width: 360, height: 500)
         popover.contentViewController = NSHostingController(rootView: CodexProbePanel(store: store))
 
         store.refresh()

@@ -12,7 +12,13 @@ EXECUTABLE="$MACOS_DIR/CodexProbeBar"
 CLI_PATH="${CODEX_PROBE_CLI:-}"
 
 if [[ -z "$CLI_PATH" ]]; then
-  if [[ -x "$ROOT/.venv/bin/codex-probe" ]]; then
+  if command -v python3 >/dev/null 2>&1; then
+    if [[ ! -x "$ROOT/.venv/bin/python" ]]; then
+      python3 -m venv "$ROOT/.venv"
+    fi
+    PIP_DISABLE_PIP_VERSION_CHECK=1 "$ROOT/.venv/bin/python" -m pip install --quiet "$ROOT"
+    CLI_PATH="$ROOT/.venv/bin/codex-probe"
+  elif [[ -x "$ROOT/.venv/bin/codex-probe" ]]; then
     CLI_PATH="$ROOT/.venv/bin/codex-probe"
   elif command -v codex-probe >/dev/null 2>&1; then
     CLI_PATH="$(command -v codex-probe)"
@@ -59,8 +65,8 @@ PLIST
 cat > "$RESOURCES_DIR/defaults.json" <<JSON
 {
   "cliPath": "$CLI_PATH",
-  "dbPath": "$HOME/.codex-probe/probe.db",
-  "reportsDir": "$HOME/CodexProbeReports/ledger",
+  "dbPath": "$ROOT/.probe/codex-probe-bar.db",
+  "reportsDir": "$ROOT/reports/ledger",
   "range": "7d",
   "projectDir": "$ROOT"
 }
@@ -82,5 +88,5 @@ codesign --verify --deep --strict --verbose=2 "$APP_DIR"
 
 echo "Built: $APP_DIR"
 echo "CLI: $CLI_PATH"
-echo "Reports: $HOME/CodexProbeReports/ledger"
+echo "Reports: $ROOT/reports/ledger"
 echo "Signature: ad-hoc local bundle signature"
