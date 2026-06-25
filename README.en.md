@@ -119,6 +119,8 @@ Example reports:
 - [Privacy audit report](examples/reports/ledger/privacy-report.md)
 - [Local HTML dashboard](examples/reports/ledger/dashboard.html)
 
+The dashboard first answers three questions: which session consumed the most, which stage grew fastest, and whether to continue, downgrade, or stop.
+
 <p>
   <img src="assets/screenshots/ledger-dashboard.png" alt="Local Codex session-level token ledger dashboard" width="100%">
 </p>

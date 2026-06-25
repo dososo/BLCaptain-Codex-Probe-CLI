@@ -119,6 +119,8 @@ open build/CodexProbeBar.app
 - [隐私审计报告](examples/reports/ledger/privacy-report.md)
 - [本地 HTML Dashboard](examples/reports/ledger/dashboard.html)
 
+Dashboard 首屏优先回答三个问题：哪个会话最贵、哪段时间增长最快、现在该继续、降配还是停止。
+
 <p>
   <img src="assets/screenshots/ledger-dashboard.png" alt="本地 Codex 会话级 Token 账本 Dashboard" width="100%">
 </p>
