@@ -13,7 +13,7 @@ fi
 .venv/bin/python -m pip install .
 
 if [[ "$#" -eq 0 ]]; then
-  .venv/bin/codex-probe --db .probe/setup-demo.db setup --demo
+  .venv/bin/codex-probe --db .probe/setup-sample.db setup --sample
 else
   .venv/bin/codex-probe "$@"
 fi

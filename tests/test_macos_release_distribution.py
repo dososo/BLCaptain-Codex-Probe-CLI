@@ -32,7 +32,7 @@ class MacOSReleaseDistributionTests(unittest.TestCase):
         self.assertIn("spctl --assess", scripts["preflight-codex-probe-bar.sh"])
         self.assertIn("stapler validate", scripts["preflight-codex-probe-bar.sh"])
 
-    def test_release_distribution_docs_disclose_unsigned_beta_boundary(self):
+    def test_release_distribution_docs_disclose_unsigned_local_build_boundary(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         install = (ROOT / "docs" / "INSTALL.md").read_text(encoding="utf-8")
         release_doc = (ROOT / "docs" / "MACOS_RELEASE_DISTRIBUTION.md").read_text(encoding="utf-8")

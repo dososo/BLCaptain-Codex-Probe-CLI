@@ -19,7 +19,7 @@
 | 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": false, "source_type": "local_status"} |
 | 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "high", "enabled": false, "source_type": "local_codex_rollout"} |
 | 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "medium", "enabled": false, "source_type": "desktop_visible"} |
-| 2026-06-25T11:37:32+00:00 | setup_initialized | {"db_name": "codex-probe-v080-examples-2.db", "demo": true, "local_codex_records": 2} |
+| 2026-06-25T11:37:32+00:00 | setup_initialized | {"db_name": "codex-probe-v080-examples-2.db", "sample_mode": true, "local_codex_records": 2} |
 | 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": true, "source_type": "official_export"} |
 | 2026-06-25T11:37:32+00:00 | official_export_imported | {"filename": "official-export.csv", "format": "csv", "sessions": 3, "snapshots": 3} |
 | 2026-06-25T11:37:32+00:00 | source_upserted | {"confidence_ceiling": "exact", "enabled": true, "source_type": "official_export"} |

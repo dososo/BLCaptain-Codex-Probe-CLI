@@ -25,7 +25,7 @@
 - 新增 `codex-probe confidence-report` 数据源可信度报告，展示来源、字段覆盖、缺失字段、置信上限、诊断和隐私边界。
 - Dashboard 首屏新增今日 token、本周 token、高风险会话、该停会话、本地预算预警、数据源可信度和任务类型归因。
 - `watch status-page` 新增最近预警摘要，帮助用户从 watcher 入口判断是否该停止长会话。
-- `setup --demo` 自动生成 `timeline.md`、`alerts.md`、`source-confidence.md` 和 `task-report.md`，普通用户一条命令即可看到新增治理报告。
+- `setup --sample` 自动生成 `timeline.md`、`alerts.md`、`source-confidence.md` 和 `task-report.md`，普通用户一条命令即可看到新增治理报告。
 - 扩充 synthetic rollout 样本库，新增 `examples/ledger-samples/local-codex-stress/`，覆盖多会话重叠、重复快照、异常时间戳、缺失模型、缺项目路径和缺上下文窗口。
 - 更新报告契约测试和端到端验收脚本，覆盖 timeline、alerts、task report、confidence report 和 Dashboard 新模块。
 - 刷新中英文 README、示例报告和 Dashboard 截图，继续强调本地优先、不读取登录态、不替代官方账单。
@@ -41,17 +41,17 @@
 - 新增 `docs/INSTALL.md`，说明 Codex 桌面版、仓库脚本、uvx、pipx 和 Homebrew Formula 草案。
 - 优化 `setup` 和 `sessions` 的普通用户输出；`--json` 保持机器可读，非 JSON 模式更适合人读。
 - 修正 README 会话级 Token 账本示例：统一公开样本模型字段为 `gpt-5.5`，并说明模型列来自数据源 `model` 字段，CLI 不猜测或强制改写。
-- 完善 README 和 Codex 桌面版提示词，增加安全 demo、本地历史分析、单次 `/status` 三类普通用户入口。
+- 完善 README 和 Codex 桌面版提示词，增加仓库示例数据、本地历史分析、单次 `/status` 三类普通用户入口。
 - 将“开发者安装”改为“安装与体验”，补充可直接让 Codex 桌面版安装 GitHub 仓库的提示词。
 
 ## 0.6.0 - 2026-06-23
 
-- 新增 `codex-probe setup`，支持一条命令完成初始化、local history dry-run、报告生成和 Dashboard 打开；`--demo` 可安全使用仓库 synthetic 样本。
-- 新增 `scripts/setup-local.sh`，可创建 `.venv`、安装 CLI 并运行安全 demo。
+- 新增 `codex-probe setup`，支持一条命令完成初始化、local history dry-run、报告生成和 Dashboard 打开；`--sample` 可使用仓库示例样本。
+- 新增 `scripts/setup-local.sh`，可创建 `.venv`、安装 CLI 并运行仓库示例数据流程。
 - Dashboard 新增项目、开始日期、结束日期、置信度和模型筛选。
 - 新增 `codex-probe watch status-page`，生成本地 watcher 状态页，展示运行状态、最近日志和会话排行。
 - 新增 `codex-probe samples collect-rollout`，生成只含白名单字段和哈希的脱敏 rollout 校准样本。
-- 新增 `docs/SAMPLE_COLLECTION.md`，说明 beta 用户如何生成和检查脱敏样本。
+- 新增 `docs/SAMPLE_COLLECTION.md`，说明愿意协助校准的用户如何生成和检查脱敏样本。
 
 ## 0.5.0 - 2026-06-23
 

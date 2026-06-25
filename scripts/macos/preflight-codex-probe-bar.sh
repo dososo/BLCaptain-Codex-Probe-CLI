@@ -65,7 +65,7 @@ else
   if [[ "$REQUIRE_SIGNED" -eq 1 ]]; then
     fail "Code signature verification failed"
   else
-    warn "Code signature verification failed; local beta build is unsigned"
+    warn "Code signature verification failed; local build is unsigned"
   fi
   sed -n '1,40p' /tmp/codex-probe-codesign.txt
 fi

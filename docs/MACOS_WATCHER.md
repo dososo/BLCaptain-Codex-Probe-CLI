@@ -19,7 +19,7 @@ codex-probe --version
 
 ```bash
 PYTHON_BIN="$(pwd)/.venv/bin/python" \
-DB_PATH="$(pwd)/.probe/launchagent-demo.db" \
+DB_PATH="$(pwd)/.probe/launchagent-sample.db" \
 CODEX_ROOT="$(pwd)/examples/ledger-samples/local-codex" \
 INTERVAL_SECONDS=10 \
 scripts/macos/install-watcher-launchagent.sh

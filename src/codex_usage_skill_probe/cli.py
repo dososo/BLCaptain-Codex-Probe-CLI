@@ -86,7 +86,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_range_args(setup_cmd)
     setup_cmd.add_argument("--out-dir", type=Path, default=Path("reports/ledger"), help="Report output directory.")
     setup_cmd.add_argument("--root", type=Path, default=None, help="Codex data root. Defaults to ~/.codex.")
-    setup_cmd.add_argument("--demo", action="store_true", help="Use repository synthetic samples for a safe first run.")
+    setup_cmd.add_argument("--sample", action="store_true", help="Use repository sample data for a guided first run.")
     setup_cmd.add_argument("--import-history", action="store_true", help="Import local history after dry-run.")
     setup_cmd.add_argument("--limit-files", type=int, default=None)
     setup_cmd.add_argument("--no-open", action="store_true", help="Do not open the generated dashboard.")
@@ -295,7 +295,7 @@ def main(argv: list[str] | None = None) -> None:
 
 def cmd_setup(args: argparse.Namespace, store: Store) -> None:
     root = args.root
-    if args.demo and root is None:
+    if args.sample and root is None:
         root = Path("examples/ledger-samples/local-codex")
     out_dir = args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -306,14 +306,14 @@ def cmd_setup(args: argparse.Namespace, store: Store) -> None:
     add_privacy_audit(
         store.conn,
         "setup_initialized",
-        {"db_name": store.db_path.name, "demo": args.demo, "local_codex_records": local_summary.importable_record_count},
+        {"db_name": store.db_path.name, "sample_mode": args.sample, "local_codex_records": local_summary.importable_record_count},
     )
     store.conn.commit()
     dry_run = import_local_history(store.conn, root=root, dry_run=True, limit_files=args.limit_files)
     imports: list[dict[str, object]] = []
 
-    if args.demo:
-        imports.extend(import_demo_samples(store))
+    if args.sample:
+        imports.extend(import_sample_records(store))
         imports.append(import_local_history(store.conn, root=root, dry_run=False, limit_files=args.limit_files))
     elif args.import_history:
         imports.append(import_local_history(store.conn, root=root, dry_run=False, limit_files=args.limit_files))
@@ -366,7 +366,7 @@ def cmd_setup(args: argparse.Namespace, store: Store) -> None:
         "ok": True,
         "db_path": str(store.db_path),
         "range": range_label,
-        "demo": args.demo,
+        "sample_mode": args.sample,
         "dry_run": dry_run,
         "imports": imports,
         "sources": source_doctor_payload(sources, deep=True),
@@ -391,7 +391,7 @@ def cmd_setup(args: argparse.Namespace, store: Store) -> None:
         print("Codex Probe 本地 setup 已完成。")
         print(f"数据库：{store.db_path}")
         print(f"时间范围：{range_label}")
-        print(f"导入模式：{'仓库 demo 样本' if args.demo else '本地历史' if args.import_history else 'dry-run 预览'}")
+        print(f"导入模式：{'仓库示例样本' if args.sample else '本地历史' if args.import_history else 'dry-run 预览'}")
         print(f"可导入本地 token 记录：{dry_run.get('importable_record_count', 0)}")
         print("生成报告：")
         for label, path in payload["reports"].items():
@@ -400,7 +400,7 @@ def cmd_setup(args: argparse.Namespace, store: Store) -> None:
             print("Dashboard 已尝试打开。")
 
 
-def import_demo_samples(store: Store) -> list[dict[str, object]]:
+def import_sample_records(store: Store) -> list[dict[str, object]]:
     sample_dir = Path("examples/ledger-samples")
     imports: list[dict[str, object]] = []
     official_csv = sample_dir / "official-export.csv"

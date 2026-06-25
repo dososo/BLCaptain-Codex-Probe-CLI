@@ -14,10 +14,10 @@
 >
 > Open this repository folder and send one of these prompts to Codex.
 >
-> Safe demo, without reading your real history:
+> Use repository sample data, without reading your real history:
 >
 > ```text
-> Run scripts/setup-local.sh and use only the repository demo samples to generate a Codex usage dashboard. Do not read my real Codex history, browser cookies, tokens, keychains, system credentials, or chat content. Do not upload any data. Tell me the dashboard and report paths at the end.
+> Run scripts/setup-local.sh and use only the repository sample data to generate a Codex usage dashboard. Do not read my real Codex history, browser cookies, tokens, keychains, system credentials, or chat content. Do not upload any data. Tell me the dashboard and report paths at the end.
 > ```
 >
 > Analyze your local Codex sessions:
@@ -37,7 +37,7 @@
 > In the Codex desktop app, you can simply say:
 >
 > ```text
-> Help me install this repository: https://github.com/dososo/BLCaptain-Codex-Probe-CLI. After installation, run the safe demo using only repository sample data to generate a Codex usage dashboard. Do not read my real Codex history, browser cookies, tokens, keychains, or system credentials. Do not upload any data.
+> Help me install this repository: https://github.com/dososo/BLCaptain-Codex-Probe-CLI. After installation, use only repository sample data to generate a Codex usage dashboard. Do not read my real Codex history, browser cookies, tokens, keychains, or system credentials. Do not upload any data.
 > ```
 >
 > Or run it manually:
@@ -48,7 +48,7 @@
 > scripts/setup-local.sh
 > ```
 >
-> With no arguments, it runs a safe demo: creates `.venv`, installs the CLI, initializes the ledger, performs dry-run, imports repository synthetic samples, generates reports, and opens the dashboard.
+> With no arguments, it runs the repository sample-data workflow: creates `.venv`, installs the CLI, initializes the ledger, performs dry-run, imports repository sample data, generates reports, and opens the dashboard.
 >
 > To try the macOS menu bar entry:
 >
@@ -57,7 +57,7 @@
 > open build/CodexProbeBar.app
 > ```
 >
-> This is a local beta build. GitHub source distribution, CLI installation, and user-side local builds do not require an Apple Developer ID. Signing, notarization, and Gatekeeper verification matter only if maintainers ship a double-clickable `.app` / `.dmg` to ordinary Mac users. See [macOS release distribution](docs/MACOS_RELEASE_DISTRIBUTION.md).
+> This is a local build. GitHub source distribution, CLI installation, and user-side local builds do not require an Apple Developer ID. Signing, notarization, and Gatekeeper verification matter only if maintainers ship a double-clickable `.app` / `.dmg` to ordinary Mac users. See [macOS release distribution](docs/MACOS_RELEASE_DISTRIBUTION.md).
 >
 > Lightweight install options are documented in [Install Guide](docs/INSTALL.md), including uvx, pipx, and a Homebrew Formula draft.
 
@@ -67,7 +67,7 @@
 
 BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill, and it is not a replacement for the official OpenAI usage dashboard.
 
-Recommended release positioning: **the CLI is the primary open-source entry point, while the macOS menu bar app is an optional local beta build**. GitHub source distribution does not require Apple Developer Program membership; signing and notarization are needed only if maintainers later distribute a double-clickable Mac app.
+Recommended release positioning: **the CLI is the primary open-source entry point, while the macOS menu bar app is an optional local build**. GitHub source distribution does not require Apple Developer Program membership; signing and notarization are needed only if maintainers later distribute a double-clickable Mac app.
 
 In v0.9.0, the product builds on real local data-source ingestion, a stable watcher, project aggregation, weekly reports, and stage-level governance with a **native macOS menu bar app**. It brings the session ledger, budget alerts, source confidence, and dashboard entry points into the system status bar. The primary question is:
 
@@ -94,12 +94,12 @@ open build/CodexProbeBar.app
 ```
 
 <p>
-  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS local beta" width="100%">
+  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS local build" width="100%">
 </p>
 
 See [macOS menu bar app](docs/MACOS_MENUBAR_APP.md).
 
-Release boundary: the repository-built `.app` is unsigned and unnotarized by default, so it is only a local beta build. This does not block CLI-first GitHub open-source release. If maintainers later distribute a double-clickable `.app` / `.dmg`, use the signing, notarization, stapling, Gatekeeper preflight, and packaging flow in [macOS release distribution](docs/MACOS_RELEASE_DISTRIBUTION.md).
+Release boundary: the repository-built `.app` is unsigned and unnotarized by default, so it is only a local build. This does not block CLI-first GitHub open-source release. If maintainers later distribute a double-clickable `.app` / `.dmg`, use the signing, notarization, stapling, Gatekeeper preflight, and packaging flow in [macOS release distribution](docs/MACOS_RELEASE_DISTRIBUTION.md).
 
 ### Session-Level Token Ledger
 
@@ -152,7 +152,7 @@ Why not call it a Skill: this project is not an instruction package loaded by an
 
 | Capability | Command | Result |
 |---|---|---|
-| One-command local setup | `scripts/setup-local.sh` or `codex-probe setup --demo` | Install/init, dry-run, reports, and dashboard in one pass |
+| One-command local setup | `scripts/setup-local.sh` or `codex-probe setup --sample` | Install/init, dry-run, reports, and dashboard in one pass |
 | macOS menu bar app | `scripts/macos/build-codex-probe-bar.sh` | Native status-bar entry for risk summary, dashboard, and reports |
 | macOS release preflight | `scripts/macos/preflight-codex-probe-bar.sh` | Checks the app bundle, signing, notarization, Gatekeeper status, and forbidden privacy APIs |
 | Safe source check | `codex-probe sources doctor` | Shows available sources, maximum confidence, and privacy boundary |
@@ -202,7 +202,7 @@ Credits are intentionally conservative:
 ```bash
 mkdir -p .probe reports/ledger
 
-codex-probe --db .probe/setup-demo.db setup --demo
+codex-probe --db .probe/setup-sample.db setup --sample
 ```
 
 If you want to run the steps manually:
@@ -340,16 +340,16 @@ The output contains only token-usage allowlist fields and hashes. It does not co
 
 The friendliest path is to open this repository folder in the **Codex desktop app** and copy the prompt that matches your scenario.
 
-### Safe Demo Only
+### Repository Sample Data Only
 
 ```text
-Run scripts/setup-local.sh and use only the repository demo samples to generate a Codex usage dashboard.
+Run scripts/setup-local.sh and use only the repository sample data to generate a Codex usage dashboard.
 
 Requirements:
 1. If it is not installed yet, create a local virtual environment in this project and install it.
-2. Use only demo samples under examples/ledger-samples/.
+2. Use only sample data under examples/ledger-samples/.
 3. Generate reports/ledger/dashboard.html, sessions.md, ledger-report.md, project-summary.md, weekly-report.md, timeline.md, alerts.md, source-confidence.md, task-report.md, privacy-report.md, and watch-status.html.
-4. Tell me the dashboard and report paths, plus which demo session consumed the most tokens.
+4. Tell me the dashboard and report paths, plus which sample session consumed the most tokens.
 5. Do not read my real Codex history, browser cookies, tokens, keychains, system credentials, or chat content.
 6. Do not upload any data.
 ```
@@ -396,7 +396,7 @@ More copyable prompts: [Codex desktop prompts](docs/CODEX_DESKTOP_PROMPT.md).
 If you only want to analyze one `/status` output:
 
 ```bash
-codex-probe --db .probe/demo.db doctor \
+codex-probe --db .probe/sample.db doctor \
   --status examples/status-codex-desktop.txt \
   --skill examples/risky-skill.md \
   --budget-tokens 100000 \
@@ -406,11 +406,11 @@ codex-probe --db .probe/demo.db doctor \
 Or generate only a usage report:
 
 ```bash
-codex-probe --db .probe/demo.db import \
+codex-probe --db .probe/sample.db import \
   --status examples/status-codex-desktop.txt \
   --goal "Generate delivery report"
 
-codex-probe --db .probe/demo.db usage-report \
+codex-probe --db .probe/sample.db usage-report \
   --budget-tokens 100000 \
   --out reports/usage-report.md
 ```
@@ -418,7 +418,7 @@ codex-probe --db .probe/demo.db usage-report \
 ## Existing Workflow: Skill / Output Inspection
 
 ```bash
-codex-probe --db .probe/demo.db skill-lint \
+codex-probe --db .probe/sample.db skill-lint \
   examples/risky-skill.md \
   --out reports/skill-lint-report.md
 ```
@@ -490,7 +490,7 @@ BLCaptain-Codex-Probe-CLI/
 ├── docs/
 │   ├── CODEX_DESKTOP_PROMPT.md       # Codex desktop prompts
 │   ├── INSTALL.md                     # Lightweight install options
-│   ├── MACOS_MENUBAR_APP.md          # macOS menu bar local beta
+│   ├── MACOS_MENUBAR_APP.md          # macOS menu bar local build
 │   ├── MACOS_RELEASE_DISTRIBUTION.md # macOS app release distribution boundary
 │   ├── MACOS_WATCHER.md              # macOS LaunchAgent watcher entry
 │   ├── PRIVACY_SECURITY.md           # Privacy and security boundaries
@@ -510,7 +510,7 @@ Before v0.9.0 release:
 - `codex-probe --version` returns `0.9.0`.
 - The CLI can import official CSV / JSON / JSONL exports, mapping samples, local synthetic rollout history, and snapshot samples.
 - The CLI can run `sources doctor --deep`, `ledger inspect-export`, `ledger map-export`, and `ledger import-history --dry-run`.
-- The CLI can run `setup --demo`, `watch once/start/status/logs/stop/status-page`, and `delete --watcher --yes`.
+- The CLI can run `setup --sample`, `watch once/start/status/logs/stop/status-page`, and `delete --watcher --yes`.
 - The CLI can generate session ranking, single-session report, ledger report, stage timeline, local budget alerts, task attribution, source confidence, privacy audit report, local HTML dashboard, and watcher status page.
 - The CLI can generate project summary reports and weekly reports.
 - The macOS menu bar app builds with `swift build` and can be packaged as `build/CodexProbeBar.app`.

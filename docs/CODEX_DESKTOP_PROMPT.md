@@ -10,7 +10,7 @@
 要求：
 1. 克隆仓库后进入项目目录。
 2. 运行 scripts/setup-local.sh。
-3. 安装完成后先跑安全 demo，只使用仓库 examples/ledger-samples/ 里的示例数据。
+3. 安装完成后先使用仓库 examples/ledger-samples/ 里的示例数据生成 Dashboard。
 4. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、project-summary.md、weekly-report.md、timeline.md、alerts.md、source-confidence.md、task-report.md、privacy-report.md 和 watch-status.html。
 5. 最后告诉我 Dashboard 和报告路径，以及示例里哪个会话最贵。
 6. 不要读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
@@ -31,14 +31,14 @@
 6. 不要上传任何数据。
 ```
 
-## 安全体验 demo
+## 使用仓库示例数据
 
 ```text
-请运行 scripts/setup-local.sh，只使用仓库 demo 样本生成 Codex 用量 Dashboard。
+请运行 scripts/setup-local.sh，只使用仓库示例样本生成 Codex 用量 Dashboard。
 
 要求：
 1. 如果还没安装，请在本项目里创建本地虚拟环境并安装。
-2. 只使用仓库 examples/ledger-samples/ 里的 demo 样本。
+2. 只使用仓库 examples/ledger-samples/ 里的示例样本。
 3. 生成 reports/ledger/dashboard.html、sessions.md、ledger-report.md、project-summary.md、weekly-report.md、timeline.md、alerts.md、source-confidence.md、task-report.md、privacy-report.md 和 watch-status.html。
 4. 最后告诉我 Dashboard 和报告路径，以及示例里哪个会话最贵。
 5. 不要读取我的真实 Codex 历史、浏览器 cookie、token、钥匙串、系统凭据或聊天正文。

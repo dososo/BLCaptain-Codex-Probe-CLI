@@ -437,7 +437,7 @@ struct CodexProbePanel: View {
                     .font(.callout.weight(.semibold))
                     .foregroundStyle(store.snapshot.alertCount > 0 ? .red : .primary)
             } else {
-                Text("暂无会话账本数据。先运行安全 demo、导入官方导出，或点击「采集一次」。")
+                Text("暂无会话账本数据。先运行仓库示例数据流程、导入官方导出，或点击「采集一次」。")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

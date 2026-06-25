@@ -419,7 +419,7 @@ class CliE2ETests(unittest.TestCase):
             deleted_watcher = self.run_probe("--db", str(db), "--json", "delete", "--watcher", "--yes")
             self.assertTrue(json.loads(deleted_watcher.stdout)["ok"])
 
-    def test_setup_demo_generates_dashboard(self):
+    def test_setup_sample_generates_dashboard(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             db = tmp_path / "setup.db"
@@ -429,7 +429,7 @@ class CliE2ETests(unittest.TestCase):
                 str(db),
                 "--json",
                 "setup",
-                "--demo",
+                "--sample",
                 "--no-open",
                 "--out-dir",
                 str(out_dir),

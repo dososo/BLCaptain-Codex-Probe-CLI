@@ -35,7 +35,7 @@ build/CodexProbeBar.app
 open build/CodexProbeBar.app
 ```
 
-注意：这个入口是本地构建体验版。它适合开发者、本地验证和公开 beta；如果要给普通用户发 release 包，必须走 Developer ID 签名、notarization 公证和 Gatekeeper 验证。完整流程见 [macOS 正式分发、签名与公证](MACOS_RELEASE_DISTRIBUTION.md)。
+注意：这个入口适合源码本地构建和本地验证；如果要给普通用户发 release 包，必须走 Developer ID 签名、notarization 公证和 Gatekeeper 验证。完整流程见 [macOS 正式分发、签名与公证](MACOS_RELEASE_DISTRIBUTION.md)。
 
 ## 面板能力
 
@@ -95,9 +95,9 @@ App 会优先读取环境变量，其次读取 app bundle 内的 `Resources/defa
 
 ## 当前发布边界
 
-第一版状态栏 App 是公开 beta 级桌面入口。本地构建出来的 `.app` 默认未签名、未公证，不能承诺普通用户下载后完全没有 Gatekeeper 提示。
+第一版状态栏 App 是本地构建 级桌面入口。本地构建出来的 `.app` 默认未签名、未公证，不能承诺普通用户下载后完全没有 Gatekeeper 提示。
 
-当前本地体验版不包含：
+当前状态栏 App 不包含：
 
 - Apple Developer ID 签名。
 - notarization 公证。

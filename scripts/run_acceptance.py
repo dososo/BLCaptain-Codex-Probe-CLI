@@ -133,7 +133,7 @@ def main() -> int:
             "must_contain": "不读取浏览器 cookie",
         },
         {
-            "name": "setup_demo",
+            "name": "setup_sample",
             "cmd": [
                 sys.executable,
                 "-m",
@@ -142,7 +142,7 @@ def main() -> int:
                 str(setup_db),
                 "--json",
                 "setup",
-                "--demo",
+                "--sample",
                 "--no-open",
                 "--out-dir",
                 str(setup_reports),

@@ -1,10 +1,10 @@
 # 脱敏 rollout 样本采集
 
-v0.9.0 继续扩充脱敏 rollout 样本库。真实 Codex rollout 结构可能随版本变化，为了校准字段兼容性，可以让 beta 用户本地生成脱敏校准样本，再人工确认后提交 issue 或 PR。
+v0.9.0 继续扩充脱敏 rollout 样本库。真实 Codex rollout 结构可能随版本变化，为了校准字段兼容性，可以让愿意协助校准的用户本地生成脱敏校准样本，再人工确认后提交 issue 或 PR。
 
 仓库内已有三类 synthetic 样本：
 
-- `examples/ledger-samples/local-codex/`：稳定基础样本，用于 demo、watcher 和导入链路。
+- `examples/ledger-samples/local-codex/`：稳定基础样本，用于仓库示例数据流程、watcher 和导入链路。
 - `examples/ledger-samples/local-codex-variants/`：字段变体样本，覆盖 `lastTokenUsage`、`totalTokenUsage`、嵌套 `usage`、缺失模型、多项目、多会话等情况。
 - `examples/ledger-samples/local-codex-stress/`：压力样本，覆盖多会话重叠、重复快照、异常时间戳、缺失模型、缺项目路径和缺上下文窗口。
 

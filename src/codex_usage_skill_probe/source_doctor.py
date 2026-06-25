@@ -52,7 +52,7 @@ def run_source_doctor(conn, root: Path | None = None, *, deep: bool = False, loc
             confidence_ceiling="medium",
             permission_scope="需要用户显式授予系统可访问性权限",
             privacy_note="P0 不读取窗口正文，只保留接口预留和风险提示",
-            next_step="暂不启用；等待 beta 用户授权验证",
+            next_step="暂不启用；等待用户授权验证",
         ),
     ]
     for result in results:

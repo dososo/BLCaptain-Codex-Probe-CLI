@@ -168,7 +168,7 @@ codex-probe --db .probe/ledger.db delete --ledger --yes
 删除旧版 `/status` 和 Skill 体检业务数据：
 
 ```bash
-codex-probe --db .probe/demo.db delete --all --yes
+codex-probe --db .probe/sample.db delete --all --yes
 ```
 
 删除后：
