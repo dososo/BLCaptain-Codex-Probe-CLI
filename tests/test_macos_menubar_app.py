@@ -32,10 +32,26 @@ class MacOSMenuBarAppTests(unittest.TestCase):
         self.assertIn("dashboard", source)
         self.assertIn("runner.prepare()", source)
         self.assertIn("statusTitle(\"Codex\")", source)
+        self.assertIn("NSStatusItem.squareLength", source)
+        self.assertIn("button.title = \"\"", source)
+        self.assertIn("button.imagePosition = .imageOnly", source)
+        self.assertIn("button.toolTip = \"BLCaptain Codex Probe\"", source)
         self.assertNotIn("Codex" + " ?", source)
-        self.assertIn("NSSize(width: 360, height: 500)", source)
+        self.assertIn("NSSize(width: 372, height: 520)", source)
+        self.assertIn("RiskBadge(text: alertActionText(item)", source)
+        self.assertIn("Text(alertUsageText(item))", source)
+        self.assertIn("func alertActionText(_ item: AlertItem) -> String", source)
+        self.assertIn("func alertUsageText(_ item: AlertItem) -> String", source)
+        self.assertIn("已用 \\(formatCompactNumber(item.tokenDelta))，触发本地预警", source)
+        self.assertIn("当前没有触发本地预警。", source)
+        self.assertNotIn("let threshold", source)
+        self.assertNotIn("预警线", source)
+        self.assertNotIn("formatCompactPercent", source)
+        self.assertNotIn("formatBudgetPressure", source)
+        self.assertNotIn("K%\"", source)
         self.assertIn("codex-probe-bar.db", source)
-        self.assertIn("不登录、不读 cookie/token/钥匙串、不抓包、不上传", source)
+        self.assertIn("Library/Application Support/BLCaptain Codex Probe", source)
+        self.assertIn("不读 cookie/token/钥匙串，不上传", source)
         forbidden = [
             "Keychain",
             "SecItemCopyMatching",
@@ -55,9 +71,10 @@ class MacOSMenuBarAppTests(unittest.TestCase):
         self.assertIn("defaults.json", script)
         self.assertIn("CODEX_PROBE_CLI", script)
         self.assertIn("pip install --quiet \"$ROOT\"", script)
-        self.assertIn(".probe/codex-probe-bar.db", script)
-        self.assertIn("reports/ledger", script)
-        self.assertIn("0.9.0", script)
+        self.assertIn("Library/Application Support/BLCaptain Codex Probe", script)
+        self.assertIn("codex-probe-bar.db", script)
+        self.assertIn("Reports", script)
+        self.assertIn("0.9.1", script)
 
 
 if __name__ == "__main__":

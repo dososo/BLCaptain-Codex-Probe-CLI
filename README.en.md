@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-2b2622.svg)
 ![CLI](https://img.shields.io/badge/Type-CLI-d98e3a.svg)
 ![Local First](https://img.shields.io/badge/Data-Local--First-2f5ea7.svg)
-![Release](https://img.shields.io/badge/Release-v0.9.0-4b5563.svg)
+![Release](https://img.shields.io/badge/Release-v0.9.1-4b5563.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 > **Fastest path in the Codex desktop app**
@@ -54,7 +54,7 @@
 >
 > ```bash
 > scripts/macos/build-codex-probe-bar.sh
-> open build/CodexProbeBar.app
+> open ~/Applications/CodexProbeBar.app
 > ```
 >
 > This is a local build. GitHub source distribution, CLI installation, and user-side local builds do not require an Apple Developer ID. Signing, notarization, and Gatekeeper verification matter only if maintainers ship a double-clickable `.app` / `.dmg` to ordinary Mac users. See [macOS release distribution](docs/MACOS_RELEASE_DISTRIBUTION.md).
@@ -69,7 +69,7 @@ BLCaptain Codex Probe CLI is a local command-line tool. It is not a Codex Skill,
 
 Recommended release positioning: **the CLI is the primary open-source entry point, while the macOS menu bar app is an optional local build**. GitHub source distribution does not require Apple Developer Program membership; signing and notarization are needed only if maintainers later distribute a double-clickable Mac app.
 
-In v0.9.0, the product builds on real local data-source ingestion, a stable watcher, project aggregation, weekly reports, and stage-level governance with a **native macOS menu bar app**. It brings the session ledger, budget alerts, source confidence, and dashboard entry points into the system status bar. The primary question is:
+In v0.9.1, the product builds on real local data-source ingestion, a stable watcher, project aggregation, weekly reports, and stage-level governance with a **native macOS menu bar app**. It brings the session ledger, budget alerts, source confidence, and dashboard entry points into the system status bar. The primary question is:
 
 > Which Codex session, project, stage, and task type consumed the tokens or credits? Should you continue, downgrade, or stop now?
 
@@ -86,15 +86,15 @@ It does not promise savings, bypass quotas, read login state, or replace officia
 
 ### macOS Menu Bar App
 
-v0.9.0 adds BLCaptain Codex Probe Bar, a native macOS menu bar entry. It does not reimplement the ledger; it calls local `codex-probe --json` commands and shows the top session, token total, budget alerts, source confidence, and common actions.
+v0.9.1 provides BLCaptain Codex Probe Bar, a native macOS menu bar entry. It does not reimplement the ledger; it calls local `codex-probe --json` commands and shows the top session, token total, budget alerts, source confidence, and common actions.
 
 ```bash
 scripts/macos/build-codex-probe-bar.sh
-open build/CodexProbeBar.app
+open ~/Applications/CodexProbeBar.app
 ```
 
-<p>
-  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS menu bar popover" width="100%">
+<p align="center">
+  <img src="assets/screenshots/macos-menubar-app.png" alt="BLCaptain Codex Probe Bar macOS menu bar popover screenshot" width="620">
 </p>
 
 See [macOS menu bar app](docs/MACOS_MENUBAR_APP.md).
@@ -169,7 +169,7 @@ Why not call it a Skill: this project is not an instruction package loaded by an
 | Project summary | `codex-probe projects --range 30d` | Finds the most expensive projects, top sessions, and confidence distribution |
 | Weekly report | `codex-probe weekly-report --range 30d` | Reviews sessions, projects, and high-consumption weeks in local timezone |
 | Stage timeline | `codex-probe timeline --range 30d` | Finds the fastest-growing token intervals, stage labels, and recommended actions |
-| Local budget alerts | `codex-probe alerts --range 30d` | Emits stop-line alerts for sessions, projects, the whole range, and context health |
+| Local budget alerts | `codex-probe alerts --range 30d` | Emits configurable local risk alerts for sessions, projects, the whole range, and context health |
 | Task attribution | `codex-probe task-report --range 30d` | Aggregates development, testing, docs, release, asset, and research work |
 | Source confidence | `codex-probe confidence-report` | Shows source type, field coverage, missing fields, confidence ceiling, and precision limits |
 | Session detail | `codex-probe session-report <session_id>` | Shows timeline, snapshots, and high-consumption windows |
@@ -319,7 +319,7 @@ codex-probe sessions --from 2026-06-01 --to 2026-06-23
 | `examples/ledger-samples/local-codex/` | Synthetic Codex rollout sample for local history import |
 | `examples/ledger-samples/local-codex-variants/` | Synthetic Codex rollout variants covering field aliases, missing models, multiple projects, and multiple sessions |
 | `examples/ledger-samples/local-codex-stress/` | Synthetic rollout stress sample covering duplicate snapshots, overlapping sessions, malformed timestamps, and missing fields |
-| `examples/reports/ledger/` | v0.9.0 ledger, stage timeline, alerts, confidence, task attribution, project summary, and weekly report samples |
+| `examples/reports/ledger/` | v0.9.1 ledger, stage timeline, alerts, confidence, task attribution, project summary, and weekly report samples |
 | `examples/status-samples/` | Earlier `/status` sample library |
 | `examples/risky-skill.md` | Risky Skill / output inspection sample |
 
@@ -504,16 +504,16 @@ BLCaptain-Codex-Probe-CLI/
 
 ## Release Acceptance
 
-Before v0.9.0 release:
+Before v0.9.1 release:
 
 - The project can be installed from a clean environment with `python -m pip install .`.
-- `codex-probe --version` returns `0.9.0`.
+- `codex-probe --version` returns `0.9.1`.
 - The CLI can import official CSV / JSON / JSONL exports, mapping samples, local synthetic rollout history, and snapshot samples.
 - The CLI can run `sources doctor --deep`, `ledger inspect-export`, `ledger map-export`, and `ledger import-history --dry-run`.
 - The CLI can run `setup --sample`, `watch once/start/status/logs/stop/status-page`, and `delete --watcher --yes`.
 - The CLI can generate session ranking, single-session report, ledger report, stage timeline, local budget alerts, task attribution, source confidence, privacy audit report, local HTML dashboard, and watcher status page.
 - The CLI can generate project summary reports and weekly reports.
-- The macOS menu bar app builds with `swift build` and can be packaged as `build/CodexProbeBar.app`.
+- The macOS menu bar app builds with `swift build` and can be installed to `~/Applications/CodexProbeBar.app`.
 - The menu bar app reuses CLI JSON output and does not directly read cookies, tokens, keychains, chat content, or network requests.
 - The dashboard can filter by project, date, confidence, and model.
 - The dashboard first screen includes today, this week, high-risk sessions, stop-now sessions, budget alerts, source confidence, and task attribution.

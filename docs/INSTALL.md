@@ -30,10 +30,10 @@ CLI 安装完成后，可以构建原生状态栏 App：
 
 ```bash
 scripts/macos/build-codex-probe-bar.sh
-open build/CodexProbeBar.app
+open ~/Applications/CodexProbeBar.app
 ```
 
-它会刷新并优先使用当前仓库 `.venv/bin/codex-probe`，默认把状态栏 App 的账本写到 `.probe/codex-probe-bar.db`，报告写到 `reports/ledger`。详细配置见 [macOS 状态栏 App](MACOS_MENUBAR_APP.md)。
+它会把可运行 App 放到 `~/Applications/CodexProbeBar.app`，并把运行时 CLI、账本和报告写到 `~/Library/Application Support/BLCaptain Codex Probe/`，避免从 Documents 仓库直接启动 App 触发用户文件夹权限弹窗。详细配置见 [macOS 状态栏 App](MACOS_MENUBAR_APP.md)。
 
 这条路径适合从源码本地构建。普通用户正式下载使用时，维护者应发布经过 Developer ID 签名、Apple notarization 公证和 stapling 的 zip / dmg。对应发布流程见 [macOS 正式分发、签名与公证](MACOS_RELEASE_DISTRIBUTION.md)。
 
@@ -80,7 +80,7 @@ class BlcaptainCodexProbe < Formula
 
   desc "Local-first Codex session token ledger and Skill inspection CLI"
   homepage "https://github.com/dososo/BLCaptain-Codex-Probe-CLI"
-  url "https://github.com/dososo/BLCaptain-Codex-Probe-CLI/archive/refs/tags/v0.9.0.tar.gz"
+  url "https://github.com/dososo/BLCaptain-Codex-Probe-CLI/archive/refs/tags/v0.9.1.tar.gz"
   sha256 "REPLACE_WITH_RELEASE_TARBALL_SHA256"
   license "MIT"
 

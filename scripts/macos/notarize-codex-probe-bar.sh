@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-APP_DIR="${1:-$ROOT/build/CodexProbeBar.app}"
+APP_DIR="${1:-${CODEX_PROBE_APP_DIR:-$HOME/Applications/CodexProbeBar.app}}"
 DIST_DIR="$ROOT/dist"
 ARCHIVE="$DIST_DIR/CodexProbeBar-notary.zip"
 PASSWORD="${APPLE_APP_SPECIFIC_PASSWORD:-${AC_PASSWORD:-}}"

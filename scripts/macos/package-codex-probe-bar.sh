@@ -2,21 +2,26 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-APP_DIR="$ROOT/build/CodexProbeBar.app"
+APP_DIR="${CODEX_PROBE_APP_DIR:-$HOME/Applications/CodexProbeBar.app}"
 DIST_DIR="$ROOT/dist"
-VERSION="0.9.0"
+VERSION="0.9.1"
 ZIP_PATH="$DIST_DIR/CodexProbeBar-v$VERSION.zip"
 DMG_PATH="$DIST_DIR/CodexProbeBar-v$VERSION.dmg"
 SKIP_DMG=0
 
-for arg in "$@"; do
-  case "$arg" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --app)
+      APP_DIR="$2"
+      shift 2
+      ;;
     --skip-dmg)
       SKIP_DMG=1
+      shift
       ;;
     *)
-      echo "Unknown argument: $arg" >&2
-      echo "Usage: scripts/macos/package-codex-probe-bar.sh [--skip-dmg]" >&2
+      echo "Unknown argument: $1" >&2
+      echo "Usage: scripts/macos/package-codex-probe-bar.sh [--app path] [--skip-dmg]" >&2
       exit 2
       ;;
   esac

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-APP_DIR="$ROOT/build/CodexProbeBar.app"
+APP_DIR="${CODEX_PROBE_APP_DIR:-$HOME/Applications/CodexProbeBar.app}"
 REQUIRE_SIGNED=0
 REQUIRE_NOTARIZED=0
 
@@ -52,7 +52,7 @@ if [[ -f "$INFO" ]]; then
   version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$INFO" 2>/dev/null || true)"
   [[ "$bundle_id" == "com.blcaptain.codexprobe.bar" ]] && pass "Bundle identifier is stable" || fail "Unexpected bundle id: ${bundle_id:-missing}"
   [[ "$lsui" == "true" ]] && pass "LSUIElement menu-bar mode is enabled" || fail "LSUIElement is not true"
-  [[ "$version" == "0.9.0" ]] && pass "Bundle version is $version" || fail "Unexpected bundle version: ${version:-missing}"
+  [[ "$version" == "0.9.1" ]] && pass "Bundle version is $version" || fail "Unexpected bundle version: ${version:-missing}"
 fi
 
 if grep -R -n -E 'Keychain|SecItemCopyMatching|HTTPCookie|URLSession|WKWebView|SFAuthorization|NEPacketTunnel|CGEventTapCreate' "$SOURCE_DIR" >/tmp/codex-probe-forbidden-api.txt 2>/dev/null; then

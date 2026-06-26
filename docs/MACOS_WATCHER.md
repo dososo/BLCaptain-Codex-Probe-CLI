@@ -1,6 +1,6 @@
 # macOS Watcher 入口
 
-v0.9.0 继续保留轻量 LaunchAgent 入口和本地状态页，并新增独立的状态栏 App 文档。watcher 不会登录 OpenAI、读取浏览器 cookie、读取 token、读取钥匙串或上传数据。
+v0.9.1 继续保留轻量 LaunchAgent 入口和本地状态页，并新增独立的状态栏 App 文档。watcher 不会登录 OpenAI、读取浏览器 cookie、读取 token、读取钥匙串或上传数据。
 
 ## 安装前
 

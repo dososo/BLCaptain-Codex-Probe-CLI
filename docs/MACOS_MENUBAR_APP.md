@@ -26,16 +26,16 @@ scripts/macos/build-codex-probe-bar.sh
 生成位置：
 
 ```text
-build/CodexProbeBar.app
+~/Applications/CodexProbeBar.app
 ```
 
 可以直接双击，或运行：
 
 ```bash
-open build/CodexProbeBar.app
+open ~/Applications/CodexProbeBar.app
 ```
 
-注意：这个入口适合源码本地构建和本地验证。构建脚本会做免费 ad-hoc 本地签名，保证 `.app` bundle、Info.plist 和资源文件完整参与签名；但它不是 Developer ID 签名，也没有 notarization 公证。如果要给普通用户发 release 包，必须走 Developer ID 签名、notarization 公证和 Gatekeeper 验证。完整流程见 [macOS 正式分发、签名与公证](MACOS_RELEASE_DISTRIBUTION.md)。
+注意：这个入口适合源码本地构建和本地验证。构建脚本会把可运行 App 放到 `~/Applications`，把运行时 CLI、账本和报告放到 `~/Library/Application Support/BLCaptain Codex Probe/`，避免从 Documents 仓库直接启动 App 触发用户文件夹权限弹窗。构建脚本会做免费 ad-hoc 本地签名，保证 `.app` bundle、Info.plist 和资源文件完整参与签名；但它不是 Developer ID 签名，也没有 notarization 公证。如果要给普通用户发 release 包，必须走 Developer ID 签名、notarization 公证和 Gatekeeper 验证。完整流程见 [macOS 正式分发、签名与公证](MACOS_RELEASE_DISTRIBUTION.md)。
 
 ## 面板能力
 
@@ -48,6 +48,8 @@ open build/CodexProbeBar.app
 - 预算预警摘要。
 - 数据源可信度摘要。
 - 本地隐私边界。
+
+预算预警不是 OpenAI / Codex 官方额度，也不是官方停止标准。它来自 CLI 的可配置本地阈值，用来发现长会话、项目范围和总账范围里的异常消耗。状态栏 App 不展示默认阈值数字，避免把启发式配置误读成官方规则；需要细看阈值时，请打开本地报告或在 CLI 中显式传入 `--session-threshold`、`--project-threshold`、`--ledger-threshold`。
 
 可执行动作：
 
@@ -66,7 +68,7 @@ open build/CodexProbeBar.app
 
 ```bash
 scripts/macos/build-codex-probe-bar.sh
-open build/CodexProbeBar.app
+open ~/Applications/CodexProbeBar.app
 ```
 
 然后手动点击菜单栏里的 `Codex`，让 Popover 保持展开，再使用系统截图快捷键：
@@ -94,17 +96,17 @@ App 会优先读取环境变量，其次读取 app bundle 内的 `Resources/defa
 | 配置 | 环境变量 | 默认 |
 |---|---|---|
 | CLI 路径 | `CODEX_PROBE_CLI` | 自动寻找 `codex-probe` |
-| DB 路径 | `CODEX_PROBE_DB` | `.probe/codex-probe-bar.db` |
-| 报告目录 | `CODEX_PROBE_REPORTS_DIR` | `reports/ledger` |
+| DB 路径 | `CODEX_PROBE_DB` | `~/Library/Application Support/BLCaptain Codex Probe/codex-probe-bar.db` |
+| 报告目录 | `CODEX_PROBE_REPORTS_DIR` | `~/Library/Application Support/BLCaptain Codex Probe/Reports` |
 | 时间范围 | `CODEX_PROBE_RANGE` | `7d` |
-| 工作目录 | `CODEX_PROBE_PROJECT_DIR` | 用户主目录或构建脚本写入的仓库路径 |
+| 工作目录 | `CODEX_PROBE_PROJECT_DIR` | `~/Library/Application Support/BLCaptain Codex Probe` |
 
 构建脚本会写入默认配置：
 
 - CLI：刷新并优先使用当前仓库 `.venv/bin/codex-probe`。
-- DB：`.probe/codex-probe-bar.db`。
-- 报告：`reports/ledger`。
-- 工作目录：当前仓库根目录。
+- DB：`~/Library/Application Support/BLCaptain Codex Probe/codex-probe-bar.db`。
+- 报告：`~/Library/Application Support/BLCaptain Codex Probe/Reports`。
+- 工作目录：`~/Library/Application Support/BLCaptain Codex Probe`，避免触发 Documents 等用户文件夹权限弹窗。
 
 ## 隐私边界
 

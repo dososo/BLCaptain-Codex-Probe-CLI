@@ -3,8 +3,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PACKAGE_DIR="$ROOT/desktop/macos/CodexProbeBar"
-APP_DIR="$ROOT/build/CodexProbeBar.app"
-STAGING_APP="$ROOT/build/CodexProbeBar.app.staging.$$"
+APP_SUPPORT="$HOME/Library/Application Support/BLCaptain Codex Probe"
+APP_DIR="${CODEX_PROBE_APP_DIR:-$HOME/Applications/CodexProbeBar.app}"
+STAGING_APP="$APP_DIR.staging.$$"
 CONTENTS_DIR="$STAGING_APP/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
@@ -13,11 +14,12 @@ CLI_PATH="${CODEX_PROBE_CLI:-}"
 
 if [[ -z "$CLI_PATH" ]]; then
   if command -v python3 >/dev/null 2>&1; then
-    if [[ ! -x "$ROOT/.venv/bin/python" ]]; then
-      python3 -m venv "$ROOT/.venv"
+    install -d "$APP_SUPPORT"
+    if [[ ! -x "$APP_SUPPORT/.venv/bin/python" ]]; then
+      python3 -m venv "$APP_SUPPORT/.venv"
     fi
-    PIP_DISABLE_PIP_VERSION_CHECK=1 "$ROOT/.venv/bin/python" -m pip install --quiet "$ROOT"
-    CLI_PATH="$ROOT/.venv/bin/codex-probe"
+    PIP_DISABLE_PIP_VERSION_CHECK=1 "$APP_SUPPORT/.venv/bin/python" -m pip install --quiet "$ROOT"
+    CLI_PATH="$APP_SUPPORT/.venv/bin/codex-probe"
   elif [[ -x "$ROOT/.venv/bin/codex-probe" ]]; then
     CLI_PATH="$ROOT/.venv/bin/codex-probe"
   elif command -v codex-probe >/dev/null 2>&1; then
@@ -49,9 +51,9 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.9.0</string>
+  <string>0.9.1</string>
   <key>CFBundleVersion</key>
-  <string>0.9.0</string>
+  <string>0.9.1</string>
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
   <key>LSUIElement</key>
@@ -65,10 +67,10 @@ PLIST
 cat > "$RESOURCES_DIR/defaults.json" <<JSON
 {
   "cliPath": "$CLI_PATH",
-  "dbPath": "$ROOT/.probe/codex-probe-bar.db",
-  "reportsDir": "$ROOT/reports/ledger",
+  "dbPath": "$APP_SUPPORT/codex-probe-bar.db",
+  "reportsDir": "$APP_SUPPORT/Reports",
   "range": "7d",
-  "projectDir": "$ROOT"
+  "projectDir": "$APP_SUPPORT"
 }
 JSON
 
@@ -77,7 +79,7 @@ xattr -cr "$STAGING_APP" 2>/dev/null || true
 codesign --force --deep --sign - "$STAGING_APP"
 
 if [[ -d "$APP_DIR" ]]; then
-  PREVIOUS_APP="$ROOT/build/CodexProbeBar.previous.$(date +%Y%m%d%H%M%S).app"
+  PREVIOUS_APP="$(dirname "$APP_DIR")/CodexProbeBar.previous.$(date +%Y%m%d%H%M%S).app"
   mv "$APP_DIR" "$PREVIOUS_APP"
   echo "Previous build moved to: $PREVIOUS_APP"
 fi
@@ -88,5 +90,5 @@ codesign --verify --deep --strict --verbose=2 "$APP_DIR"
 
 echo "Built: $APP_DIR"
 echo "CLI: $CLI_PATH"
-echo "Reports: $ROOT/reports/ledger"
+echo "Reports: $APP_SUPPORT/Reports"
 echo "Signature: ad-hoc local bundle signature"

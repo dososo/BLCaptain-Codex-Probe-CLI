@@ -13,26 +13,27 @@ struct ProbeConfig: Equatable, Sendable {
         let env = ProcessInfo.processInfo.environment
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         let bundle = BundleDefaults.load()
+        let appSupport = "\(home)/Library/Application Support/BLCaptain Codex Probe"
         let cwd = env["CODEX_PROBE_PROJECT_DIR"]
             ?? bundle.projectDir
-            ?? home
+            ?? appSupport
         let cli = env["CODEX_PROBE_CLI"]
             ?? bundle.cliPath
             ?? ProbeConfig.findCLI(home: home)
             ?? "codex-probe"
         let db = ProbeConfig.firstWritableFile(
-            preferred: env["CODEX_PROBE_DB"] ?? bundle.dbPath ?? "\(cwd)/.probe/codex-probe-bar.db",
+            preferred: env["CODEX_PROBE_DB"] ?? bundle.dbPath ?? "\(appSupport)/codex-probe-bar.db",
             fallbackDirectories: [
+                appSupport,
                 "\(cwd)/.probe",
-                "\(home)/Library/Application Support/BLCaptain Codex Probe",
                 NSTemporaryDirectory()
             ],
             filename: "codex-probe-bar.db"
         )
         let reports = ProbeConfig.firstWritableDirectory([
-            env["CODEX_PROBE_REPORTS_DIR"] ?? bundle.reportsDir ?? "\(cwd)/reports/ledger",
+            env["CODEX_PROBE_REPORTS_DIR"] ?? bundle.reportsDir ?? "\(appSupport)/Reports",
+            "\(appSupport)/Reports",
             "\(cwd)/reports/ledger",
-            "\(home)/Library/Application Support/BLCaptain Codex Probe/Reports",
             NSTemporaryDirectory() + "codex-probe-reports"
         ])
         let range = env["CODEX_PROBE_RANGE"]
@@ -43,6 +44,7 @@ struct ProbeConfig: Equatable, Sendable {
 
     private static func findCLI(home: String) -> String? {
         let candidates = [
+            "\(home)/Library/Application Support/BLCaptain Codex Probe/.venv/bin/codex-probe",
             "\(home)/.local/bin/codex-probe",
             "\(home)/.venv/bin/codex-probe",
             "\(home)/bin/codex-probe",
@@ -73,12 +75,13 @@ struct ProbeConfig: Equatable, Sendable {
         let manager = FileManager.default
         let preferredURL = URL(fileURLWithPath: preferred)
         let preferredDir = preferredURL.deletingLastPathComponent().path
-        if canWriteDirectory(preferredDir, manager: manager) {
+        if canWriteDirectory(preferredDir, manager: manager), canWriteDatabaseFiles(preferred, manager: manager) {
             return preferred
         }
         for directory in fallbackDirectories {
-            if canWriteDirectory(directory, manager: manager) {
-                return URL(fileURLWithPath: directory).appendingPathComponent(filename).path
+            let candidate = URL(fileURLWithPath: directory).appendingPathComponent(filename).path
+            if canWriteDirectory(directory, manager: manager), canWriteDatabaseFiles(candidate, manager: manager) {
+                return candidate
             }
         }
         return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(filename).path
@@ -93,6 +96,15 @@ struct ProbeConfig: Equatable, Sendable {
             return true
         } catch {
             return false
+        }
+    }
+
+    private static func canWriteDatabaseFiles(_ path: String, manager: FileManager) -> Bool {
+        [path, "\(path)-journal", "\(path)-wal", "\(path)-shm"].allSatisfy { candidate in
+            guard manager.fileExists(atPath: candidate) else { return true }
+            guard let handle = FileHandle(forUpdatingAtPath: candidate) else { return false }
+            try? handle.close()
+            return true
         }
     }
 }
@@ -286,20 +298,6 @@ final class ProbeRunner: @unchecked Sendable {
         }
         guard help.stdout.contains("alerts"), help.stdout.contains("confidence-report") else {
             throw RuntimeError("当前 codex-probe CLI 版本过旧，不支持状态栏 App 所需命令。请重新运行 scripts/setup-local.sh 或 scripts/macos/build-codex-probe-bar.sh。")
-        }
-
-        if !FileManager.default.fileExists(atPath: config.dbPath) {
-            let setup = try run([
-                "--db", config.dbPath,
-                "--json",
-                "setup",
-                "--sample",
-                "--no-open",
-                "--out-dir", config.reportsDir
-            ])
-            guard setup.status == 0 else {
-                throw RuntimeError((setup.stderr.isEmpty ? setup.stdout : setup.stderr).trimmingCharacters(in: .whitespacesAndNewlines))
-            }
         }
     }
 
@@ -499,170 +497,180 @@ struct CodexProbePanel: View {
     @ObservedObject var store: ProbeStore
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color(nsColor: .windowBackgroundColor)
+        VStack(spacing: 0) {
+            header
+            VStack(spacing: 8) {
+                summaryGrid
+                if let error = store.lastError, !error.isEmpty {
+                    errorBanner(error)
+                } else {
+                    decisionPanel
+                    alertsPanel
+                    sourcePanel
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
+            .padding(.bottom, 10)
+            footer
+        }
+        .frame(width: 372, height: 520)
+        .background(
             LinearGradient(
                 colors: [
-                    Color(red: 0.04, green: 0.12, blue: 0.26),
-                    Color(red: 0.02, green: 0.42, blue: 0.48),
-                    Color(red: 0.12, green: 0.50, blue: 0.30)
+                    Color(red: 0.96, green: 0.98, blue: 1.00),
+                    Color(red: 0.91, green: 0.95, blue: 0.97)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+
+    private var header: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.03, green: 0.09, blue: 0.20),
+                    Color(red: 0.02, green: 0.37, blue: 0.47),
+                    Color(red: 0.06, green: 0.54, blue: 0.37)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            .frame(height: 126)
             .overlay(alignment: .bottom) {
                 Rectangle()
-                    .fill(.white.opacity(0.10))
+                    .fill(.white.opacity(0.16))
                     .frame(height: 1)
             }
 
-            VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        header
-                        if let error = store.lastError, !error.isEmpty {
-                            errorBanner(error)
-                        }
-                        summaryGrid
-                        decisionPanel
-                        alertsPanel
-                        sourcePanel
-                        privacyFooter
-                    }
-                    .padding(14)
+            HStack(alignment: .center, spacing: 11) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(.white.opacity(0.16))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: "gauge.with.dots.needle.50percent")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
-                actions
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                    .background(.regularMaterial)
-            }
-        }
-        .frame(width: 360, height: 500)
-    }
-
-    private var header: some View {
-        HStack(alignment: .center, spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(.white.opacity(0.18))
-                    .frame(width: 38, height: 38)
-                Image(systemName: "gauge.with.dots.needle.50percent")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text("BLCaptain Codex Probe")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-                Text(store.snapshot.message)
-                    .font(.caption)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("BLCaptain Codex Probe")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    HStack(spacing: 5) {
+                        Image(systemName: store.isLoading ? "hourglass" : "checkmark.seal.fill")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text(store.isLoading ? "正在读取本地账本" : store.snapshot.message)
+                            .lineLimit(1)
+                    }
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(.white.opacity(0.76))
-                    .lineLimit(1)
+                }
+                Spacer()
+                Label("本地", systemImage: "lock.shield.fill")
+                    .font(.caption.weight(.semibold))
+                    .labelStyle(.titleAndIcon)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 6)
+                    .foregroundStyle(Color(red: 0.04, green: 0.32, blue: 0.20))
+                    .background(.white.opacity(0.86), in: Capsule())
             }
-            Spacer()
-            Label("本地", systemImage: "lock.shield.fill")
-                .font(.caption.weight(.semibold))
-                .labelStyle(.titleAndIcon)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .foregroundStyle(Color(red: 0.05, green: 0.28, blue: 0.17))
-                .background(.white.opacity(0.82), in: Capsule())
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
         }
+        .frame(height: 88)
     }
 
     private var summaryGrid: some View {
         HStack(spacing: 8) {
-            MetricPill(title: "token", value: formatNumber(store.snapshot.totalTokens), accent: .cyan)
-            MetricPill(title: "会话", value: "\(store.snapshot.sessionCount)", accent: .green)
-            MetricPill(title: "预警", value: "\(store.snapshot.alertCount)", accent: store.snapshot.alertCount > 0 ? .red : .mint)
+            MetricTile(title: "Token", value: formatCompactNumber(store.snapshot.totalTokens), caption: store.config.range, tint: Color(red: 0.00, green: 0.48, blue: 0.82))
+            MetricTile(title: "会话", value: "\(store.snapshot.sessionCount)", caption: "账本", tint: Color(red: 0.05, green: 0.62, blue: 0.39))
+            MetricTile(title: "预警", value: "\(store.snapshot.alertCount)", caption: riskLabel, tint: store.snapshot.alertCount > 0 ? Color(red: 0.96, green: 0.25, blue: 0.30) : Color(red: 0.05, green: 0.62, blue: 0.39))
         }
+        .frame(height: 66)
     }
 
     private var decisionPanel: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            panelTitle("当前判断", systemImage: "bolt.circle.fill", tint: .orange)
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                panelTitle("当前判断", systemImage: "bolt.fill", tint: Color(red: 1.00, green: 0.51, blue: 0.16))
+                Spacer()
+                RiskBadge(text: store.snapshot.alertCount > 0 ? "建议停止" : "可继续", color: store.snapshot.alertCount > 0 ? .red : .green)
+            }
             if let top = store.snapshot.topSession {
                 HStack(alignment: .firstTextBaseline) {
                     Text(top.title)
-                        .font(.callout.weight(.semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .lineLimit(1)
                     Spacer()
-                    Text(formatNumber(top.tokenDelta))
-                        .font(.callout.weight(.bold))
+                    Text(formatCompactNumber(top.tokenDelta))
+                        .font(.system(size: 15, weight: .bold))
                         .monospacedDigit()
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color(red: 0.93, green: 0.35, blue: 0.12))
                 }
                 Text(top.recommendation)
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(store.snapshot.alertCount > 0 ? .red : .primary)
+                    .foregroundStyle(store.snapshot.alertCount > 0 ? Color(red: 0.88, green: 0.10, blue: 0.16) : .secondary)
                     .lineLimit(2)
             } else {
-                Text("暂无会话账本数据。先运行仓库示例数据流程、导入官方导出，或点击「采集一次」。")
+                Text("暂无会话账本数据。点击「采集」或先导入官方导出。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
         }
-        .panelStyle()
+        .panelStyle(height: 82)
     }
 
     private var alertsPanel: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            panelTitle("预算预警", systemImage: "exclamationmark.triangle.fill", tint: store.snapshot.alertCount > 0 ? .red : .green)
+        VStack(alignment: .leading, spacing: 7) {
+            panelTitle("预算预警", systemImage: "exclamationmark.triangle.fill", tint: store.snapshot.alertCount > 0 ? Color(red: 0.96, green: 0.25, blue: 0.30) : .green)
             if store.snapshot.alerts.isEmpty {
-                Text("当前本地阈值没有触发预警。")
+                Text("当前没有触发本地预警。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             } else {
                 ForEach(store.snapshot.alerts.prefix(2)) { item in
-                    HStack(alignment: .top, spacing: 8) {
-                        SeverityDot(severity: item.severity)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.name)
-                                .font(.subheadline.weight(.semibold))
-                            Text("\(item.scope) · \(formatNumber(item.tokenDelta)) · \(String(format: "%.0f%%", item.usagePercent))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(item.recommendation)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                        }
-                    }
+                    AlertRow(item: item)
                 }
             }
         }
-        .panelStyle()
+        .panelStyle(height: 100)
     }
 
     private var sourcePanel: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            panelTitle("数据源可信度", systemImage: "checkmark.seal.fill", tint: .mint)
+        VStack(alignment: .leading, spacing: 7) {
+            panelTitle("数据源可信度", systemImage: "checkmark.seal.fill", tint: Color(red: 0.00, green: 0.70, blue: 0.62))
             if store.snapshot.sources.isEmpty {
                 Text("暂无数据源记录。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(activeSources.prefix(2)) { source in
-                    HStack {
+                ForEach(activeSources.prefix(1)) { source in
+                    HStack(alignment: .center, spacing: 10) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(source.sourceType)
-                                .font(.subheadline.weight(.semibold))
+                                .font(.system(size: 13, weight: .semibold))
+                                .lineLimit(1)
                             Text(source.missingFields.isEmpty ? "字段完整" : "缺失：\(source.missingFields.prefix(3).joined(separator: ", "))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                                .lineLimit(1)
                         }
                         Spacer()
                         Text(source.confidenceCeiling)
                             .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(confidenceColor(source.confidenceCeiling).opacity(0.18), in: Capsule())
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .foregroundStyle(confidenceColor(source.confidenceCeiling))
+                            .background(confidenceColor(source.confidenceCeiling).opacity(0.15), in: Capsule())
                     }
                 }
             }
         }
-        .panelStyle()
+        .panelStyle(height: 70)
     }
 
     private var activeSources: [SourceItem] {
@@ -670,73 +678,91 @@ struct CodexProbePanel: View {
         return enabled.isEmpty ? store.snapshot.sources : enabled
     }
 
-    private var actions: some View {
-        HStack(spacing: 8) {
-            Button {
-                store.generateDashboardAndOpen()
-            } label: {
-                Label("Dashboard", systemImage: "safari")
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+    private var footer: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Button {
+                    store.generateDashboardAndOpen()
+                } label: {
+                    Label("Dashboard", systemImage: "safari")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(ProbeActionButtonStyle(kind: .primary))
+                .help("生成并打开本地 Dashboard")
 
-            Button {
-                store.runOnce()
-            } label: {
-                Label("采集", systemImage: "tray.and.arrow.down")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
+                Button {
+                    store.runOnce()
+                } label: {
+                    Label("采集", systemImage: "tray.and.arrow.down")
+                        .frame(width: 78)
+                }
+                .buttonStyle(ProbeActionButtonStyle(kind: .secondary))
+                .help("从本地数据源采集一次快照")
 
-            Button {
-                store.refresh()
-            } label: {
-                Image(systemName: store.isLoading ? "hourglass" : "arrow.clockwise")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
+                Button {
+                    store.refresh()
+                } label: {
+                    Image(systemName: store.isLoading ? "hourglass" : "arrow.clockwise")
+                        .frame(width: 34)
+                }
+                .buttonStyle(ProbeActionButtonStyle(kind: .icon))
+                .help("刷新当前面板")
 
-            Menu {
-                Button("报告目录", systemImage: "folder") { store.openReports() }
-                Button("隐私报告", systemImage: "lock.doc") { store.generatePrivacyAndOpen() }
-                Divider()
-                Button("退出", systemImage: "xmark.circle") { NSApp.terminate(nil) }
-            } label: {
-                Image(systemName: "ellipsis.circle")
+                Menu {
+                    Button("报告目录", systemImage: "folder") { store.openReports() }
+                    Button("隐私报告", systemImage: "lock.doc") { store.generatePrivacyAndOpen() }
+                    Divider()
+                    Button("退出", systemImage: "xmark.circle") { NSApp.terminate(nil) }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .frame(width: 30)
+                }
+                .menuStyle(.borderlessButton)
+                .help("更多操作")
             }
-            .menuStyle(.borderlessButton)
-            .frame(width: 32)
+            .disabled(store.isLoading)
+
+            HStack(spacing: 5) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 9, weight: .semibold))
+                Text("只调用本地 CLI，不读 cookie/token/钥匙串，不上传")
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+            }
+            .font(.caption2.weight(.medium))
+            .foregroundStyle(.secondary)
         }
-        .disabled(store.isLoading)
-    }
-
-    private var privacyFooter: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("隐私边界")
-                .font(.caption.weight(.semibold))
-            Text("只调用本地 CLI；不登录、不读 cookie/token/钥匙串、不抓包、不上传。")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text("DB：\(store.config.dbPath)")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .lineLimit(1)
-                .truncationMode(.middle)
+        .padding(.horizontal, 12)
+        .padding(.top, 10)
+        .padding(.bottom, 9)
+        .background(.thinMaterial)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color(nsColor: .separatorColor).opacity(0.40))
+                .frame(height: 0.5)
         }
     }
 
     private func errorBanner(_ error: String) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text("CLI 未就绪")
-                .font(.subheadline.weight(.semibold))
-            Text(error)
-                .font(.caption)
-                .lineLimit(3)
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.octagon.fill")
+                .foregroundStyle(.red)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("CLI 未就绪")
+                    .font(.subheadline.weight(.semibold))
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(5)
+            }
         }
-        .foregroundStyle(.red)
-        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+        .padding(12)
+        .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.red.opacity(0.16), lineWidth: 1)
+        )
     }
 
     private func panelTitle(_ title: String, systemImage: String, tint: Color) -> some View {
@@ -748,71 +774,162 @@ struct CodexProbePanel: View {
         .font(.subheadline.weight(.semibold))
     }
 
+    private var riskLabel: String {
+        store.snapshot.alertCount > 0 ? "需处理" : "健康"
+    }
 }
 
-struct MetricPill: View {
+struct MetricTile: View {
     let title: String
     let value: String
-    let accent: Color
+    let caption: String
+    let tint: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
+            Capsule()
+                .fill(tint)
+                .frame(width: 27, height: 3)
             Text(title)
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.title3.weight(.bold))
+                .font(.system(size: 20, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .lineLimit(1)
-                .minimumScaleFactor(0.74)
+                .minimumScaleFactor(0.72)
+            Text(caption)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 9)
+        .padding(.horizontal, 11)
+        .padding(.vertical, 8)
         .background(
             LinearGradient(
-                colors: [accent.opacity(0.18), Color(nsColor: .controlBackgroundColor)],
+                colors: [tint.opacity(0.14), Color.white.opacity(0.78)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ),
-            in: RoundedRectangle(cornerRadius: 10)
+            in: RoundedRectangle(cornerRadius: 13, style: .continuous)
         )
-        .overlay(alignment: .topLeading) {
-            Capsule()
-                .fill(accent)
-                .frame(width: 28, height: 3)
-                .padding(.top, 7)
-                .padding(.leading, 10)
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(accent.opacity(0.26), lineWidth: 0.8)
-        )
+        .overlay(roundedStroke(tint.opacity(0.22), radius: 13))
     }
 }
 
-struct SeverityDot: View {
-    let severity: String
+struct RiskBadge: View {
+    let text: String
+    let color: Color
 
     var body: some View {
-        Circle()
-            .fill(severityColor(severity))
-            .frame(width: 9, height: 9)
-            .padding(.top, 5)
+        Text(text)
+            .font(.caption2.weight(.bold))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .foregroundStyle(color)
+            .background(color.opacity(0.12), in: Capsule())
+    }
+}
+
+struct AlertRow: View {
+    let item: AlertItem
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Circle()
+                .fill(severityColor(item.severity))
+                .frame(width: 8, height: 8)
+                .padding(.top, 5)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(item.name)
+                        .font(.system(size: 12, weight: .semibold))
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                    RiskBadge(text: alertActionText(item), color: severityColor(item.severity))
+                }
+                Text(alertUsageText(item))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+    }
+}
+
+struct ProbeActionButtonStyle: ButtonStyle {
+    enum Kind {
+        case primary
+        case secondary
+        case icon
+    }
+
+    let kind: Kind
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(foreground)
+            .padding(.horizontal, kind == .icon ? 8 : 12)
+            .frame(height: 36)
+            .background {
+                background(isPressed: configuration.isPressed)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .overlay(roundedStroke(stroke, radius: 12))
+            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+    }
+
+    private var foreground: Color {
+        switch kind {
+        case .primary: return .white
+        case .secondary: return Color(red: 0.19, green: 0.25, blue: 0.32)
+        case .icon: return Color(red: 0.29, green: 0.34, blue: 0.40)
+        }
+    }
+
+    private var stroke: Color {
+        switch kind {
+        case .primary: return Color.white.opacity(0.18)
+        default: return Color.black.opacity(0.07)
+        }
+    }
+
+    @ViewBuilder
+    private func background(isPressed: Bool) -> some View {
+        switch kind {
+        case .primary:
+            LinearGradient(
+                colors: [
+                    Color(red: 0.02, green: 0.46, blue: 0.95).opacity(isPressed ? 0.86 : 1),
+                    Color(red: 0.00, green: 0.68, blue: 0.72).opacity(isPressed ? 0.86 : 1)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .secondary:
+            Color.white.opacity(isPressed ? 0.58 : 0.82)
+        case .icon:
+            Color.white.opacity(isPressed ? 0.50 : 0.72)
+        }
     }
 }
 
 extension View {
-    func panelStyle() -> some View {
+    func panelStyle(height: CGFloat) -> some View {
         self
-            .padding(11)
+            .padding(12)
+            .frame(height: height)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color(nsColor: .separatorColor).opacity(0.58), lineWidth: 0.6)
-            )
+            .background(Color.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(roundedStroke(Color.black.opacity(0.07), radius: 14))
     }
+}
+
+func roundedStroke(_ color: Color, radius: CGFloat) -> some View {
+    RoundedRectangle(cornerRadius: radius, style: .continuous)
+        .stroke(color, lineWidth: 1)
 }
 
 func severityColor(_ severity: String) -> Color {
@@ -839,6 +956,45 @@ func formatNumber(_ value: Int) -> String {
     return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
 }
 
+func formatCompactNumber(_ value: Int) -> String {
+    let absolute = abs(value)
+    let sign = value < 0 ? "-" : ""
+    if absolute >= 1_000_000_000 {
+        return "\(sign)\(formatOneDecimal(Double(absolute) / 1_000_000_000))B"
+    }
+    if absolute >= 1_000_000 {
+        return "\(sign)\(formatOneDecimal(Double(absolute) / 1_000_000))M"
+    }
+    if absolute >= 10_000 {
+        return "\(sign)\(formatOneDecimal(Double(absolute) / 1_000))K"
+    }
+    return formatNumber(value)
+}
+
+func alertActionText(_ item: AlertItem) -> String {
+    switch item.severity {
+    case "critical": return "建议拆分"
+    case "high": return "先降配"
+    case "medium": return "需关注"
+    default: return "观察"
+    }
+}
+
+func alertUsageText(_ item: AlertItem) -> String {
+    if item.scope == "context" {
+        return "上下文峰值 \(formatOneDecimal(Double(item.tokenDelta)))%，需要拆分处理"
+    }
+    return "已用 \(formatCompactNumber(item.tokenDelta))，触发本地预警"
+}
+
+private func formatOneDecimal(_ value: Double) -> String {
+    let rounded = (value * 10).rounded() / 10
+    if rounded == rounded.rounded() {
+        return "\(Int(rounded))"
+    }
+    return String(format: "%.1f", rounded)
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
@@ -850,24 +1006,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let config = ProbeConfig.load()
         let runner = ProbeRunner(config: config)
         store = ProbeStore(runner: runner) { [weak self] title in
-            self?.statusItem.button?.title = title
+            self?.statusItem.button?.toolTip = "BLCaptain Codex Probe: \(title)"
         }
 
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
-            button.title = "Codex"
+            button.title = ""
             button.image = NSImage(systemSymbolName: "gauge.with.dots.needle.50percent", accessibilityDescription: "Codex Probe")
-            button.imagePosition = .imageLeading
+            button.imagePosition = .imageOnly
+            button.toolTip = "BLCaptain Codex Probe"
             button.action = #selector(togglePopover(_:))
             button.target = self
         }
 
         popover = NSPopover()
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: 360, height: 500)
+        popover.contentSize = NSSize(width: 372, height: 520)
         popover.contentViewController = NSHostingController(rootView: CodexProbePanel(store: store))
 
         store.refresh()
+        if ProcessInfo.processInfo.environment["CODEX_PROBE_OPEN_ON_LAUNCH"] == "1" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                self?.togglePopover(nil)
+            }
+        }
     }
 
     @MainActor @objc private func togglePopover(_ sender: AnyObject?) {

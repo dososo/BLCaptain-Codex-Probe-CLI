@@ -4,6 +4,13 @@
 
 - 暂无。
 
+## 0.9.1 - 2026-06-26
+
+- 刷新 macOS 状态栏 App 工作效果图，README 改用真实状态栏下拉面板截图并限制展示宽度，提升 GitHub 阅读体验。
+- 将状态栏 App 预算预警主界面调整为更易理解的「已用 token，触发本地预警」表达，避免把内部阈值误读成官方额度或停止标准。
+- 同步刷新中英文 README、隐私文档、状态栏 App 文档和示例截图文案。
+- 更新 Python 包版本、CLI `--version`、macOS App bundle 版本、打包脚本和 preflight 契约到 `0.9.1`。
+
 ## 0.9.0 - 2026-06-25
 
 - 新增原生 macOS 状态栏 App：BLCaptain Codex Probe Bar，基于 Swift/AppKit 实现，点击状态栏即可查看本地 Codex 用量摘要。

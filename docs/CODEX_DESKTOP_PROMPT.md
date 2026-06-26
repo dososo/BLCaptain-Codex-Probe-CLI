@@ -25,7 +25,7 @@
 要求：
 1. 先确认本仓库 CLI 已安装；如果没有，请运行 scripts/setup-local.sh。
 2. 运行 scripts/macos/build-codex-probe-bar.sh。
-3. 打开 build/CodexProbeBar.app。
+3. 打开 ~/Applications/CodexProbeBar.app。
 4. 告诉我状态栏 App 的配置、报告目录和 Dashboard 路径。
 5. 不要读取浏览器 cookie、token、钥匙串、系统凭据或聊天正文。
 6. 不要上传任何数据。

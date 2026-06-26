@@ -13,7 +13,7 @@
   <text x="128" y="360" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">上下文剩余 78%</text>
   <text x="128" y="392" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">5 小时额度 98%</text>
   <text x="128" y="424" font-family="Inter, Arial, sans-serif" font-size="16" fill="#334155">7 天额度 84%</text>
-  <text x="128" y="486" font-family="Inter, Arial, sans-serif" font-size="14" fill="#64748b">适合继续当前任务，但仍保留停止线。</text>
+  <text x="128" y="486" font-family="Inter, Arial, sans-serif" font-size="14" fill="#64748b">适合继续当前任务，但仍保留本地风险提示。</text>
 
   <rect x="380" y="176" width="244" height="400" rx="12" fill="#fffbeb" stroke="#fde68a"/>
   <text x="404" y="216" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="800" fill="#a16207">上下文偏重</text>
